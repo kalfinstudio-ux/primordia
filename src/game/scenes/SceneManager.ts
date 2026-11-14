@@ -15,6 +15,9 @@ import { VolcanoSystem } from '../world/volcano';
 import { WeatherSystem } from '../world/weather';
 import { MeteorSystem } from '../world/meteors';
 import { ChunkManager } from '../world/chunkManager';
+import { RemotePlayersSystem } from '../world/remotePlayers';
+import { multiplayer } from '../net/multiplayer';
+import type { AnimState } from '../net/multiplayerProtocol';
 import { VOLCANO_MAIN, getBiomeAt } from '../world/biomes';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
 import { tryLoadExplorerGlb, type GlbExplorerHandle } from '../player/glbCharacter';
@@ -53,6 +56,7 @@ export class SceneManager {
   private weather!: WeatherSystem;
   private meteors!: MeteorSystem;
   private chunks!: ChunkManager;
+  private remotePlayers!: RemotePlayersSystem;
   private buildingGhost!: BuildingGhostSystem;
   private character!: CharacterRig;
   private glbHandle: GlbExplorerHandle | null = null;
@@ -146,6 +150,7 @@ export class SceneManager {
     this.meteors = new MeteorSystem(this.engine.scene);
     this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash);
     this.buildingGhost = new BuildingGhostSystem(this.engine.scene, this.assets.contactShadowTexture);
+    this.remotePlayers = new RemotePlayersSystem(this.engine.scene, this.assets.contactShadowTexture);
 
     this.character = createExplorerCharacter(gameState.avatar, this.assets.contactShadowTexture);
     this.character.root.visible = false;
@@ -186,6 +191,7 @@ export class SceneManager {
     this.camRig.snapToPlayer(this.controller.position, 0);
     this.camRig.updateGameplay(0.016, this.engine.camera, this.controller.position, this.terrain, this.spatialHash);
     this.autosaveAccum = 0;
+    multiplayer.enterWorld(gameState.worldSeed);
     this.emitHudSnapshot();
     this.engine.render();
   }
@@ -205,6 +211,8 @@ export class SceneManager {
   enterMenuFlyover(): void {
     if (!this.ready) return;
     this.character.root.visible = false;
+    multiplayer.leave();
+    this.remotePlayers.clear();
     this.camRig.updateMenuFlyover(0, this.engine.camera);
     this.engine.render();
   }
@@ -409,6 +417,22 @@ export class SceneManager {
       }
     }
 
+    if (['hud', 'pause', 'inventory', 'map', 'journal', 'storage'].includes(screen)) {
+      const cp = this.controller.position;
+      const sp = this.controller.lastHorizontalSpeed;
+      const anim: AnimState = this.controller.swimming
+        ? 'swim'
+        : !this.controller.grounded
+          ? 'jump'
+          : sp > 6.8
+            ? 'run'
+            : sp > 0.35
+              ? 'walk'
+              : 'idle';
+      multiplayer.tick({ x: cp.x, y: cp.y, z: cp.z, yaw: this.controller.yaw, anim, speed: sp });
+      this.remotePlayers.update(dt, elapsed, multiplayer.getRemotePlayers(), cp);
+    }
+
     input.endFrame();
     this.engine.render();
   }
@@ -491,6 +515,10 @@ export class SceneManager {
       }
     }
 
+    for (const rp of multiplayer.getRemotePlayers()) {
+      minimapNodes.push({ x: rp.x, z: rp.z, kind: 'player' });
+    }
+
     const snap: HudSnapshot = {
       vitals: { ...gameState.vitals },
       headingDeg,
@@ -517,6 +545,7 @@ export class SceneManager {
       playtimeSec: Math.round(gameState.playtimeSec),
       tutorialHintKey: evaluateContextualTutorial(this.survival.currentHazard, this.survival.nearWater),
       minimapNodes,
+      online: multiplayer.getHudInfo(),
       debug: {
         fps: this.currentFps,
         activeChunks: this.terrain.getActiveChunkCount(),
@@ -546,6 +575,8 @@ export class SceneManager {
     this.weather?.dispose();
     this.meteors?.dispose();
     this.buildingGhost?.dispose();
+    multiplayer.leave();
+    this.remotePlayers?.dispose();
     this.chunks?.dispose();
     this.engine.dispose();
   }

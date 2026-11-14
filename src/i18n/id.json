@@ -382,6 +382,28 @@
     "startNgPlus": "Mulai New Game+ (Bawa Resep & Jurnal)",
     "mainMenu": "Menu Utama"
   },
+  "mp": {
+    "title": "Mode Online",
+    "on": "Aktif",
+    "off": "Mati",
+    "online": "Online",
+    "players": "pemain",
+    "connecting": "Menghubungkan…",
+    "error": "Koneksi online bermasalah. Mencoba lagi…",
+    "privacy": "Pemain lain di dunia yang sama bisa melihat nama, penampilan, dan posisimu. Inventaris dan save tidak dikirim.",
+    "emoteBtn": "Isyarat",
+    "you": "Kamu",
+    "joined": "bergabung",
+    "left": "meninggalkan dunia",
+    "emotes": {
+      "hello": "👋 Halo!",
+      "danger": "⚠️ Bahaya!",
+      "water": "💧 Ada air di sini",
+      "safe": "⛺ Tempat aman",
+      "help": "🆘 Tolong!",
+      "follow": "➡️ Ikuti aku"
+    }
+  },
   "pause": {
     "title": "Ekspedisi Dijeda",
     "resume": "Lanjutkan",

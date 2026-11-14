@@ -11,6 +11,7 @@ import {
   ChevronUp,
   RotateCw,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { ITEMS, WORLD_RADIUS } from '../game/config';
 import { eventBus } from '../game/core/eventBus';
@@ -22,6 +23,8 @@ import { isTouchDevice } from '../game/utils/device';
 import { t } from '../game/utils/i18n';
 import { ItemIcon } from './ItemIcon';
 import { DebugOverlay } from './DebugOverlay';
+import { multiplayer } from '../game/net/multiplayer';
+import { MP_EMOTES } from '../game/net/multiplayerProtocol';
 
 function getCardinal(deg: number): string {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -38,6 +41,7 @@ export function HudScreen() {
   const [rotateBanner, setRotateBanner] = useState(false);
   const [inspectIdx, setInspectIdx] = useState<number | null>(null);
   const [joyKnob, setJoyKnob] = useState({ x: 0, y: 0 });
+  const [emoteOpen, setEmoteOpen] = useState(false);
 
   const minimapRef = useRef<HTMLCanvasElement | null>(null);
   const joyRef = useRef<{ x: number; y: number; touchId: number | null }>({ x: 0, y: 0, touchId: null });
@@ -98,7 +102,9 @@ export function HudScreen() {
               ? '#fb923c'
               : node.kind === 'beacon'
                 ? '#10b981'
-                : '#22c55e';
+                : node.kind === 'player'
+                  ? '#facc15'
+                  : '#22c55e';
       ctx.beginPath();
       ctx.arc(half + dx, half + dz, node.kind === 'volcano' ? 4 : 2.5, 0, Math.PI * 2);
       ctx.fill();
@@ -380,6 +386,16 @@ export function HudScreen() {
             {t(`hud.hazards.${snap.hazard}`)}
           </div>
 
+          {snap.online.status !== 'off' && (
+            <div className="rounded-md border border-stone-800 px-2.5 py-0.5 text-[11px] font-medium text-yellow-200" style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
+              {snap.online.status === 'online'
+                ? `${t('mp.online')} · ${snap.online.players} ${t('mp.players')}`
+                : snap.online.status === 'connecting'
+                  ? t('mp.connecting')
+                  : t('mp.error')}
+            </div>
+          )}
+
           {snap.activeEvent.type !== 'none' && (
             <div className="rounded-md border border-red-600/80 px-3 py-1 text-[11px] font-bold text-red-200 shadow-lg" style={{ backgroundColor: 'rgba(69, 10, 10, 0.9)' }}>
               {t(`events.${snap.activeEvent.type}`)} · {snap.activeEvent.remainingSec}s
@@ -423,10 +439,34 @@ export function HudScreen() {
             <HudIconBtn label="Mute" onClick={toggleMute}>
               {muted ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
             </HudIconBtn>
+            {snap.online.status === 'online' && (
+              <HudIconBtn label={t('mp.emoteBtn')} onClick={() => setEmoteOpen((o) => !o)}>
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" />
+              </HudIconBtn>
+            )}
             <HudIconBtn label={t('hud.pauseBtn')} onClick={() => setScreen('pause')}>
               <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
             </HudIconBtn>
           </div>
+
+          {emoteOpen && snap.online.status === 'online' && (
+            <div className="flex max-w-[210px] flex-wrap justify-end gap-1">
+              {MP_EMOTES.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    multiplayer.sendEmote(id);
+                    setEmoteOpen(false);
+                  }}
+                  className="min-h-[36px] rounded-md border border-stone-700 px-2.5 py-1 text-[11px] font-medium text-stone-100 hover:border-yellow-400"
+                  style={{ backgroundColor: 'rgba(15, 12, 11, 0.94)' }}
+                >
+                  {t(`mp.emotes.${id}`)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {showFull && !isShortLandscape && (
             <button

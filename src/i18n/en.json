@@ -382,6 +382,28 @@
     "startNgPlus": "Launch New Game+ (Keep Recipes & Journal)",
     "mainMenu": "Main Menu"
   },
+  "mp": {
+    "title": "Online Mode",
+    "on": "On",
+    "off": "Off",
+    "online": "Online",
+    "players": "players",
+    "connecting": "Connecting…",
+    "error": "Online connection problem. Retrying…",
+    "privacy": "Other players in the same world can see your name, look, and position. Inventory and saves are never sent.",
+    "emoteBtn": "Signals",
+    "you": "You",
+    "joined": "joined",
+    "left": "left the world",
+    "emotes": {
+      "hello": "👋 Hello!",
+      "danger": "⚠️ Danger!",
+      "water": "💧 Water here",
+      "safe": "⛺ Safe spot",
+      "help": "🆘 Help!",
+      "follow": "➡️ Follow me"
+    }
+  },
   "pause": {
     "title": "Expedition Paused",
     "resume": "Resume",

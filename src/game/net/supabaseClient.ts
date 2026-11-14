@@ -22,6 +22,7 @@ export function getSupabaseClient(): SupabaseClient | null {
         persistSession: true,
         autoRefreshToken: true,
       },
+      realtime: { params: { eventsPerSecond: 10 } },
     });
     return client;
   } catch (err) {

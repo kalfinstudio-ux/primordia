@@ -112,7 +112,8 @@ export interface HudSnapshot {
   distanceExplored: number;
   playtimeSec: number;
   tutorialHintKey: string | null;
-  minimapNodes: Array<{ x: number; z: number; kind: 'water' | 'crystal' | 'shelter' | 'volcano' | 'beacon' | 'geyser' }>;
+  minimapNodes: Array<{ x: number; z: number; kind: 'water' | 'crystal' | 'shelter' | 'volcano' | 'beacon' | 'geyser' | 'player' }>;
+  online: { status: 'off' | 'connecting' | 'online' | 'error'; players: number };
   debug: DebugTelemetry;
 }
 

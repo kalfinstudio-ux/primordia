@@ -30,3 +30,11 @@ In **Authentication → Providers**, ensure **Email** is enabled and add your Gi
 3. Supabase → **Authentication → URL Configuration**: isi **Site URL** dan **Redirect URLs** dengan alamat game (mis. `https://kalfinstudio-ux.github.io/primordia/`).
 4. Jalankan `supabase/migration-auth-google.sql` di SQL Editor (membuat profil otomatis untuk akun baru).
 5. Project lama: jalankan juga `supabase/migration-stage2.sql` sekali. Project baru: cukup `schema.sql` lalu `policies.sql`.
+
+## 6. Mode Online / Multiplayer Tahap A (opsional)
+Tidak perlu SQL tambahan. Fitur ini hanya memakai **Realtime Broadcast + Presence**, yang aktif secara bawaan di project Supabase.
+- Pemain dengan **seed dunia yang sama** masuk ke kamar yang sama (`primordia:<seed>:<nomor>`), maksimal 8 pemain per kamar; pemain ke-9 dan seterusnya otomatis pindah ke kamar berikutnya.
+- Yang dikirim ke pemain lain: nama, penampilan, posisi, arah, dan animasi. Inventaris, save, dan data akun tidak pernah dikirim.
+- Bawaan: aktif untuk pemain yang sudah login, mati untuk tamu. Pemain bisa mengubahnya di menu Jeda → Mode Online.
+- Kamar bersifat publik (siapa pun yang tahu nama kamar dan anon key bisa ikut mendengar). Data yang beredar hanya yang tercantum di atas. Pelanggaran/cheat belum dicegah di Tahap A (tanpa server otoritatif).
+- Free tier Supabase memiliki batas koneksi Realtime bersamaan dan pesan per detik; cek **Project Settings → Realtime** / halaman harga untuk angka terbarunya.

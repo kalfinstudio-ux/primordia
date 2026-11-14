@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
 import { returnToMainMenu, saveCurrentSlot } from '../game/main';
+import { multiplayer } from '../game/net/multiplayer';
 import { t } from '../game/utils/i18n';
 
 export function PauseModal() {
+  const [mpOn, setMpOn] = useState(() => multiplayer.isEnabled());
+  const mpStatus = multiplayer.getStatus();
   return (
     <main
       className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4"
@@ -55,6 +58,25 @@ export function PauseModal() {
             >
               {t('pause.saveCloud')}
             </button>
+          )}
+
+          {multiplayer.isAvailable() && (
+            <div className="rounded-lg border border-stone-700 bg-stone-900 p-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !mpOn;
+                  setMpOn(next);
+                  multiplayer.setEnabled(next);
+                }}
+                className="min-h-[42px] w-full rounded-lg border border-stone-700 bg-stone-950 px-4 py-2 text-sm font-medium text-yellow-200 hover:bg-stone-800"
+              >
+                {t('mp.title')}: {mpOn ? t('mp.on') : t('mp.off')}
+              </button>
+              <p className="mt-1.5 text-[11px] leading-snug text-stone-400">
+                {mpOn && mpStatus === 'error' ? t('mp.error') : t('mp.privacy')}
+              </p>
+            </div>
           )}
 
           <button
