@@ -826,7 +826,7 @@
     "current": "Assigned",
     "reset": "Back to default",
     "appliesNext": "Applies the next time a world is loaded (reload the game).",
-    "addFile": "Try another file in public/models/",
+    "addFile": "Try another file in public/play/models/",
     "add": "Add",
     "invalidName": "Invalid file name (must be .glb/.gltf/.usdz/…, no folders).",
     "convert": "Needs conversion"

@@ -3,6 +3,18 @@
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
 Terakhir diperbarui: 14 November 2026 (v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0. Site layout (v13)
+| URL | Source |
+|---|---|
+| `/primordia/` | `index.html` (landing page, self-contained) |
+| `/primordia/play/` | `play/index.html` (the game, Vite entry `src/main.tsx`) |
+
+- Game static files live in `public/play/` (models, `sw.js`, manifest, icons) so every relative path (`./models/`, `./sw.js`) keeps working from `/play/`.
+- Landing assets (favicon, mascot) live in `public/`. `public/sw.js` is a stub that unregisters the old root service worker.
+- Dev: landing `http://localhost:3000/`, game `http://localhost:3000/play/`. Edit `CONTACT_EMAIL` at the bottom of `index.html`.
+- Mascot: **Bruk, the basalt warden** (`public/mascot.svg`, `mascot-512.png`).
+
 ## 1. Ringkasan
 PRIMORDIA = game survival 3D di browser (React 19 + Three.js + Vite + Supabase opsional).
 Lapisan terbaru **Era Adam & Hawa**: pemain berumur abadi, waktu mengikuti dunia nyata, peta berubah mengikuti kalender nyata.

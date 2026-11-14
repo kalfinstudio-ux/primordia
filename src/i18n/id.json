@@ -826,7 +826,7 @@
     "current": "Terpasang",
     "reset": "Kembali ke bawaan",
     "appliesNext": "Berlaku saat dunia dimuat berikutnya (muat ulang permainan).",
-    "addFile": "Coba file lain di public/models/",
+    "addFile": "Coba file lain di public/play/models/",
     "add": "Tambah",
     "invalidName": "Nama file tidak valid (harus .glb/.gltf/.usdz/…, tanpa folder).",
     "convert": "Perlu konversi"

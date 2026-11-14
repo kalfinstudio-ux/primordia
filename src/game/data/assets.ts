@@ -38,7 +38,7 @@ export interface AssetEntry {
   note: string;
 }
 
-/** Daftar model di public/models/. Tambah/ganti nama file di sini bila formatnya berubah. */
+/** Daftar model di public/play/models/. Tambah/ganti nama file di sini bila formatnya berubah. */
 export const ASSET_FILES: readonly AssetEntry[] = [
   { file: 'naked_dude.glb', note: 'Ringan (0,23 MB)' },
   { file: 'party_starter_-_layered_t-shirts.glb', note: 'Sedang (0,93 MB)' },

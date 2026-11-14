@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Kompres + konversi aset 3D (butuh internet sekali untuk npx). Hasil -> public/models
+# Kompres + konversi aset 3D (butuh internet sekali untuk npx). Hasil -> public/play/models
 # Pakai: ./tools/optimize-assets.sh ~/unduhan/*.glb
 set -e
-mkdir -p public/models
+mkdir -p public/play/models
 for f in "$@"; do
   b=$(basename "${f%.*}")
   case "$f" in
@@ -11,7 +11,7 @@ for f in "$@"; do
       blender -b --python-expr "import bpy;bpy.ops.wm.usd_import(filepath='$f');bpy.ops.export_scene.gltf(filepath='/tmp/$b.glb')"
       in="/tmp/$b.glb" ;;
   esac
-  npx -y @gltf-transform/cli optimize "$in" "public/models/$b.glb" \
+  npx -y @gltf-transform/cli optimize "$in" "public/play/models/$b.glb" \
     --compress meshopt --texture-compress webp --texture-size 1024 --simplify true
 done
-ls -lh public/models
+ls -lh public/play/models

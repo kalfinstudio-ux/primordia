@@ -1,29 +1,320 @@
-<!doctype html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b0908" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>PRIMORDIA — Survival di Bumi Purba</title>
-    <meta name="description" content="3D open-world survival exploration game set on primordial Hadean-Archean Earth." />
-    <meta property="og:title" content="PRIMORDIA" />
-    <meta property="og:description" content="3D open-world survival exploration game set on primordial Hadean-Archean Earth." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body data-state="splash" class="bg-[#0b0908] text-stone-100 antialiased overflow-hidden select-none">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1518">
+<title>PRIMORDIA — Survive the First Earth | Jurkon Studio</title>
+<meta name="description" content="PRIMORDIA is a 3D survival game that runs in your browser. Wake up on a volcanic Earth, build an outpost and plant the first seed of life. By Jurkon Studio.">
+<meta property="og:title" content="PRIMORDIA — Survive the First Earth">
+<meta property="og:description" content="A 3D open-world survival game in your browser, set on primordial Earth. By Jurkon Studio.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./mascot-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#E6ECE8;--mute:#A3B2AE;--line:#3A4A4D;--lava:#FF6A2A;--sulfur:#D4BC2A;--crystal:#5FD3C4;
+--head:'Barlow Condensed','Arial Narrow',Arial,sans-serif;--body:'Barlow','Segoe UI',Arial,sans-serif;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 60px);scroll-behavior:smooth;background:#0f1518}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;color:var(--ink);font:400 1.05rem/1.65 var(--body);background:#0f1518}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:#0f1518;z-index:30}
+a{color:var(--crystal)}
+:focus-visible{outline:3px solid var(--lava);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px;position:relative}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#0f1518ee;border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:54px}
+.brand{display:flex;align-items:center;gap:10px;font:600 1.3rem var(--head);letter-spacing:.06em;color:var(--ink);text-decoration:none;margin-right:auto}
+.brand img{width:30px;height:30px;border-radius:7px}
+.nav nav{display:flex;overflow-x:auto}
+.nav nav a{color:var(--mute);text-decoration:none;padding:8px 10px;font-size:.95rem;white-space:nowrap}
+.nav nav a:hover{color:var(--ink)}
+.btn{display:inline-block;background:var(--lava);color:#1a0b04;font:600 1.05rem var(--body);padding:12px 24px;border-radius:6px;text-decoration:none}
+.btn:hover{filter:brightness(1.1)}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.nav .btn{padding:7px 16px;font-size:.92rem}
+section{position:relative;background:var(--tone);padding:76px 0 72px}
+section::before{content:"";position:absolute;left:0;right:0;top:-31px;height:32px;background:var(--tone);clip-path:polygon(0 100%, 0 50%, 3.6% 27%, 7.5% 14%, 10.3% 76%, 13.1% 82%, 15.8% 72%, 19.1% 19%, 23.1% 16%, 26.4% 78%, 30.4% 80%, 33.3% 36%, 38.0% 82%, 43.9% 81%, 48.4% 14%, 54.3% 13%, 58.8% 25%, 62.3% 26%, 66.7% 81%, 70.3% 31%, 73.1% 81%, 77.9% 55%, 80.7% 16%, 85.2% 87%, 88.4% 76%, 92.4% 48%, 96.5% 66%, 100.0% 39%, 100% 100%)}
+h1,h2,h3{font-family:var(--head);font-weight:600;margin:0}
+h2{font-size:clamp(2rem,5vw,2.9rem);line-height:1.05;margin-bottom:10px}
+h3{font-size:1.3rem;line-height:1.2}
+.sub{color:var(--mute);max-width:60ch;margin:0 0 34px}
+#top{--tone:#0f1518;padding:56px 0 0}
+#top .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:end}
+#top::before{display:none}
+h1{font-size:clamp(2.8rem,8.5vw,5.6rem);line-height:.95;letter-spacing:-.01em}
+.lead{font-size:1.18rem;color:#C3D0CC;max-width:46ch;margin:18px 0 26px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.clock{font-size:.95rem;color:var(--mute);border-left:3px solid var(--sulfur);padding-left:12px;margin:0 0 56px}
+.clock b{color:var(--ink);font-weight:500}
+.mascot{display:block;width:100%;max-width:470px;margin:0 0 -92px auto;position:relative;z-index:2;overflow:visible}
+.eye{animation:eye 5s ease-in-out infinite}.halo{animation:eye 5s ease-in-out infinite}
+.crack{animation:eye 7s ease-in-out infinite}
+.steam{animation:rise 5s ease-out infinite}.steam:nth-of-type(3){animation-delay:1.6s}.steam:nth-of-type(4){animation-delay:3.2s}
+@keyframes eye{50%{opacity:.62}}
+@keyframes rise{0%{transform:translateY(8px);opacity:0}30%{opacity:.4}100%{transform:translateY(-26px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.eye,.halo,.crack,.steam{animation:none}html{scroll-behavior:auto}}
+#story{--tone:#141c1f;padding-top:130px}
+.story{columns:2 340px;column-gap:44px;max-width:900px}
+.story p{margin:0 0 1em;break-inside:avoid}
+.story p:first-child::first-line{color:var(--ink);font-weight:600}
+#features{--tone:#1a2326}
+.rows{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(150px,.32fr) 1fr;gap:6px 28px;padding:18px 0;border-bottom:1px dashed var(--line)}
+.row p{margin:0;color:var(--mute);max-width:64ch}
+@media(max-width:700px){.row{grid-template-columns:1fr}#top .wrap{grid-template-columns:1fr}.mascot{max-width:320px;margin:0 auto -60px;order:-1}}
+#roadmap{--tone:#1f2a2c}
+.road{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.stage{padding:18px 20px;border:1px solid var(--line);border-radius:4px;background:#ffffff06}
+.stage p{margin:6px 0 0;color:var(--mute);font-size:.98rem}
+.st{font:600 .82rem var(--body);display:inline-block;margin-bottom:6px;color:var(--mute)}
+.stage.done{border-left:4px solid var(--crystal)}
+.stage.now{border-left:4px solid var(--lava);background:#ff6a2a12}.stage.now .st{color:var(--lava)}
+.stage.plan{border-style:dashed}
+#missions{--tone:#262b27}
+.chapters{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.ch{border-top:3px solid var(--sulfur);padding-top:10px}
+.ch p{margin:4px 0 10px;color:var(--mute);font-size:.93rem}
+.ch ol{margin:0;padding-left:30px;font-size:.95rem}
+.ch li{padding:2px 0}
+#help{--tone:#2d2a24}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 14px;margin:0 0 28px;padding:0;list-style:none}
+kbd{font:600 .85rem var(--body);background:#0f1518;border:1px solid var(--line);border-bottom-width:3px;border-radius:4px;padding:1px 7px;margin-right:6px}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;padding:15px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";color:var(--lava);font-size:1.3rem;line-height:1}
+details[open] summary::after{content:"–"}
+details>*:not(summary){margin:0 0 16px;color:var(--mute);max-width:70ch}
+details ol{padding-left:22px}
+#legal{--tone:#33261f;padding-bottom:40px}
+.tabs{display:flex;gap:6px;margin-bottom:0;flex-wrap:wrap}
+.tabs button{font:600 .98rem var(--body);background:transparent;color:var(--mute);border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;padding:10px 18px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:#0f1518;color:var(--ink);border-color:#0f1518}
+.panel{background:#0f1518;border-radius:0 6px 6px 6px;padding:8px 26px 24px}
+.panel[hidden]{display:none}
+.panel h3{margin-top:24px;color:var(--ink)}
+.panel p,.panel li{color:var(--mute);max-width:72ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;min-width:560px;width:100%;font-size:.93rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--mute)}
+th{color:var(--ink)}
+footer{background:#1b1410;padding:34px 0 52px;color:var(--mute);font-size:.93rem}
+footer .row2{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margin-right:12px}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="#top"><img src="./favicon.svg" alt="">PRIMORDIA</a>
+  <nav aria-label="Main"><a href="#story">Story</a><a href="#features">Features</a><a href="#roadmap">Roadmap</a><a href="#missions">Missions</a><a href="#help">Help</a><a href="#legal">Legal</a></nav>
+  <a class="btn" data-play href="./play/">Play</a>
+</div></header>
+
+<main>
+<section id="top"><div class="wrap">
+  <div>
+    <h1>Wake up on the first Earth.</h1>
+    <p class="lead">PRIMORDIA is a 3D survival game that runs in your browser. Volcanoes burn, lava rivers cut the plains and the air can kill you. Stay alive, build an outpost and plant the first seed of life.</p>
+    <div class="cta"><a class="btn" data-play href="./play/">Play now</a><a class="btn alt" href="#missions">See the 22 missions</a></div>
+    <p class="clock">The sky in the game follows your device clock. Right now: <b id="clk">–</b></p>
+  </div>
+  <svg class="mascot" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Bruk, the basalt warden: a horned stone creature with a glowing amber eye and lava cracks">
+<defs><filter id="blr" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs>
+<circle class="halo" cx="150" cy="200" r="46" fill="#ffb020" opacity=".45" filter="url(#blr)"/>
+<path d="M6.3 403.5 L-7.8 398.9 L-15.1 392.7 L-16.7 385.3 L-13.8 377.1 L-7.5 368.3 L0.9 359.3 L10.2 350.3 L19.5 341.9 L27.3 334.2 L32.6 327.6 L36.5 321.8 L40.5 316.5 L44.8 311.5 L49.4 306.8 L54.1 302.5 L59.0 298.5 L64.1 294.7 L69.2 291.1 L74.6 287.7 L80.0 284.5 L85.3 281.5 L90.5 278.9 L95.7 276.5 L101.0 274.4 L106.5 272.5 L112.4 270.7 L118.7 269.1 L125.6 267.7 L133.2 266.3 L141.5 264.9 L151.0 263.5 L161.8 262.0 L173.4 260.6 L185.7 259.3 L198.4 258.2 L211.0 257.3 L223.4 256.6 L235.2 256.4 L246.2 256.6 L255.9 257.3 L264.7 258.5 L272.7 260.3 L280.1 262.4 L287.1 265.0 L293.6 267.8 L299.8 270.9 L305.8 274.1 L311.7 277.5 L317.5 280.9 L323.4 284.3 L329.3 287.7 L335.2 291.0 L341.0 294.4 L346.7 297.9 L352.2 301.5 L357.4 305.5 L362.3 309.7 L366.8 314.3 L371.0 319.4 L374.6 325.0 L379.5 331.6 L386.6 339.3 L394.9 347.9 L403.1 356.9 L410.3 366.1 L415.3 375.1 L417.0 383.5 L414.4 391.1 L406.2 397.4 L391.5 402.2 L367.4 405.8 L333.6 408.6 L292.5 410.6 L246.6 411.9 L198.3 412.4 L150.1 412.2 L104.3 411.2 L63.5 409.4 L30.0 406.8Z" fill="#1a2124"/>
+<path d="M123.6 303.6 L123.5 299.0 L123.7 293.3 L124.2 287.0 L125.2 280.2 L126.7 273.3 L128.9 266.6 L131.9 260.2 L135.8 254.6 L140.6 250.0 L146.5 246.7 L154.0 244.5 L163.6 243.1 L174.6 242.4 L186.6 242.3 L199.1 242.8 L211.6 243.8 L223.7 245.3 L234.9 247.2 L244.7 249.4 L252.7 251.9 L259.1 254.9 L264.7 258.8 L269.4 263.3 L273.4 268.2 L276.7 273.5 L279.3 278.9 L281.2 284.2 L282.5 289.4 L283.2 294.2 L283.4 298.5 L283.0 302.4 L282.0 306.4 L280.4 310.4 L278.2 314.2 L275.3 317.8 L271.8 321.2 L267.6 324.2 L262.7 326.9 L257.1 329.1 L250.8 330.9 L243.2 332.0 L234.0 332.8 L223.5 333.1 L212.1 333.0 L200.4 332.6 L188.7 331.9 L177.5 331.0 L167.1 329.8 L158.0 328.6 L150.6 327.3 L144.8 325.9 L139.8 324.3 L135.6 322.7 L132.2 320.8 L129.5 318.8 L127.3 316.4 L125.8 313.8 L124.7 310.8 L124.0 307.4Z" fill="#222c30"/>
+<path d="M85.4 170.4 L85.9 165.2 L86.7 159.9 L87.7 154.7 L89.0 149.5 L90.5 144.4 L92.3 139.4 L94.4 134.5 L96.8 129.8 L99.6 125.3 L102.7 121.0 L106.3 116.9 L110.5 112.8 L115.1 108.8 L120.1 104.9 L125.3 101.3 L130.7 97.9 L136.1 94.7 L141.3 92.0 L146.5 89.6 L151.3 87.7 L155.8 86.3 L160.2 85.5 L164.4 85.1 L168.6 85.1 L172.8 85.4 L177.0 85.9 L181.3 86.4 L185.8 86.9 L190.3 87.2 L195.1 87.4 L200.2 87.2 L205.4 86.9 L210.7 86.4 L216.2 85.9 L221.8 85.4 L227.4 85.2 L233.0 85.1 L238.6 85.4 L244.1 86.1 L249.6 87.3 L255.1 89.1 L260.9 91.2 L266.8 93.6 L272.8 96.4 L278.7 99.4 L284.3 102.7 L289.7 106.2 L294.7 109.9 L299.1 113.7 L303.0 117.7 L306.2 121.9 L309.0 126.4 L311.3 131.1 L313.3 136.1 L314.9 141.2 L316.2 146.5 L317.3 151.8 L318.1 157.1 L318.8 162.5 L319.4 167.8 L319.8 173.0 L319.9 178.3 L319.8 183.6 L319.5 188.9 L319.0 194.3 L318.3 199.8 L317.4 205.3 L316.2 210.9 L314.9 216.7 L313.4 222.5 L311.7 228.6 L309.8 235.1 L307.7 241.9 L305.4 248.7 L302.9 255.6 L300.2 262.3 L297.3 268.8 L294.2 275.0 L290.9 280.6 L287.3 285.7 L283.5 290.2 L279.1 294.4 L274.5 298.2 L269.6 301.7 L264.6 304.9 L259.5 307.8 L254.4 310.4 L249.4 312.7 L244.7 314.7 L240.2 316.4 L236.0 317.8 L232.0 318.6 L228.1 319.1 L224.3 319.3 L220.6 319.2 L216.9 319.0 L213.2 318.6 L209.4 318.2 L205.6 317.9 L201.7 317.6 L197.7 317.5 L193.8 317.6 L189.8 317.6 L185.8 317.7 L181.8 317.6 L177.7 317.3 L173.6 316.8 L169.3 315.9 L165.0 314.7 L160.6 312.9 L155.9 310.7 L150.9 308.0 L145.6 305.0 L140.2 301.7 L134.9 298.0 L129.6 294.2 L124.6 290.1 L119.9 285.9 L115.7 281.7 L112.0 277.3 L108.9 272.8 L106.2 268.1 L104.0 263.1 L102.0 258.0 L100.3 252.7 L98.8 247.4 L97.5 242.0 L96.2 236.5 L94.9 231.1 L93.7 225.7 L92.3 220.3 L90.9 214.8 L89.6 209.2 L88.4 203.6 L87.3 197.9 L86.4 192.3 L85.7 186.7 L85.2 181.2 L85.1 175.7Z" fill="#2c373b"/>
+<path d="M110.4 125.6 L112.1 122.2 L114.7 118.8 L118.0 115.6 L121.9 112.4 L126.2 109.4 L130.8 106.6 L135.6 104.0 L140.4 101.6 L145.0 99.6 L149.4 97.9 L153.9 96.4 L158.9 95.0 L164.3 93.8 L169.7 92.8 L175.1 92.0 L180.2 91.7 L184.8 91.8 L188.7 92.4 L191.6 93.6 L193.4 95.4 L194.1 98.2 L193.8 101.9 L192.7 106.4 L191.0 111.5 L188.6 116.9 L185.9 122.5 L182.7 128.0 L179.4 133.1 L175.9 137.8 L172.5 141.8 L168.7 145.4 L164.3 149.2 L159.3 152.8 L154.1 156.3 L148.7 159.5 L143.3 162.3 L138.2 164.5 L133.4 166.0 L129.1 166.6 L125.6 166.3 L122.5 164.8 L119.7 162.2 L117.0 158.5 L114.6 154.1 L112.6 149.2 L111.1 144.1 L110.0 138.9 L109.5 134.0 L109.6 129.5Z" fill="#3d4c51"/>
+<path d="M262.7 105.5 L265.1 106.0 L268.1 107.0 L271.5 108.6 L275.2 110.7 L279.0 113.1 L282.9 115.8 L286.6 118.8 L290.1 122.0 L293.2 125.3 L295.8 128.7 L298.0 132.5 L300.2 137.2 L302.2 142.4 L304.1 147.9 L305.7 153.5 L307.0 158.8 L307.8 163.6 L308.3 167.7 L308.1 170.8 L307.4 172.5 L305.9 173.0 L303.6 172.3 L300.6 170.7 L297.1 168.3 L293.3 165.5 L289.3 162.2 L285.4 158.9 L281.6 155.5 L278.1 152.5 L275.2 149.8 L272.5 147.4 L269.9 144.9 L267.3 142.3 L264.7 139.7 L262.4 137.1 L260.2 134.6 L258.3 132.0 L256.7 129.6 L255.5 127.2 L254.7 124.9 L254.2 122.5 L254.0 120.0 L254.2 117.3 L254.6 114.7 L255.4 112.2 L256.3 109.9 L257.6 108.0 L259.1 106.5 L260.8 105.6Z" fill="#364449"/>
+<path d="M121.5 127.6 L117.7 125.0 L113.9 121.0 L109.9 115.9 L106.0 109.9 L102.0 103.2 L98.1 96.2 L94.3 88.9 L90.6 81.8 L87.2 75.0 L83.9 68.8 L80.7 62.6 L77.2 55.7 L73.7 48.6 L70.3 41.3 L67.1 34.2 L64.3 27.6 L61.9 21.7 L60.3 16.7 L59.4 13.0 L59.5 10.8 L60.7 10.2 L63.0 11.0 L66.2 13.0 L70.0 16.0 L74.3 19.7 L78.9 23.9 L83.5 28.4 L88.0 32.9 L92.2 37.3 L95.9 41.3 L99.1 45.3 L102.2 49.6 L105.1 54.3 L108.1 59.1 L110.9 64.0 L113.7 68.8 L116.6 73.5 L119.4 77.9 L122.4 81.9 L125.4 85.4 L128.7 88.3 L132.6 90.9 L136.8 93.1 L141.0 95.0 L145.2 96.8 L149.0 98.5 L152.3 100.1 L154.8 101.7 L156.4 103.5 L156.9 105.5 L156.0 108.0 L154.1 111.1 L151.2 114.5 L147.6 118.1 L143.5 121.5 L139.0 124.5 L134.4 126.9 L129.8 128.3 L125.4 128.7Z" fill="#2f9c93"/>
+<path d="M85.5 65.0 L83.3 61.0 L80.6 55.6 L77.5 49.1 L74.3 42.0 L71.0 34.6 L68.1 27.4 L65.5 20.8 L63.6 15.2 L62.5 11.0 L62.5 8.7 L63.7 8.3 L66.1 9.3 L69.4 11.6 L73.3 14.8 L77.7 18.7 L82.2 23.1 L86.5 27.6 L90.5 32.1 L93.7 36.1 L96.1 39.6 L97.7 42.8 L98.9 46.3 L99.7 49.9 L100.1 53.5 L100.3 57.1 L100.3 60.4 L100.0 63.5 L99.7 66.2 L99.2 68.4 L98.7 70.0 L98.0 71.2 L97.2 72.1 L96.2 72.7 L95.0 73.0 L93.7 72.9 L92.2 72.4 L90.7 71.4 L89.0 69.8 L87.3 67.7Z" fill="#7fe3d4"/>
+<path d="M260.6 114.3 L260.9 111.7 L262.3 108.8 L264.7 105.5 L267.7 102.0 L271.3 98.3 L275.2 94.6 L279.2 91.0 L283.2 87.4 L286.9 84.1 L290.1 81.0 L293.2 78.0 L296.5 74.7 L300.0 71.2 L303.4 67.9 L306.8 64.7 L310.1 61.8 L313.1 59.5 L315.8 57.7 L318.1 56.8 L319.9 56.7 L321.3 57.7 L322.3 59.7 L323.0 62.5 L323.4 65.9 L323.6 69.8 L323.4 74.0 L323.0 78.3 L322.4 82.6 L321.6 86.8 L320.5 90.5 L319.2 94.4 L317.5 98.6 L315.5 103.1 L313.3 107.6 L310.9 112.1 L308.3 116.4 L305.5 120.2 L302.6 123.5 L299.7 126.1 L296.7 127.8 L293.3 128.6 L289.2 128.7 L284.7 128.1 L280.0 127.0 L275.3 125.5 L270.9 123.6 L267.0 121.4 L263.8 119.1 L261.6 116.7Z" fill="#2f9c93"/>
+<path d="M295.9 77.6 L297.1 75.4 L299.2 72.9 L301.8 70.3 L304.8 67.6 L308.1 65.0 L311.4 62.7 L314.5 60.8 L317.2 59.5 L319.5 58.9 L320.9 59.1 L321.7 60.4 L322.0 62.8 L322.0 66.0 L321.6 69.8 L321.0 74.0 L320.2 78.3 L319.3 82.4 L318.3 86.3 L317.4 89.5 L316.5 92.0 L315.7 93.9 L314.7 95.5 L313.6 96.8 L312.4 97.9 L311.2 98.8 L309.9 99.3 L308.7 99.6 L307.4 99.6 L306.3 99.3 L305.2 98.7 L304.0 97.7 L302.7 96.3 L301.2 94.4 L299.7 92.2 L298.3 89.8 L297.0 87.2 L296.1 84.6 L295.5 82.1 L295.4 79.8Z" fill="#7fe3d4"/>
+<path d="M98.4 209.6 L99.5 207.7 L101.0 205.6 L102.9 203.5 L104.9 201.4 L107.2 199.4 L109.5 197.7 L111.9 196.2 L114.2 195.1 L116.4 194.5 L118.4 194.5 L120.4 195.2 L122.5 196.5 L124.7 198.3 L126.9 200.5 L129.0 203.0 L131.0 205.6 L132.7 208.3 L134.1 211.0 L135.1 213.4 L135.6 215.6 L135.5 217.7 L135.1 219.9 L134.2 222.1 L133.1 224.3 L131.7 226.5 L130.0 228.5 L128.3 230.4 L126.4 232.0 L124.6 233.3 L122.8 234.3 L120.8 235.0 L118.5 235.4 L116.0 235.5 L113.4 235.5 L110.7 235.2 L108.1 234.8 L105.7 234.1 L103.5 233.3 L101.6 232.3 L100.1 231.1 L99.0 229.7 L98.1 227.9 L97.4 225.8 L96.9 223.6 L96.6 221.1 L96.5 218.7 L96.6 216.2 L97.0 213.8 L97.6 211.6Z" fill="#b9a21f"/>
+<path d="M267.8 236.3 L268.7 234.2 L270.5 232.1 L273.0 230.0 L276.0 227.9 L279.3 226.0 L282.7 224.4 L286.1 223.1 L289.2 222.2 L292.0 221.7 L294.1 221.8 L295.9 222.6 L297.6 224.1 L299.2 226.0 L300.7 228.4 L302.0 231.1 L303.0 234.0 L303.8 236.9 L304.2 239.6 L304.3 242.2 L304.0 244.4 L303.3 246.6 L302.0 249.0 L300.2 251.5 L298.2 253.9 L295.9 256.3 L293.5 258.4 L291.0 260.1 L288.6 261.4 L286.4 262.1 L284.4 262.1 L282.4 261.2 L280.2 259.5 L277.9 257.2 L275.5 254.3 L273.2 251.2 L271.2 247.9 L269.5 244.6 L268.3 241.4 L267.7 238.6Z" fill="#a8921a"/>
+<path d="M99.9 160.8 L102.8 158.7 L106.7 156.6 L111.3 154.7 L116.7 152.9 L122.4 151.3 L128.4 150.0 L134.4 149.0 L140.3 148.3 L145.8 148.0 L150.8 148.2 L155.6 149.0 L160.6 150.3 L165.6 152.2 L170.5 154.4 L175.3 156.9 L179.8 159.5 L184.0 162.2 L187.8 164.8 L191.0 167.2 L193.6 169.4 L195.6 171.4 L197.2 173.7 L198.4 176.0 L199.2 178.3 L199.6 180.5 L199.6 182.5 L199.1 184.3 L198.2 185.8 L196.8 186.9 L194.9 187.6 L192.3 187.5 L189.0 186.8 L185.1 185.6 L180.7 184.0 L175.9 182.3 L170.9 180.5 L165.8 178.9 L160.6 177.6 L155.7 176.7 L151.0 176.5 L146.2 177.1 L141.1 178.5 L135.8 180.3 L130.5 182.5 L125.2 184.8 L120.0 187.1 L115.3 189.0 L111.0 190.4 L107.3 191.1 L104.3 190.8 L101.9 189.5 L99.8 187.4 L98.1 184.5 L96.8 181.2 L96.0 177.5 L95.6 173.7 L95.8 169.9 L96.5 166.4 L97.9 163.3Z" fill="#10171a"/>
+<path d="M204.8 170.9 L207.6 169.0 L211.2 166.9 L215.6 164.7 L220.4 162.4 L225.7 160.1 L231.2 157.9 L236.8 155.8 L242.4 154.1 L247.8 152.7 L252.9 151.7 L258.1 151.2 L263.6 150.8 L269.4 150.7 L275.2 150.9 L280.9 151.3 L286.4 151.9 L291.5 152.7 L295.9 153.8 L299.6 155.1 L302.4 156.7 L304.4 158.7 L305.6 161.4 L306.3 164.5 L306.5 167.9 L306.1 171.5 L305.3 175.0 L304.0 178.2 L302.4 181.0 L300.5 183.2 L298.2 184.6 L295.5 185.2 L292.2 185.0 L288.4 184.2 L284.1 183.0 L279.5 181.5 L274.7 179.9 L269.8 178.5 L264.8 177.2 L259.9 176.4 L255.2 176.2 L250.3 176.5 L245.0 177.4 L239.4 178.7 L233.7 180.2 L228.1 181.8 L222.6 183.4 L217.5 184.8 L213.0 185.9 L209.2 186.5 L206.2 186.6 L203.9 186.1 L202.0 185.2 L200.7 183.9 L199.8 182.4 L199.4 180.6 L199.5 178.7 L200.1 176.7 L201.1 174.7 L202.7 172.8Z" fill="#10171a"/>
+<path class="eye" d="M122.8 186.6 L123.9 184.7 L125.6 183.1 L128.0 181.6 L130.8 180.4 L133.9 179.3 L137.3 178.5 L140.7 177.9 L144.2 177.5 L147.5 177.3 L150.5 177.3 L153.5 177.6 L156.7 178.1 L160.2 178.9 L163.7 179.9 L167.2 181.1 L170.4 182.5 L173.4 184.0 L175.9 185.7 L177.9 187.4 L179.3 189.3 L180.1 191.4 L180.4 193.8 L180.3 196.6 L179.8 199.5 L178.9 202.5 L177.7 205.4 L176.3 208.2 L174.6 210.7 L172.7 212.8 L170.7 214.5 L168.3 215.8 L165.3 216.9 L161.9 217.8 L158.3 218.5 L154.4 219.0 L150.6 219.1 L146.8 219.0 L143.3 218.6 L140.1 217.7 L137.4 216.6 L135.0 214.8 L132.6 212.3 L130.3 209.3 L128.2 205.9 L126.3 202.3 L124.7 198.6 L123.5 195.1 L122.7 191.8 L122.5 188.9Z" fill="#ffb020"/>
+<path d="M150.6 183.4 L151.0 182.1 L151.6 181.2 L152.3 180.5 L153.2 180.1 L154.2 180.0 L155.1 180.1 L156.1 180.6 L156.9 181.3 L157.7 182.3 L158.3 183.6 L158.8 185.4 L159.3 187.8 L159.7 190.8 L160.1 194.0 L160.4 197.5 L160.7 200.9 L160.8 204.2 L160.9 207.1 L160.8 209.6 L160.6 211.4 L160.2 212.7 L159.5 213.8 L158.7 214.6 L157.8 215.1 L156.8 215.4 L155.8 215.3 L154.8 215.0 L153.8 214.4 L153.1 213.5 L152.5 212.2 L152.0 210.4 L151.5 207.9 L151.1 204.8 L150.8 201.4 L150.5 197.9 L150.3 194.3 L150.2 190.9 L150.2 187.8 L150.3 185.3Z" fill="#1a0f05"/>
+<path class="eye2" d="M221.7 196.0 L223.3 194.9 L225.7 193.7 L228.8 192.4 L232.4 191.1 L236.3 189.8 L240.4 188.6 L244.6 187.5 L248.6 186.7 L252.4 186.1 L255.8 185.9 L259.0 186.0 L262.5 186.4 L266.0 187.0 L269.6 187.9 L272.9 188.9 L276.1 190.0 L278.8 191.1 L281.1 192.3 L282.8 193.4 L283.8 194.4 L284.0 195.4 L283.6 196.4 L282.7 197.5 L281.3 198.7 L279.5 199.8 L277.4 200.9 L275.1 201.9 L272.6 202.9 L270.0 203.7 L267.4 204.3 L264.6 204.8 L261.3 205.3 L257.6 205.7 L253.8 206.0 L249.8 206.1 L245.9 206.2 L242.1 206.2 L238.5 206.1 L235.4 205.9 L232.8 205.5 L230.6 205.0 L228.4 204.3 L226.3 203.5 L224.5 202.5 L223.0 201.4 L221.7 200.3 L220.9 199.2 L220.6 198.1 L220.8 197.0Z" fill="#b66a18"/>
+<path d="M246.0 170.0 L247.0 172.8 L248.4 176.7 L250.1 181.4 L252.0 186.4 L254.0 191.4 L256.0 196.0 L258.3 200.6 L260.9 205.6 L263.6 210.6 L266.2 215.3 L268.4 219.2 L270.0 222.0" fill="none" stroke="#10171a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M176.1 233.2 L179.8 231.8 L184.4 230.6 L189.6 229.6 L195.3 228.9 L201.1 228.4 L207.0 228.3 L212.6 228.5 L217.8 229.0 L222.3 229.9 L225.8 231.2 L228.7 233.1 L231.3 235.7 L233.5 238.9 L235.4 242.5 L236.8 246.3 L237.9 250.1 L238.4 253.9 L238.5 257.4 L238.0 260.4 L237.1 262.8 L235.4 264.8 L232.9 266.5 L229.7 268.0 L226.0 269.2 L222.0 270.3 L217.7 271.1 L213.2 271.8 L208.8 272.2 L204.6 272.4 L200.6 272.4 L196.6 272.3 L192.2 271.9 L187.6 271.2 L182.9 270.4 L178.2 269.4 L173.8 268.1 L169.9 266.7 L166.5 265.2 L163.8 263.4 L162.1 261.5 L161.2 259.3 L161.0 256.6 L161.3 253.5 L162.2 250.2 L163.6 246.8 L165.4 243.5 L167.6 240.3 L170.2 237.5 L173.0 235.1Z" fill="#222c30"/>
+<path d="M183.6 246.2 L184.3 245.7 L185.2 245.3 L186.3 245.0 L187.5 244.8 L188.8 244.7 L190.1 244.6 L191.3 244.7 L192.4 244.9 L193.2 245.2 L193.8 245.6 L194.1 246.3 L194.3 247.2 L194.3 248.3 L194.2 249.5 L194.0 250.8 L193.7 252.1 L193.4 253.3 L192.9 254.4 L192.5 255.3 L192.0 256.0 L191.4 256.5 L190.7 256.8 L189.8 257.1 L188.9 257.2 L187.9 257.2 L186.9 257.2 L186.0 257.0 L185.2 256.7 L184.5 256.4 L184.0 255.9 L183.6 255.3 L183.2 254.5 L183.0 253.4 L182.8 252.3 L182.7 251.1 L182.6 249.9 L182.7 248.8 L182.9 247.7 L183.2 246.8Z" fill="#5a1e0c"/>
+<path d="M206.2 246.3 L206.8 245.9 L207.6 245.5 L208.6 245.2 L209.8 245.0 L211.0 244.9 L212.3 244.9 L213.5 245.0 L214.5 245.2 L215.4 245.6 L216.0 246.0 L216.4 246.7 L216.8 247.6 L217.0 248.8 L217.1 250.0 L217.1 251.3 L217.0 252.7 L216.8 253.9 L216.6 255.0 L216.3 256.0 L215.9 256.6 L215.4 257.0 L214.7 257.3 L213.8 257.4 L212.9 257.4 L211.9 257.3 L210.9 257.1 L210.0 256.9 L209.1 256.5 L208.3 256.1 L207.7 255.6 L207.3 254.9 L206.8 254.1 L206.4 253.1 L206.1 252.0 L205.9 250.9 L205.7 249.8 L205.6 248.7 L205.7 247.8 L205.9 246.9Z" fill="#5a1e0c"/>
+<path class="mouth" d="M129.6 274.7 L131.1 274.5 L133.2 274.9 L135.8 275.7 L138.9 277.0 L142.3 278.5 L146.0 280.1 L149.8 281.7 L153.7 283.3 L157.5 284.6 L161.1 285.6 L164.6 286.4 L168.1 287.1 L171.7 287.8 L175.4 288.5 L179.1 289.1 L182.9 289.6 L186.8 290.0 L190.8 290.3 L194.9 290.5 L199.0 290.5 L203.4 290.5 L208.1 290.3 L212.9 290.1 L217.8 289.7 L222.8 289.2 L227.7 288.7 L232.5 288.0 L237.2 287.3 L241.6 286.4 L245.6 285.5 L249.5 284.2 L253.5 282.4 L257.4 280.3 L261.2 278.1 L264.8 275.8 L268.0 273.8 L270.9 272.0 L273.3 270.8 L275.1 270.3 L276.3 270.7 L276.7 272.0 L276.5 274.3 L275.8 277.4 L274.5 280.9 L272.8 284.8 L270.9 288.8 L268.7 292.8 L266.4 296.4 L264.0 299.5 L261.6 302.0 L259.2 303.8 L256.4 305.3 L253.4 306.5 L250.2 307.5 L246.9 308.3 L243.5 309.0 L240.1 309.5 L236.8 310.1 L233.5 310.6 L230.4 311.3 L227.5 312.0 L224.6 312.6 L221.8 313.3 L219.1 313.9 L216.3 314.4 L213.6 314.9 L210.8 315.3 L207.9 315.5 L204.9 315.7 L201.8 315.8 L198.5 315.8 L195.1 315.6 L191.5 315.4 L187.9 315.1 L184.2 314.7 L180.6 314.2 L177.0 313.6 L173.4 312.9 L170.0 312.1 L166.8 311.3 L163.7 310.3 L160.6 309.2 L157.6 308.1 L154.6 306.8 L151.7 305.4 L148.9 304.0 L146.3 302.5 L143.9 300.8 L141.6 299.1 L139.6 297.3 L137.8 295.3 L135.9 292.8 L134.1 290.1 L132.4 287.3 L131.0 284.5 L129.8 281.8 L129.0 279.3 L128.7 277.3 L128.9 275.7Z" fill="#d9501a"/>
+<path d="M138.1 275.4 L138.6 274.5 L139.5 273.8 L140.6 273.4 L142.0 273.2 L143.4 273.2 L144.8 273.5 L146.1 274.0 L147.3 274.6 L148.1 275.4 L148.6 276.5 L148.7 277.9 L148.5 280.0 L148.1 282.6 L147.5 285.4 L146.8 288.3 L146.0 291.1 L145.2 293.5 L144.4 295.5 L143.7 296.8 L143.1 297.3 L142.5 296.7 L141.9 295.3 L141.1 293.1 L140.3 290.5 L139.6 287.6 L139.0 284.5 L138.5 281.6 L138.1 279.0 L138.0 276.8Z" fill="#e9e2cc"/>
+<path d="M158.5 280.8 L159.1 279.9 L160.2 279.4 L161.7 279.1 L163.3 279.1 L165.1 279.4 L166.9 279.8 L168.6 280.5 L170.0 281.4 L171.1 282.4 L171.7 283.6 L171.8 285.1 L171.6 287.3 L171.1 290.0 L170.4 292.9 L169.5 295.9 L168.5 298.7 L167.5 301.2 L166.6 303.2 L165.7 304.5 L164.9 304.8 L164.2 304.2 L163.3 302.5 L162.4 300.1 L161.4 297.2 L160.5 294.0 L159.7 290.7 L159.0 287.5 L158.6 284.7 L158.4 282.4Z" fill="#e9e2cc"/>
+<path d="M178.7 285.1 L179.2 284.1 L180.2 283.5 L181.5 283.1 L183.1 283.1 L184.8 283.4 L186.6 284.0 L188.2 284.7 L189.6 285.7 L190.7 286.9 L191.4 288.2 L191.7 290.0 L191.7 292.6 L191.5 295.6 L191.1 298.9 L190.5 302.3 L189.9 305.6 L189.1 308.5 L188.4 310.8 L187.7 312.2 L187.0 312.7 L186.2 311.9 L185.2 310.0 L184.1 307.3 L183.0 303.9 L181.8 300.2 L180.7 296.4 L179.8 292.8 L179.1 289.5 L178.7 286.9Z" fill="#e9e2cc"/>
+<path d="M210.2 287.4 L210.8 286.1 L211.9 285.0 L213.2 284.1 L214.9 283.4 L216.6 283.0 L218.3 282.9 L219.9 283.0 L221.3 283.5 L222.4 284.2 L223.0 285.3 L223.1 287.1 L222.9 289.8 L222.4 293.2 L221.7 296.9 L220.9 300.7 L220.0 304.5 L219.0 307.8 L218.0 310.6 L217.2 312.4 L216.5 313.2 L215.7 312.7 L214.9 311.1 L214.0 308.6 L213.0 305.6 L212.1 302.2 L211.3 298.6 L210.7 295.1 L210.2 291.9 L210.1 289.3Z" fill="#e9e2cc"/>
+<path d="M232.1 283.3 L232.7 282.2 L233.7 281.5 L235.1 280.9 L236.7 280.6 L238.5 280.4 L240.2 280.5 L241.9 280.9 L243.3 281.4 L244.4 282.2 L245.0 283.2 L245.2 284.7 L245.1 287.0 L244.7 289.7 L244.1 292.7 L243.3 295.8 L242.5 298.8 L241.6 301.5 L240.7 303.6 L239.9 305.1 L239.1 305.6 L238.4 305.1 L237.5 303.6 L236.5 301.5 L235.4 298.8 L234.4 295.8 L233.5 292.7 L232.8 289.7 L232.2 287.0 L232.0 284.8Z" fill="#e9e2cc"/>
+<path d="M252.1 278.8 L252.8 277.7 L253.8 276.8 L255.2 276.1 L256.9 275.6 L258.6 275.2 L260.3 275.1 L261.9 275.2 L263.2 275.6 L264.2 276.2 L264.7 277.1 L264.8 278.5 L264.5 280.7 L263.9 283.4 L263.1 286.4 L262.2 289.4 L261.1 292.4 L260.0 295.1 L259.0 297.3 L258.1 298.8 L257.4 299.4 L256.7 299.0 L255.9 297.7 L255.1 295.8 L254.3 293.3 L253.5 290.6 L252.8 287.7 L252.3 284.9 L252.0 282.4 L251.9 280.2Z" fill="#e9e2cc"/>
+<path d="M145.6 305.2 L146.4 306.7 L147.5 308.0 L149.0 309.2 L150.8 310.1 L152.6 310.8 L154.4 311.2 L156.1 311.3 L157.5 311.0 L158.5 310.3 L159.0 309.2 L159.0 307.3 L158.6 304.4 L157.9 300.8 L156.9 296.7 L155.7 292.5 L154.5 288.4 L153.3 284.7 L152.1 281.6 L151.0 279.5 L150.2 278.6 L149.5 279.0 L148.8 280.6 L148.0 283.1 L147.2 286.2 L146.6 289.7 L146.0 293.4 L145.6 297.1 L145.3 300.4 L145.4 303.2Z" fill="#d8d0b6"/>
+<path d="M256.4 304.6 L255.5 306.0 L254.0 307.3 L252.2 308.3 L250.2 309.0 L248.1 309.5 L246.1 309.7 L244.3 309.6 L242.8 309.2 L241.8 308.4 L241.3 307.2 L241.6 305.2 L242.4 302.2 L243.6 298.6 L245.2 294.5 L247.0 290.3 L248.8 286.2 L250.7 282.5 L252.3 279.4 L253.7 277.4 L254.7 276.5 L255.4 277.1 L256.1 278.8 L256.6 281.4 L257.0 284.7 L257.3 288.5 L257.5 292.4 L257.5 296.2 L257.3 299.7 L257.0 302.5Z" fill="#d8d0b6"/>
+<path class="crack" d="M200.0 83.1 L200.9 85.9 L202.3 89.7 L203.9 94.3 L205.4 99.3 L206.4 104.3 L206.5 109.0 L205.6 113.5 L203.6 118.1 L201.2 122.7 L198.8 127.3 L196.9 131.7 L195.9 135.9 L196.1 140.0 L197.0 144.2 L198.5 148.3 L200.0 151.9 L201.4 155.0 L202.3 157.3" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M315.0 168.0 L312.5 170.5 L308.8 174.1 L304.5 178.2 L300.4 182.7 L296.8 187.2 L294.6 191.3 L294.1 195.1 L294.9 199.0 L296.3 202.9 L297.9 206.7 L298.9 210.5 L298.9 214.2 L297.6 218.1 L295.3 222.2 L292.6 226.3 L289.8 230.1 L287.3 233.3 L285.7 235.6" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M89.9 168.2 L92.3 171.3 L95.9 175.7 L100.0 180.8 L104.0 186.3 L107.1 191.5 L108.9 195.9 L108.9 199.9 L107.6 203.8 L105.5 207.5 L103.2 210.8 L101.1 213.6 L99.8 215.6" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M150.5 263.6 L149.4 266.1 L147.9 269.9 L146.1 274.2 L144.4 278.5 L142.9 282.3 L141.8 284.8" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M201.7 328.5 L200.6 331.6 L198.9 335.8 L197.1 340.8 L195.4 346.1 L194.3 351.3 L194.2 355.9 L195.5 360.1 L198.0 364.2 L201.1 368.1 L204.1 372.0 L206.6 375.8 L207.8 379.5 L207.7 383.4 L206.5 387.4 L204.7 391.4 L202.7 395.0 L200.9 398.1 L199.8 400.3" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M192.4 357.8 L188.6 359.6 L183.4 362.3 L177.3 365.4 L170.8 368.5 L164.4 371.1 L158.6 373.0 L153.1 373.8 L147.4 374.1 L141.9 373.9 L136.8 373.5 L132.5 373.2 L129.4 373.0" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M207.9 380.2 L211.3 379.2 L216.0 377.6 L221.6 375.8 L227.7 374.1 L233.9 372.7 L239.9 372.1 L246.2 372.3 L253.3 373.2 L260.5 374.5 L267.2 375.9 L273.0 377.2 L277.1 378.0" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M50.2 352.4 L52.9 350.1 L56.7 346.9 L61.3 343.1 L66.2 339.4 L71.2 336.2 L76.1 334.1 L81.2 333.1 L86.8 333.0 L92.6 333.5 L98.0 334.2 L102.6 334.8 L105.9 335.2" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M348.3 354.8 L346.0 352.8 L342.9 349.8 L339.2 346.3 L335.1 342.8 L330.8 339.8 L326.6 337.8 L321.9 336.8 L316.5 336.5 L311.0 336.7 L305.8 337.2 L301.3 337.6 L298.2 337.8" fill="none" stroke="#ff6a2a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="crack" d="M200.8 97.6 L201.1 99.6 L201.6 102.3 L202.1 105.6 L202.5 109.0 L202.8 112.3 L202.9 115.3 L202.7 118.0 L202.2 120.7 L201.6 123.4 L200.9 125.8 L200.4 127.8 L200.0 129.3" fill="none" stroke="#ffd27a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle class="steam" cx="322" cy="50" r="7" fill="#dfe9e6" opacity=".35"/>
+<circle class="steam" cx="334" cy="30" r="9" fill="#dfe9e6" opacity=".35"/>
+<circle class="steam" cx="326" cy="12" r="6" fill="#dfe9e6" opacity=".35"/>
+
+</svg>
+</div></section>
+
+<section id="story"><div class="wrap">
+  <h2>What is PRIMORDIA about?</h2>
+  <p class="sub">Meet Bruk, the basalt warden who guards the crater, and the world he watches over.</p>
+  <div class="story">
+    <p>Four billion years ago there were no plants, no animals and no other people. There was only black basalt, steaming shallow oceans and a sky that meteors kept tearing open. You are the first survivor on this 4 × 4 km world.</p>
+    <p>Your goal is not to conquer it but to prepare it for life. You collect stone and minerals, smelt iron, mine metal from fallen stars and brew prebiotic compounds in a research lab until you can craft a Seed of Life. The final mission takes you to the Geyser Basin to plant it.</p>
+    <p>The Adam &amp; Eve era layer makes the world feel alive. Your character does not age to death, the sky follows the real clock and the map reshapes with the calendar. The world keeps running while you are away, and a “While you were gone” report tells you what happened.</p>
+    <p>Bruk is the game’s mascot: stone skin, crystal horns and lava in his veins. He is what the planet would look like if it could scowl at you.</p>
+  </div>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <h2>Features</h2>
+  <p class="sub">Every number here comes from the game data of version 0.8.0-Archean.</p>
+  <div class="rows">
+    <div class="row"><h3>Open world, 4 × 4 km</h3><p>Ten biomes: steaming ocean, basalt plains, lava rifts, sulfur flats, obsidian fields, geyser basin, crystal crater, ash dunes, meteor zone and volcanic ridges. The world streams in 64 m chunks.</p></div>
+    <div class="row"><h3>Survival</h3><p>Watch your health, water and oxygen. Survive toxic gas, ash storms, acid rain, lightning and meteors. Gas filters and shelters save your life. The first 10 minutes are safe and beginner friendly.</p></div>
+    <div class="row"><h3>Five-tier crafting</h3><p>42 items and 33 recipes, from a stone axe to an Archean research lab. Recipes unlock as you find new materials.</p></div>
+    <div class="row"><h3>Modular building</h3><p>Place floors, walls, roofs, storage chests, furnaces, Moss Gardens and Auto Drills that keep working while you are offline.</p></div>
+    <div class="row"><h3>Adam &amp; Eve era</h3><p>Immortal age, a real-time sky, four seasons (Dry, Rain, Ash, Cold) and the Great Shift: terrain changes at the start of every month. Build a Terrain Anchor to lock a 60 m area.</p></div>
+    <div class="row"><h3>Wisdom</h3><p>The longer you live, the more Wisdom points you earn. Spend them on perks such as Lasting Filter and Ancestral Recipes.</p></div>
+    <div class="row"><h3>Optional accounts</h3><p>Play as a guest, or sign in for cloud saves, leaderboard, friends and messages.</p></div>
+    <div class="row"><h3>Built for phones</h3><p>Touch joystick, portrait and landscape HUD, three HUD modes (Full, Compact, Clean), fullscreen, and install as an app (PWA).</p></div>
+  </div>
+</div></section>
+
+<section id="roadmap"><div class="wrap">
+  <h2>Roadmap</h2>
+  <p class="sub">The game grows in small stages. Dashed cards are planned and not released yet.</p>
+  <div class="road">
+    <div class="stage done"><span class="st">Released · Stage 1</span><h3>Survival foundation</h3><p>Chunk world, physics, character, five-tier crafting, building, the 22-mission campaign, journal and achievements.</p></div>
+    <div class="stage done"><span class="st">Released · Stage 2</span><h3>Mobile, cloud and PWA</h3><p>Responsive HUD, multi-touch joystick, cloud saves, leaderboard and offline mode.</p></div>
+    <div class="stage done"><span class="st">Released · Stage 3</span><h3>Adam &amp; Eve era</h3><p>Immortal age, real-time sky, monthly map shifts, seasons, offline economy and server-side anti-cheat for time away.</p></div>
+    <div class="stage now"><span class="st">Current · v0.8.0-Archean</span><h3>Comfort and looks</h3><p>Mission arrows, a gentler first 10 minutes, HUD modes, new terrain and sky colors, in-game Game Info, Base44 sign-in, friends and messages.</p></div>
+    <div class="stage plan"><span class="st">Planned</span><h3>Full 3D assets</h3><p>Caves, a female character, ancient animals and enemies. The 3D Asset Gallery exists, but only the player model is connected to the game today.</p></div>
+    <div class="stage plan"><span class="st">Planned</span><h3>Wider multiplayer</h3><p>A steadier shared world, plus balance tuning for Moss Gardens and Auto Drills based on player feedback.</p></div>
+  </div>
+</div></section>
+
+<section id="missions"><div class="wrap">
+  <h2>Mission: Seed of Life</h2>
+  <p class="sub">A 22-mission campaign in 5 chapters. A blue arrow on screen points to the current objective. After the ending you can continue in free survival or New Game+.</p>
+  <div class="chapters">
+    <div class="ch"><h3>Chapter 1: Survive</h3><p>Water, materials, tools, shelter.</p><ol><li>First Water Trail</li><li>Basalt Foundation</li><li>Survivor’s Tools</li><li>Shelter</li><li>Heart of the Crater</li></ol></div>
+    <div class="ch"><h3>Chapter 2: Supplies</h3><p>Better tools and dangerous ground.</p><ol start="6"><li>Field Workshop</li><li>Volcanic Glass</li><li>Obsidian Pick</li><li>Breath Protection</li><li>Supply Store</li></ol></div>
+    <div class="ch"><h3>Chapter 3: Iron Age</h3><p>Smelting and your first outpost.</p><ol start="11"><li>Dawn of the Iron Age</li><li>Ancient Metallurgy</li><li>Modular Outpost</li><li>Master of Heat</li></ol></div>
+    <div class="ch"><h3>Chapter 4: Fallen Stars</h3><p>Meteor metal and crystal power.</p><ol start="15"><li>Archean Laboratory</li><li>Metal from the Stars</li><li>Core Ignition</li><li>Beacon Network</li></ol></div>
+    <div class="ch"><h3>Chapter 5: Seed of Life</h3><p>Prebiotic chemistry, then the moment that matters.</p><ol start="19"><li>Amino Synthesis</li><li>Protocell Membrane</li><li>Seed of Life</li><li>Cradle of Biology</li></ol></div>
+  </div>
+</div></section>
+
+<section id="help"><div class="wrap">
+  <h2>Help center</h2>
+  <p class="sub">Start with the controls, then find your problem below. The game itself is currently in Indonesian.</p>
+  <ul class="keys" aria-label="Keyboard controls">
+    <li><kbd>W A S D</kbd>move</li><li><kbd>E</kbd>interact</li><li><kbd>I</kbd>inventory</li><li><kbd>B</kbd>build</li><li><kbd>M</kbd>map</li><li><kbd>J</kbd>journal</li><li><kbd>H</kbd>HUD mode</li><li><kbd>F3</kbd>debug info</li>
+  </ul>
+  <details><summary>The game will not start or shows a black screen</summary><p>PRIMORDIA needs WebGL. Update Chrome, Edge, Firefox or Safari, turn on hardware acceleration and reload. If it still fails, try a new tab without extensions.</p></details>
+  <details><summary>The game feels slow</summary><ol><li>Open Settings and turn Particles off.</li><li>Lower the graphics settings.</li><li>Close other tabs, especially on phones.</li></ol></details>
+  <details><summary>I am out of oxygen or feel breathless</summary><p>Equip a Gas Filter (it equips itself when oxygen drops below 30% and you own one). Follow the arrow to clean air or the nearest shelter, and avoid storms without cover.</p></details>
+  <details><summary>I died. Are my items gone?</summary><p>No. Your items become a bag marked by a yellow pillar of light where you died. Walk up and press <kbd>E</kbd>. Up to 3 bags are kept. Dying never reduces your age.</p></details>
+  <details><summary>How is my progress saved?</summary><p>The game autosaves, with 3 save slots. Guests save on this device only. Sign in for cloud saves and to continue on another device. If local and cloud data differ, the game asks which one to keep.</p></details>
+  <details><summary>Why does the map change?</summary><p>Terrain reshapes at the start of every month (the Great Shift), and you get a warning 6 hours before. Build a Terrain Anchor (3 core crystals, 4 meteorite iron, 6 basalt bricks) to keep the 60 m area around your outpost unchanged.</p></details>
+  <details><summary>What happens while I am offline?</summary><p>Up to 24 hours are simulated, and anything under 5 minutes is ignored. Your water tank refills, Moss Gardens grow, Auto Drills mine and storms can damage buildings with no roof. Buildings are never destroyed completely.</p></details>
+  <details><summary>How do I install it as an app?</summary><p>In Chrome or Edge choose “Install app”. On iPhone open Share, then “Add to Home Screen”.</p></details>
+  <details><summary>The on-screen buttons cover too much</summary><p>Tap the eye icon at the top right to switch HUD mode: Full, Compact or Clean. The game remembers your choice.</p></details>
+  <details><summary>My problem is not listed</summary><p id="contactHelp">Send a report to Jurkon Studio with your device, browser and the steps that led to the problem.</p></details>
+</div></section>
+
+<section id="legal"><div class="wrap">
+  <h2>Legal</h2>
+  <p class="sub">Last updated November 15, 2026.</p>
+  <div class="tabs" role="tablist" aria-label="Legal documents">
+    <button role="tab" id="t-terms" aria-controls="p-terms" aria-selected="true">Terms &amp; Conditions</button>
+    <button role="tab" id="t-privacy" aria-controls="p-privacy" aria-selected="false" tabindex="-1">Privacy</button>
+    <button role="tab" id="t-copyright" aria-controls="p-copyright" aria-selected="false" tabindex="-1">Copyright</button>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-terms" aria-labelledby="t-terms">
+    <h3>1. Acceptance</h3><p>By playing PRIMORDIA you agree to these terms. If you do not agree, stop using the game.</p>
+    <h3>2. The service</h3><p>PRIMORDIA is an entertainment game run in the browser by Jurkon Studio. It is still in development, so features may change, be added or be removed without notice.</p>
+    <h3>3. Accounts</h3><p>You can play as a guest. An account (Google, GitHub, Discord or Base44) is only needed for cloud saves, the leaderboard, friends and messages. Keep your account secure. You are responsible for activity on it.</p>
+    <h3>4. Prohibited conduct</h3>
+    <ul><li>Cheating, or tampering with saves, device clocks, scores or servers.</li><li>Using bots or scripts to submit scores or messages.</li><li>Sending messages that harass, threaten, scam or break the law.</li><li>Decompiling, copying or reselling the game or its assets without permission.</li><li>Impersonating other players or staff.</li></ul>
+    <h3>5. Enforcement</h3><p>Violations may lead to removed scores, limited social features or a ban from online services.</p>
+    <h3>6. Game data</h3><p>Progress is stored on your device and, if you sign in, in the cloud. We try to protect it, but data can be lost through browser clean-ups, outages or version changes. Back up what matters to you.</p>
+    <h3>7. No warranty</h3><p>The game is provided “as is”. To the extent the law allows, Jurkon Studio is not liable for indirect damages from using the game, including lost progress.</p>
+    <h3>8. Changes</h3><p>We may update these terms. The date above shows the latest update. Using the game after a change means you accept it.</p>
+    <h3>9. Governing law</h3><p>These terms are governed by the laws of the Republic of Indonesia.</p>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-privacy" aria-labelledby="t-privacy" hidden>
+    <h3>In short</h3><p>Guests: everything stays on your device. Signed-in players: game data is stored on a server so you can continue elsewhere. We do not sell your data and this game shows no ads.</p>
+    <h3>Data we store</h3>
+    <div class="scroll"><table>
+      <tr><th>Data</th><th>Contents</th><th>Purpose</th><th>Who</th></tr>
+      <tr><td>Account</td><td>Account ID, email from your sign-in provider, display name (max 16 characters), avatar settings</td><td>Sign-in and profile</td><td>Signed-in only</td></tr>
+      <tr><td>Progress</td><td>Save slots (player and world state, seed, play time) and game settings</td><td>Cloud save</td><td>Signed-in only</td></tr>
+      <tr><td>Age &amp; activity</td><td>Character birth time, death count, last active time</td><td>Immortal age and away-time calculation (anti-cheat)</td><td>Signed-in only</td></tr>
+      <tr><td>Ranking</td><td>Score</td><td>Leaderboard</td><td>Signed-in only</td></tr>
+      <tr><td>Social</td><td>Friend list, message text (max 500 characters), read status</td><td>Friends and messages</td><td>Signed-in only</td></tr>
+      <tr><td>Multiplayer</td><td>Temporary position and name on a realtime channel</td><td>Seeing other players</td><td>While online</td></tr>
+      <tr><td>Local storage</td><td>Guest saves, HUD settings, asset choices, sign-in token</td><td>Running the game</td><td>On your device</td></tr>
+    </table></div>
+    <h3>What we do not ask for</h3><p>GPS location, contacts, camera, microphone or payment details.</p>
+    <h3>Third parties</h3><p>Account and cloud data are processed by Supabase and the sign-in provider you choose (Google, GitHub, Discord or Base44), each under its own privacy policy. This page loads fonts from Google Fonts.</p>
+    <h3>Security</h3><p>Access is limited per account (row level security): you can only read your own data, and messages can only be read by the sender and the recipient. No system is perfectly secure, so do not put secrets in game messages.</p>
+    <h3>Retention and deletion</h3><p>Data is kept while your account is active. Deleting the account removes your profile, saves, score, friends and related messages. Local data can be cleared in your browser settings. To request deletion or a copy of your data, use the contact below.</p>
+    <h3>Children</h3><p>The game is intended for ages 13 and up. Players under 17 should use account and messaging features with a parent or guardian.</p>
+    <h3>Policy changes</h3><p>If we change how data is handled, this page is updated with a new date.</p>
+    <h3>Contact</h3><p class="contact">Contact Jurkon Studio with any privacy question.</p>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-copyright" aria-labelledby="t-copyright" hidden>
+    <h3>Copyright</h3><p>© 2026 Jurkon Studio. All rights reserved. PRIMORDIA, its name, logo, mascot Bruk, game design, mission flow, text and original code belong to Jurkon Studio.</p>
+    <h3>What you may do</h3><p>Play for personal use, and share screenshots or videos of your gameplay with credit to “PRIMORDIA by Jurkon Studio”.</p>
+    <h3>What you may not do</h3><p>Copy, redistribute, sell or make derivative works from the code, design or assets without written permission from Jurkon Studio.</p>
+    <h3>Third parties</h3><p>The game uses open-source libraries such as Three.js, React and Vite under their own licenses. Some 3D models come from other creators and remain the property of those creators under their licenses. If you believe your work is used improperly, contact us and we will review it and remove it if needed.</p>
+    <h3>Reporting infringement</h3><p class="contact">Include a link, proof of ownership and a short explanation.</p>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap"><div class="row2">
+  <div><img src="./mascot-512.png" alt="Bruk the basalt warden"><strong>PRIMORDIA</strong> v0.8.0-Archean · © 2026 Jurkon Studio. All rights reserved.</div>
+  <div><a href="#story">Story</a> · <a href="#help">Help</a> · <a href="#legal" data-tab="terms">Terms</a> · <a href="#legal" data-tab="privacy">Privacy</a> · <a href="#legal" data-tab="copyright">Copyright</a></div>
+</div></div></footer>
+
+<script>
+// ===== Settings: edit here =====
+var GAME_URL = './play/';      // where the game lives
+var CONTACT_EMAIL = '';        // put Jurkon Studio's official email here, e.g. 'hello@example.com'
+// ===============================
+document.querySelectorAll('[data-play]').forEach(function(a){a.href=GAME_URL});
+if(CONTACT_EMAIL){document.querySelectorAll('.contact,#contactHelp').forEach(function(el){el.insertAdjacentHTML('beforeend',' Email: <a href="mailto:'+CONTACT_EMAIL+'">'+CONTACT_EMAIL+'</a>.')})}
+(function(){var c=document.getElementById('clk');function t(){var d=new Date(),h=d.getHours(),n=h<5?'deep night':h<9?'dawn':h<15?'midday':h<18?'afternoon':h<20?'dusk':'night';c.textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' ('+n+')'}t();setInterval(t,30000)})();
+var names=['terms','privacy','copyright'];
+function openTab(n,focus){if(names.indexOf(n)<0)n='terms';names.forEach(function(k){var on=k===n;var b=document.getElementById('t-'+k);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;document.getElementById('p-'+k).hidden=!on});if(focus)document.getElementById('t-'+n).focus()}
+names.forEach(function(k,i){var b=document.getElementById('t-'+k);b.addEventListener('click',function(){openTab(k)});b.addEventListener('keydown',function(e){if(e.key==='ArrowRight')openTab(names[(i+1)%3],true);if(e.key==='ArrowLeft')openTab(names[(i+2)%3],true)})});
+document.querySelectorAll('[data-tab]').forEach(function(a){a.addEventListener('click',function(){openTab(a.dataset.tab)})});
+function fromHash(){var h=location.hash.slice(1);if(names.indexOf(h)>=0){openTab(h);document.getElementById('legal').scrollIntoView()}}
+window.addEventListener('hashchange',fromHash);fromHash();
+</script>
+</body>
 </html>

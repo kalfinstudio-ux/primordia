@@ -59,6 +59,6 @@ def compress(src, dst):
 
 if __name__ == "__main__":
     for s in sys.argv[1:]:
-        d = os.path.join("public/models", os.path.basename(s))
+        d = os.path.join("public/play/models", os.path.basename(s))
         a, b = compress(s, d)
         print(f"{os.path.basename(s)}: {a/1e6:.2f}MB -> {b/1e6:.2f}MB")
