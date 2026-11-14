@@ -1,4 +1,5 @@
-import { buildAwayReport, sanitizeBornAt } from '../data/eden';
+import { buildAwayReport, resolveAwayWindow, sanitizeBornAt } from '../data/eden';
+import { fetchAwaySeconds, startPresenceHeartbeat } from '../net/presence';
 import { setAwayReport } from './awayReport';
 import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
@@ -77,6 +78,8 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
         hp: Number(item.hp) || 160,
         maxHp: Number(item.maxHp) || 160,
         waterStored: item.waterStored,
+        growth: typeof item.growth === 'number' ? item.growth : undefined,
+        stored: typeof item.stored === 'number' ? item.stored : undefined,
         label: item.label,
         anchorSeed: typeof item.anchorSeed === 'string' ? item.anchorSeed : undefined,
       };
@@ -242,12 +245,24 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.activeWorldLoaded = true;
 }
 
-/** Dunia berjalan saat kamu pergi (efek maks 24 jam): air terisi, istirahat, dan laporan kronik. */
+/**
+ * Dunia berjalan saat kamu pergi (efek maks 24 jam): air, kebun, bor, kerusakan badai, istirahat, dan laporan.
+ * Akun login: lama pergi dihitung SERVER (`presence_ping`); save lokal hanya cadangan bila server tidak menjawab.
+ */
 function applyOfflineProgress(updatedAt: string | undefined): void {
   const savedMs = Date.parse(updatedAt || '');
-  if (!Number.isFinite(savedMs)) return;
-  const report = buildAwayReport(savedMs, Date.now(), gameState.placedStructures);
-  if (report.seconds < 300) return;
-  if (report.seconds >= 1800) gameState.vitals.fatigue = 100;
-  setTimeout(() => setAwayReport(report), 1500);
+  const structs = gameState.placedStructures;
+  void (async () => {
+    const serverSec = await fetchAwaySeconds();
+    startPresenceHeartbeat();
+    const nowMs = Date.now();
+    const win = resolveAwayWindow(savedMs, nowMs, serverSec);
+    if (win.source === 'none') return;
+    // Pemain bisa memuat save lain sementara menunggu server: hanya terapkan ke dunia yang sama.
+    if (gameState.placedStructures !== structs) return;
+    const report = buildAwayReport(win.fromMs, nowMs, structs);
+    if (report.seconds < 300) return;
+    if (report.seconds >= 1800) gameState.vitals.fatigue = 100;
+    setTimeout(() => setAwayReport(report), 1500);
+  })();
 }

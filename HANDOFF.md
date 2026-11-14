@@ -1,7 +1,7 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 14 November 2026.
+Terakhir diperbarui: 14 November 2026 (v9: Backlog #1–#5 selesai kecuali #1 aset 3D).
 
 ## 1. Ringkasan
 PRIMORDIA = game survival 3D di browser (React 19 + Three.js + Vite + Supabase opsional).
@@ -22,10 +22,11 @@ tail -f server.log                         # lihat log
 - `.env` berisi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` (jangan commit kunci `service_role`). Tanpa itu game jalan mode tamu lokal.
 
 ## 3. Supabase — urutan SQL (SQL Editor)
-Project baru: `schema.sql` → `policies.sql` → `migration-eden.sql`.
-Project lama: `migration-stage2.sql` → `migration-auth-google.sql` → `migration-eden.sql`.
+Project baru: `schema.sql` → `policies.sql` → `migration-eden.sql` → `migration-presence.sql`.
+Project lama: `migration-stage2.sql` → `migration-auth-google.sql` → `migration-eden.sql` → `migration-presence.sql`.
 `migration-eden.sql` menambah `profiles.born_at`, `deaths`, `last_seen_at`, serta RPC `sync_immortal_age()` dan `record_death()`.
 **Wajib dijalankan** agar umur abadi tersimpan di profil.
+`migration-presence.sql` menambah RPC `presence_ping()` (lama pergi dihitung server) dan mengubah `sync_immortal_age()` agar tidak menimpa `last_seen_at`. Tanpanya game tetap jalan (jatuh ke waktu save lokal), tetapi anti-curang offline tidak aktif.
 
 ## 4. Fitur Era Adam & Hawa (sudah ada)
 Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang boleh disetel ada di file itu.
@@ -39,6 +40,10 @@ Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang bole
 | Offline berjalan | Maks 24 jam efek; <5 menit diabaikan. Penampung air +0,02/dtk (+8 per ~6 jam hujan). >30 menit = kelelahan pulih. | `eden.ts` (`buildAwayReport`), `systems/saveLoad.ts` |
 | Laporan "Saat kamu pergi" | Panel sekali muncul: cuaca (kronik 6 jam, deterministik dari kalender), air, hari berganti, gunung berapi, Pergeseran Besar. | `systems/awayReport.ts`, `ui/AwayReportModal.tsx` |
 | Kebijaksanaan | Poin dari umur: 7 hari=1, 30=2, 100=3, 365=5. Perk: Filter Awet, Kulit Abu, Resep Leluhur, Filter Abadi. Panel di menu Jeda. | `eden.ts`, `ui/WisdomPanel.tsx`, `player/stats.ts` |
+| Anti-curang offline | Akun login: lama pergi = `presence_ping()` server (denyut tiap 60 dtk + saat tab disembunyikan). Mengubah `updatedAt` save lokal tidak berpengaruh. Tamu/gagal jaringan: waktu save lokal, waktu masa depan ditolak. | `eden.ts` (`resolveAwayWindow`), `net/presence.ts`, `systems/saveLoad.ts`, `supabase/migration-presence.sql` |
+| Offline lanjutan | Per blok cuaca 6 jam (maks 24 jam): **Kebun Lumut** (`garden_plot`) tumbuh 12,5/jam × cuaca × musim, siap panen di 100; **Bor Otomatis** (`auto_drill`) +6 batu/jam (maks 48) hanya saat cerah/hujan asam; badai merusak bangunan tanpa tempat berteduh (abu 3, petir 5, meteor 6 HP/jam; ×0,25 bila ada shelter/atap radius 6 m). Bangunan **tidak pernah hancur** (HP min 10%); Jangkar kebal. Laju yang sama dipakai saat main. | `eden.ts` (`simulateOfflineEconomy`, `advanceProducer`), `systems/building.ts`, `systems/interaction.ts` |
+| Musim | Kering/Hujan/Abu/Dingin (3 bulan masing-masing, dari kalender). Memengaruhi peluang cuaca kronik, laju isi penampung air, pertumbuhan kebun, dan suhu lingkungan (kering +2, abu +1, dingin −3 °C). | `eden.ts` (`SEASON_FX`, `currentSeasonFx`), `systems/survival.ts` |
+| Peringatan Pergeseran Besar | ≤6 jam sebelum tanggal 1: toast + banner di EdenClock; ≤30 menit: merah berkedip. Toast tidak berulang (kunci per bulan+level). | `eden.ts` (`shiftWarning`), `scenes/SceneManager.ts`, `ui/EdenClock.tsx` |
 | Nama karakter | Acak (Adar, Hawa, Liora, …) + tombol 🎲; pemain bebas mengganti. | `ui/NewGameScreen.tsx` |
 | HUD | Jam/tanggal/umur ringkas di panel kiri; tombol ikon punya teks; tombol sentuh: LARI/BANGUN/AKSI/LOMPAT; notifikasi maks 2, kecil, 2,2 dtk. | `ui/HudScreen.tsx`, `EdenClock.tsx`, `ToastContainer.tsx` |
 
@@ -53,8 +58,11 @@ Sudah di `public/models/` (teksturnya dikompres, **belum dihubungkan ke game**):
 1. Perubahan Era Adam & Hawa **belum dijalankan di browser** oleh penulisnya (sandbox tanpa internet); hanya tes logika yang lulus. Cek manual di §8.
 2. `npm run lint` (tsc) belum pernah dijalankan penuh setelah perubahan. Di CI, lint & test `continue-on-error`, tapi `npm run build` harus lolos agar deploy jalan — cek tab Actions setelah push.
 3. Medan berganti tiap bulan bisa mengubur bangunan di luar zona Jangkar.
-4. Waktu offline & daftar perk berasal dari save lokal → bisa dimanipulasi (umur tetap dari server).
-5. Cuaca di laporan adalah kronik deterministik dari kalender; cuaca saat bermain (`world/weather.ts`) masih acak → belum selaras.
+4. Daftar perk & isi save tetap dari save lokal (bisa dimanipulasi). Lama pergi untuk akun login kini dari server (Backlog #3); untuk tamu masih bisa dimanipulasi lewat jam perangkat.
+5. ~~Cuaca saat bermain masih acak~~ → **selesai (Backlog #2)**: `world/weather.ts` kini mengikuti `weatherAtTime()` (blok 6 jam kalender nyata). Belum dicoba di browser.
+7. Musim mengubah peluang cuaca kronik → cuaca/laporan untuk tanggal lampau berbeda dari versi sebelum v9 (tidak ada data tersimpan yang terdampak).
+8. Struktur baru (Kebun Lumut, Bor Otomatis): mesh, resep, dan angka belum diuji di browser; keseimbangan (hasil panen: 3 tanah liat + 15 HP; bor: batu) hanyalah tebakan awal.
+9. Jaringan sandbox mati: `tsc` penuh & build Vite belum dijalankan. Tes `tsx` (73) lulus; tipe diperiksa terbatas (tanpa tipe three/react).
 6. Teks Era Adam & Hawa (eden.ts, EdenClock, WisdomPanel, AwayReportModal) masih di-hardcode Bahasa Indonesia, belum lewat `src/i18n`.
 
 ## 7. Konvensi kode
@@ -72,16 +80,20 @@ Sudah di `public/models/` (teksturnya dikompres, **belum dihubungkan ke game**):
 - [ ] Menu Jeda: panel Kebijaksanaan tampil (poin 0 di hari pertama).
 - [ ] Stasiun riset → resep Jangkar Medan; pasang jangkar; save/load, struktur tetap ada.
 - [ ] Simpan, tutup tab >5 menit, muat lagi → panel "Saat kamu pergi" muncul.
+- [ ] Cuaca: ubah jam perangkat melewati 00/06/12/18 → cuaca berganti sesuai kronik, dan sama dengan laporan "Saat kamu pergi".
+- [ ] Kebun Lumut & Bor Otomatis muncul di menu bangun/resep, bisa dipasang, dipanen/diambil; tersimpan setelah save/load.
+- [ ] Musim tampil di panel jam (🍂); suhu terasa berbeda antar musim.
 - [ ] Login Supabase → `profiles.born_at` terisi; umur tidak reset setelah mati.
 
 ## 9. Backlog (urutan saran)
 1. Hubungkan aset: tanya pemilik pembagian peran; konversi USDZ; ganti karakter Adam/Hawa.
-2. Cuaca saat bermain mengikuti kronik (`weatherForBlock`) agar selaras dengan laporan.
-3. Anti-curang offline: hitung waktu pergi di server (`last_seen_at` sudah ada di profil).
-4. Offline lanjutan: tanaman tumbuh, tambang otomatis, badai merusak bangunan tanpa pelindung.
-5. Peristiwa kalender nyata: musim memengaruhi gameplay; peringatan "Pergeseran Besar" beberapa jam sebelum tanggal 1.
+2. ✅ SELESAI — Cuaca saat bermain mengikuti kronik (`weatherAtTime` di `eden.ts`, dipakai `WeatherSystem`). Masa aman awal tetap cerah + jeda 40 dtk; transisi cuaca mengikuti blok 6 jam. Tes: `eden3.test.ts`. Cek manual: ubah jam perangkat lintas batas blok (00/06/12/18) → cuaca & kabut berganti dalam ≤1 dtk.
+3. ✅ SELESAI — Anti-curang offline lewat `presence_ping()` server. Cek manual: login, simpan, ubah `updatedAt` save lokal ke 20 hari lalu, muat ulang → laporan tetap hanya menghitung waktu sebenarnya.
+4. ✅ SELESAI — Kebun Lumut, Bor Otomatis, kerusakan badai (lihat tabel §4). Cek manual: buat keduanya di Meja Kerja, pasang, simpan, tinggal >1 jam, muat → panen/ambil hasil; bangunan jauh dari shelter berkurang HP-nya. Belum ada cara **memperbaiki** HP bangunan (HP saat ini hanya informasi) → kandidat berikutnya.
+5. ✅ SELESAI — Musim memengaruhi gameplay + peringatan Pergeseran Besar. Cek manual: ubah jam perangkat ke 30 Nov 20:00 → toast & banner muncul dalam ≤30 dtk.
 6. Suku pertama: peti bersama & nama suku untuk satu room (maks 8 pemain).
-7. Pindahkan teks Eden ke i18n (id/en).
+7. Pindahkan teks Eden ke i18n (id/en) — kini juga mencakup teks peringatan/laporan baru.
+8. Perbaikan bangunan (pulihkan HP, bahan bata/besi), visual kebun menurut `growth`, dan tombol "panen semua".
 
 ## 10. Prompt awal untuk melanjutkan bersama Claude
 > Baca `HANDOFF.md` dan `README.md` di repo PRIMORDIA. Lanjutkan dari bagian Backlog nomor …, ikuti Konvensi kode, tulis tes untuk logika murni, lalu perbarui HANDOFF.md.

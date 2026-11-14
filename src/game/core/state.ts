@@ -57,7 +57,9 @@ export type StructureType =
   | 'floor_tile'
   | 'wall_panel'
   | 'roof_panel'
-  | 'door_frame';
+  | 'door_frame'
+  | 'garden_plot'
+  | 'auto_drill';
 
 export interface PlacedStructure {
   id: string;
@@ -69,6 +71,10 @@ export interface PlacedStructure {
   hp: number;
   maxHp: number;
   waterStored?: number;
+  /** garden_plot: pertumbuhan 0..100 (100 = siap panen). */
+  growth?: number;
+  /** auto_drill: unit batu terkumpul (maks DRILL_CAP). */
+  stored?: number;
   label?: string;
   /** Hanya terrain_anchor: seed medan yang dibekukan. */
   anchorSeed?: string;

@@ -99,6 +99,30 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
       gameState.vitals.water = Math.min(100, gameState.vitals.water + 15);
       eventBus.emit('audio:sfx', 'water');
     }
+  } else if (target.kind === 'garden_plot') {
+    const struct = gameState.placedStructures.find((s) => s.id === target.id);
+    if (struct && (struct.growth || 0) >= 100) {
+      struct.growth = 0;
+      addItem('ash_clay', 3);
+      gameState.vitals.health = Math.min(100, gameState.vitals.health + 15);
+      gameState.vitals.radiation = Math.max(0, gameState.vitals.radiation - 10);
+      eventBus.emit('audio:sfx', 'gather');
+      eventBus.emit('toast:show', { text: `+3 ${t('items.ash_clay.name')}`, type: 'success' });
+    } else {
+      eventBus.emit('toast:show', { text: `${t('hud.actions.garden_not_ready')} (${Math.round(struct?.growth || 0)}%)`, type: 'info' });
+    }
+  } else if (target.kind === 'auto_drill') {
+    const struct = gameState.placedStructures.find((s) => s.id === target.id);
+    const n = Math.floor(struct?.stored || 0);
+    if (struct && n > 0) {
+      struct.stored = 0;
+      addItem('basalt_rock', n);
+      if (n >= 8) addItem('iron_slag', Math.floor(n / 8));
+      eventBus.emit('audio:sfx', 'gather');
+      eventBus.emit('toast:show', { text: `+${n} ${t('items.basalt_rock.name')}`, type: 'success' });
+    } else {
+      eventBus.emit('toast:show', { text: t('hud.actions.drill_empty'), type: 'info' });
+    }
   } else if (target.kind === 'fast_beacon') {
     setScreen('map');
   } else if (target.kind === 'shelter') {

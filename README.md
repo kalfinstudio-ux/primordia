@@ -19,6 +19,7 @@ Lapisan cerita dan sistem baru: awal era manusia pertama, tanpa tua dan tanpa ak
 - **Kebijaksanaan**: poin dari umur (7/30/100/365 hari) untuk perk permanen di menu Jeda.
 - **Nama karakter** acak dengan tombol 🎲; pemain bebas menggantinya.
 - **Server anti-mati**: `./tools/keepalive.sh` (restart otomatis + watchdog), konfigurasi Codespace di `.devcontainer/`.
+- **v9:** anti-curang offline (server `presence_ping`), Kebun Lumut & Bor Otomatis yang bekerja saat offline, kerusakan badai pada bangunan tanpa tempat berteduh, musim yang memengaruhi gameplay, dan peringatan "Pergeseran Besar". Jalankan juga `supabase/migration-presence.sql`.
 - Semua rincian, risiko, dan backlog ada di [`HANDOFF.md`](./HANDOFF.md). Migrasi database: `supabase/migration-eden.sql`.
 
 ## Running Locally & Testing

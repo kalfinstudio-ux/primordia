@@ -240,6 +240,10 @@
       "gather_crystal": "Extract Primordial Crystal",
       "collect_water": "Collect Shallow Water",
       "open_storage": "Open Storage Chest",
+      "harvest_garden": "Harvest Moss Garden",
+      "collect_drill": "Collect Drill Output",
+      "garden_not_ready": "The garden is not ready yet.",
+      "drill_empty": "The drill is empty.",
       "collect_rain": "Collect Condensed Water",
       "use_beacon": "Open Fast-Travel Map",
       "seed_pool": "Deposit Seed of Life",
@@ -546,6 +550,14 @@
     "water_collector": {
       "name": "Condensation Collector",
       "desc": "Passively gathers atmospheric steam and acid-filtered water."
+    },
+    "garden_plot": {
+      "name": "Moss Garden",
+      "desc": "A moss-and-microbe bed that grows on its own, even while you are away. Faster in the wet season."
+    },
+    "auto_drill": {
+      "name": "Auto Drill",
+      "desc": "Mines basalt nonstop in clear weather or acid rain. Stops during storms."
     },
     "floor_tile": {
       "name": "Modular Floor Tile",

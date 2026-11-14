@@ -15,6 +15,8 @@ export interface WorldInteractable {
     | 'shelter'
     | 'storage_chest'
     | 'water_collector'
+    | 'garden_plot'
+    | 'auto_drill'
     | 'fast_beacon'
     | 'gas_vent';
   actionKey: string;
@@ -38,6 +40,7 @@ const shelterFrameMat = new THREE.MeshStandardMaterial({ color: '#57534e', rough
 const shelterShieldMat = new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32, metalness: 0.65 });
 const ironMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 });
 const glassMat = new THREE.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.65, roughness: 0.1, metalness: 0.2 });
+const mossMat = new THREE.MeshStandardMaterial({ color: '#4d7c0f', emissive: '#14532d', emissiveIntensity: 0.25, roughness: 0.85 });
 const beaconMat = new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#eab308', emissiveIntensity: 1.4, roughness: 0.2 });
 
 export function createBasaltRockNode(shadowTex: THREE.Texture): THREE.Group {
@@ -185,6 +188,26 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     funnel.rotation.x = Math.PI;
     funnel.position.y = 1.38;
     g.add(makeShadowDisc(shadowTex, 1.1), tank, funnel);
+  } else if (type === 'garden_plot') {
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 1.6), darkBasaltMat);
+    bed.position.y = 0.14;
+    const soil = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.12, 1.4), basaltMat);
+    soil.position.y = 0.3;
+    g.add(makeShadowDisc(shadowTex, 1.5), bed, soil);
+    for (let i = 0; i < 6; i++) {
+      const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 5), mossMat);
+      tuft.position.set(-0.7 + (i % 3) * 0.7, 0.55, i < 3 ? -0.3 : 0.3);
+      g.add(tuft);
+    }
+  } else if (type === 'auto_drill') {
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 0.4, 8), darkBasaltMat);
+    base.position.y = 0.2;
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), ironMat);
+    tower.position.y = 1.5;
+    const bit = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.9, 6), shelterShieldMat);
+    bit.rotation.x = Math.PI;
+    bit.position.y = 0.55;
+    g.add(makeShadowDisc(shadowTex, 1.3), base, tower, bit);
   } else if (type === 'fast_beacon') {
     const plinth = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.1, 0.4, 8), darkBasaltMat);
     plinth.position.y = 0.2;

@@ -49,6 +49,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
   silica_glass: { id: 'silica_glass', tier: 3, category: 'resource', stackable: true, maxStack: 30, weight: 0.35, iconType: 'glass', color: '#bae6fd' },
   smelter_furnace: { id: 'smelter_furnace', tier: 3, category: 'structure', stackable: true, maxStack: 3, weight: 6.0, iconType: 'fire', color: '#f97316' },
   water_collector: { id: 'water_collector', tier: 3, category: 'structure', stackable: true, maxStack: 4, weight: 3.5, iconType: 'vessel', color: '#0ea5e9' },
+  garden_plot: { id: 'garden_plot', tier: 3, category: 'structure', stackable: true, maxStack: 4, weight: 4.0, iconType: 'seed', color: '#65a30d' },
+  auto_drill: { id: 'auto_drill', tier: 4, category: 'structure', stackable: true, maxStack: 3, weight: 5.0, iconType: 'station', color: '#38bdf8' },
   floor_tile: { id: 'floor_tile', tier: 3, category: 'module', stackable: true, maxStack: 20, weight: 1.5, iconType: 'module', color: '#78716c' },
   wall_panel: { id: 'wall_panel', tier: 3, category: 'module', stackable: true, maxStack: 20, weight: 1.8, iconType: 'module', color: '#57534e' },
   roof_panel: { id: 'roof_panel', tier: 3, category: 'module', stackable: true, maxStack: 20, weight: 1.6, iconType: 'shelter', color: '#a8a29e' },

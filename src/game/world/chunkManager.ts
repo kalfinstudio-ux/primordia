@@ -375,6 +375,18 @@ export class ChunkManager {
           depleted: false,
           mesh: model,
         });
+      } else if (s.type === 'garden_plot' || s.type === 'auto_drill') {
+        this.structureInteractables.push({
+          id: s.id,
+          kind: s.type,
+          actionKey: s.type === 'garden_plot' ? 'harvest_garden' : 'collect_drill',
+          x: s.x,
+          y: s.y,
+          z: s.z,
+          radius: 3.2,
+          depleted: false,
+          mesh: model,
+        });
       } else if (s.type === 'fast_beacon') {
         this.structureInteractables.push({
           id: s.id,

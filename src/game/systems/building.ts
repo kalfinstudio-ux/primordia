@@ -1,4 +1,4 @@
-import { collectAnchors, effectiveTerrainSeed } from '../data/eden';
+import { advanceProducer, collectAnchors, currentSeason, currentSeasonFx, effectiveTerrainSeed, type AwayWeather } from '../data/eden';
 import * as THREE from 'three';
 import { WATER_LEVEL } from '../config';
 import { gameState, type StructureType } from '../core/state';
@@ -128,6 +128,8 @@ export function tryPlaceStructure(
     hp: maxHp,
     maxHp,
     waterStored: type === 'water_collector' ? 0 : undefined,
+    growth: type === 'garden_plot' ? 0 : undefined,
+    stored: type === 'auto_drill' ? 0 : undefined,
     anchorSeed: type === 'terrain_anchor' ? effectiveTerrainSeed(gameState.worldSeed) : undefined,
   });
 
@@ -147,10 +149,15 @@ export function tryPlaceStructure(
 }
 
 export function tickStructures(dt: number, weather: string): void {
-  const fillRate = weather === 'acid_rain' || weather === 'electrical_storm' ? 3.5 : 0.8;
+  const rainy = weather === 'acid_rain' || weather === 'electrical_storm';
+  const fillRate = (rainy ? 3.5 : 0.8) * currentSeasonFx().waterFillMult;
+  const season = currentSeason();
   for (const s of gameState.placedStructures) {
     if (s.type === 'water_collector') {
       s.waterStored = Math.min(100, (s.waterStored || 0) + fillRate * dt);
+    } else if (s.type === 'garden_plot' || s.type === 'auto_drill') {
+      // Laju yang sama dengan simulasi offline (per jam), diterapkan per detik
+      advanceProducer(s, dt / 3600, weather as AwayWeather, season);
     }
   }
 }

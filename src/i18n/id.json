@@ -240,6 +240,10 @@
       "gather_crystal": "Ekstrak Kristal Primordial",
       "collect_water": "Ambil Air Hangat",
       "open_storage": "Buka Peti Penyimpanan",
+      "harvest_garden": "Panen Kebun Lumut",
+      "collect_drill": "Ambil Hasil Bor",
+      "garden_not_ready": "Kebun belum siap panen.",
+      "drill_empty": "Bor masih kosong.",
       "collect_rain": "Ambil Air Kondensasi",
       "use_beacon": "Buka Peta Teleportasi",
       "seed_pool": "Tanam Benih Kehidupan",
@@ -546,6 +550,14 @@
     "water_collector": {
       "name": "Penampung Kondensasi",
       "desc": "Mengumpulkan uap air dan menyaring hujan asam otomatis."
+    },
+    "garden_plot": {
+      "name": "Kebun Lumut",
+      "desc": "Petak lumut & mikroba yang tumbuh sendiri, bahkan saat kamu pergi. Lebih cepat di musim hujan."
+    },
+    "auto_drill": {
+      "name": "Bor Otomatis",
+      "desc": "Menambang basalt tanpa henti saat cuaca cerah atau hujan asam. Berhenti saat badai."
     },
     "floor_tile": {
       "name": "Lantai Modular",

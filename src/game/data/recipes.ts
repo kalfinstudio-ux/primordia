@@ -207,6 +207,32 @@ export const RECIPES: CraftingRecipe[] = [
     ],
   },
   {
+    id: 'recipe_garden_plot',
+    tier: 3,
+    outputId: 'garden_plot',
+    outputQty: 1,
+    stationRequired: 'workbench',
+    discoveredByDefault: true,
+    ingredients: [
+      { itemId: 'ash_clay', qty: 6 },
+      { itemId: 'thermal_salt', qty: 2 },
+      { itemId: 'silicate_sand', qty: 3 },
+    ],
+  },
+  {
+    id: 'recipe_auto_drill',
+    tier: 4,
+    outputId: 'auto_drill',
+    outputQty: 1,
+    stationRequired: 'workbench',
+    unlocksOnItem: 'refined_iron',
+    ingredients: [
+      { itemId: 'refined_iron', qty: 3 },
+      { itemId: 'obsidian_shard', qty: 2 },
+      { itemId: 'silica_glass', qty: 1 },
+    ],
+  },
+  {
     id: 'recipe_floor_tile',
     tier: 3,
     outputId: 'floor_tile',

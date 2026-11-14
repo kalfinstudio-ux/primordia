@@ -6,23 +6,19 @@ import type { SkySystem } from './sky';
 import type { TerrainSystem } from './terrain';
 import { distance2D } from '../utils/math';
 import { BALANCE, isSafeStartActive } from '../data/balance';
+import { weatherAtTime } from '../data/eden';
 
 const PARTICLE_COUNT = 160;
 const _dummy = new THREE.Object3D();
 
-const WEATHER_SEQUENCE: WeatherType[] = [
-  'clear_haze',
-  'ash_storm',
-  'acid_rain',
-  'electrical_storm',
-  'meteor_shower',
-];
+/** Seberapa sering (detik) cuaca dicocokkan dengan kronik kalender nyata. */
+const CHRONICLE_CHECK_SEC = 1;
 
 export class WeatherSystem {
   currentWeather: WeatherType = 'clear_haze';
-  private timer = 36;
+  private timer = 0;
+  private chronicleTimer = 0;
   private lightningTimer = 6;
-  private seqIndex = 0;
   private particleMesh: THREE.InstancedMesh;
   private particleMat: THREE.MeshBasicMaterial;
   private offsets: Float32Array;
@@ -84,19 +80,20 @@ export class WeatherSystem {
     const safeStart = isSafeStartActive(gameState.settings.gameplay.difficulty, gameState.playtimeSec);
     if (safeStart && this.currentWeather !== 'clear_haze') {
       // Masa aman awal: tidak ada badai abu / cuaca berbahaya (termasuk sisa dari run sebelumnya).
-      this.seqIndex = 0;
       this.setWeather('clear_haze', scene, sky);
     }
     if (safeStart) {
-      // Timer ditahan; setelah masa aman habis ada jeda cerah penuh sebelum cuaca pertama berganti.
-      this.timer = Math.max(this.timer, BALANCE.safeStart.weatherClearAfterSec);
-    } else {
+      // Setelah masa aman habis ada jeda cerah penuh sebelum cuaca kronik berlaku.
+      this.timer = BALANCE.safeStart.weatherClearAfterSec;
+    } else if (this.timer > 0) {
       this.timer -= dt;
     }
-    if (!safeStart && this.timer <= 0) {
-      this.seqIndex = (this.seqIndex + 1) % WEATHER_SEQUENCE.length;
-      this.setWeather(WEATHER_SEQUENCE[this.seqIndex], scene, sky);
-      this.timer = this.currentWeather === 'clear_haze' ? 40 : 24;
+    // Cuaca mengikuti kronik kalender nyata (blok 6 jam) — selaras dengan laporan "Saat kamu pergi".
+    this.chronicleTimer -= dt;
+    if (!safeStart && this.timer <= 0 && this.chronicleTimer <= 0) {
+      this.chronicleTimer = CHRONICLE_CHECK_SEC;
+      const target = weatherAtTime(Date.now()) as WeatherType;
+      if (target !== this.currentWeather) this.setWeather(target, scene, sky);
     }
 
     if (this.boltTimer > 0) {

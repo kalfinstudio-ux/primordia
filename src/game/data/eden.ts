@@ -243,7 +243,7 @@ export function perkEffects(owned: readonly string[]): { filterDrainMult: number
 // ─────────────────────────────────────────────────────────────
 export type AwayWeather = 'clear_haze' | 'ash_storm' | 'acid_rain' | 'electrical_storm' | 'meteor_shower';
 
-const AWAY_BLOCK_MS = 6 * 3600 * 1000;
+export const AWAY_BLOCK_MS = 6 * 3600 * 1000;
 const AWAY_MAX_WINDOW_MS = 30 * 86400 * 1000;
 const WEATHER_LABEL: Record<AwayWeather, { icon: string; name: string }> = {
   clear_haze: { icon: '🌫', name: 'Kabut oranye' },
@@ -254,13 +254,229 @@ const WEATHER_LABEL: Record<AwayWeather, { icon: string; name: string }> = {
 };
 const MONTH_NAMES = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
+/** Pengali peluang cuaca per musim: [cerah, badai abu, hujan asam, badai petir, hujan meteor]. */
+const SEASON_WEATHER_MULT: Record<EdenCalendar['season'], [number, number, number, number, number]> = {
+  kering: [1.3, 1, 0.5, 0.7, 1],
+  hujan: [0.8, 0.6, 1.8, 1.5, 1],
+  abu: [0.8, 2.0, 1, 1, 1],
+  dingin: [1.2, 0.8, 0.8, 0.8, 1.5],
+};
+const BASE_WEATHER_P = [0.5, 0.2, 0.12, 0.1, 0.08];
+const WEATHER_ORDER: AwayWeather[] = ['clear_haze', 'ash_storm', 'acid_rain', 'electrical_storm', 'meteor_shower'];
+
+/** Musim pada sebuah blok cuaca (dari tanggal lokal awal blok). */
+export function seasonOfBlock(blockIdx: number): EdenCalendar['season'] {
+  return getEdenCalendar(new Date(blockIdx * AWAY_BLOCK_MS)).season;
+}
+
 export function weatherForBlock(blockIdx: number): AwayWeather {
-  const r = mulberry(blockIdx * 2654435761 + 97)();
-  if (r < 0.5) return 'clear_haze';
-  if (r < 0.7) return 'ash_storm';
-  if (r < 0.82) return 'acid_rain';
-  if (r < 0.92) return 'electrical_storm';
+  const mult = SEASON_WEATHER_MULT[seasonOfBlock(blockIdx)];
+  const w = BASE_WEATHER_P.map((p, i) => p * mult[i]);
+  const total = w.reduce((a, b) => a + b, 0);
+  let r = mulberry(blockIdx * 2654435761 + 97)() * total;
+  for (let i = 0; i < w.length; i++) {
+    if (r < w[i]) return WEATHER_ORDER[i];
+    r -= w[i];
+  }
   return 'meteor_shower';
+}
+
+/** Cuaca dunia pada waktu nyata tertentu: sama untuk semua pemain & selaras dengan laporan "Saat kamu pergi". */
+export function weatherAtTime(ms: number = Date.now()): AwayWeather {
+  return weatherForBlock(Math.floor(ms / AWAY_BLOCK_MS));
+}
+
+/** Sisa milidetik sampai blok cuaca berikutnya dimulai (selalu 1..AWAY_BLOCK_MS). */
+export function msUntilWeatherChange(ms: number = Date.now()): number {
+  return AWAY_BLOCK_MS - (((ms % AWAY_BLOCK_MS) + AWAY_BLOCK_MS) % AWAY_BLOCK_MS);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Musim memengaruhi gameplay (Backlog #5)
+// ─────────────────────────────────────────────────────────────
+export interface SeasonEffects {
+  label: string;
+  /** Pengali laju isi penampung air. */
+  waterFillMult: number;
+  /** Pengali pertumbuhan kebun. */
+  gardenMult: number;
+  /** Selisih suhu lingkungan (°C). */
+  tempOffsetC: number;
+}
+
+export const SEASON_FX: Record<EdenCalendar['season'], SeasonEffects> = {
+  kering: { label: 'Musim Kering', waterFillMult: 0.6, gardenMult: 0.7, tempOffsetC: 2 },
+  hujan: { label: 'Musim Hujan', waterFillMult: 1.5, gardenMult: 1.5, tempOffsetC: 0 },
+  abu: { label: 'Musim Abu', waterFillMult: 1, gardenMult: 0.5, tempOffsetC: 1 },
+  dingin: { label: 'Musim Dingin', waterFillMult: 1, gardenMult: 0.8, tempOffsetC: -3 },
+};
+
+export function seasonEffects(date: Date = new Date()): SeasonEffects {
+  return SEASON_FX[getEdenCalendar(date).season];
+}
+
+let _fxCache: { minute: number; season: EdenCalendar['season'] } | null = null;
+/** Musim saat ini (di-cache per menit; aman dipanggil tiap frame). */
+export function currentSeason(nowMs: number = Date.now()): EdenCalendar['season'] {
+  const minute = Math.floor(nowMs / 60000);
+  if (!_fxCache || _fxCache.minute !== minute) _fxCache = { minute, season: getEdenCalendar(new Date(nowMs)).season };
+  return _fxCache.season;
+}
+export function currentSeasonFx(nowMs: number = Date.now()): SeasonEffects {
+  return SEASON_FX[currentSeason(nowMs)];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Peringatan Pergeseran Besar (pergantian bulan = medan berganti)
+// ─────────────────────────────────────────────────────────────
+export const SHIFT_WARN_SOON_MS = 6 * 3600 * 1000;
+export const SHIFT_WARN_IMMINENT_MS = 30 * 60 * 1000;
+
+/** Milidetik sampai tanggal 1 bulan berikutnya pukul 00:00 lokal. */
+export function msUntilMonthShift(nowMs: number = Date.now()): number {
+  const d = new Date(nowMs);
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() - nowMs;
+}
+
+export interface ShiftWarning {
+  level: 'none' | 'soon' | 'imminent';
+  msLeft: number;
+  /** Kunci unik per (bulan tujuan, level) agar toast tidak berulang. */
+  key: string;
+}
+
+export function shiftWarning(nowMs: number = Date.now()): ShiftWarning {
+  const msLeft = msUntilMonthShift(nowMs);
+  const next = new Date(nowMs + msLeft);
+  const level = msLeft <= SHIFT_WARN_IMMINENT_MS ? 'imminent' : msLeft <= SHIFT_WARN_SOON_MS ? 'soon' : 'none';
+  return { level, msLeft, key: `${next.getFullYear()}-${next.getMonth() + 1}:${level}` };
+}
+
+export function formatShiftCountdown(ms: number): string {
+  const totalMin = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? `${h}j ${m}m` : `${m}m`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Anti-curang offline: server menjadi sumber kebenaran lama pergi
+// ─────────────────────────────────────────────────────────────
+export interface AwayWindow {
+  fromMs: number;
+  source: 'server' | 'local' | 'none';
+}
+
+/**
+ * Tentukan awal jendela offline. Jika server menjawab (`last_seen_at`), HANYA server yang dipercaya —
+ * mengubah `updatedAt` save lokal tidak menambah waktu pergi. Tanpa server (tamu/gagal jaringan)
+ * dipakai waktu save lokal, tetapi waktu di masa depan ditolak (0 detik).
+ */
+export function resolveAwayWindow(savedMs: number, nowMs: number, serverAwaySec?: number | null): AwayWindow {
+  if (typeof serverAwaySec === 'number' && Number.isFinite(serverAwaySec) && serverAwaySec >= 0) {
+    return { fromMs: nowMs - Math.min(serverAwaySec, AWAY_MAX_WINDOW_MS / 1000) * 1000, source: 'server' };
+  }
+  if (Number.isFinite(savedMs) && savedMs <= nowMs) return { fromMs: savedMs, source: 'local' };
+  return { fromMs: nowMs, source: 'none' };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Offline lanjutan (Backlog #4): kebun tumbuh, bor menambang, badai merusak
+// ─────────────────────────────────────────────────────────────
+export const GARDEN_GROWTH_PER_HOUR = 12.5; // 8 jam cerah = panen
+export const GARDEN_WEATHER_MULT: Record<AwayWeather, number> = {
+  clear_haze: 1, ash_storm: 0.3, acid_rain: 1.4, electrical_storm: 0.8, meteor_shower: 1,
+};
+export const DRILL_PER_HOUR = 6;
+export const DRILL_CAP = 48;
+/** Bor hanya bekerja saat cuaca ini. */
+export const DRILL_WEATHER_OK: Record<AwayWeather, boolean> = {
+  clear_haze: true, ash_storm: false, acid_rain: true, electrical_storm: false, meteor_shower: false,
+};
+/** HP hilang per jam badai (bangunan tanpa pelindung). */
+export const STORM_DAMAGE_PER_HOUR: Record<AwayWeather, number> = {
+  clear_haze: 0, ash_storm: 3, acid_rain: 0, electrical_storm: 5, meteor_shower: 6,
+};
+export const PROTECTED_DAMAGE_MULT = 0.25;
+export const SHELTER_COVER_RADIUS = 6;
+/** Bangunan tidak pernah hancur saat offline: HP tidak turun di bawah pecahan ini. */
+export const MIN_HP_FRACTION = 0.1;
+const STORM_EXEMPT = new Set(['terrain_anchor']);
+
+export interface EconomyStruct {
+  type: string;
+  x: number;
+  z: number;
+  hp?: number;
+  maxHp?: number;
+  growth?: number;
+  stored?: number;
+}
+
+/** Bangunan terlindungi bila ia sendiri tempat berteduh, atau ada tempat berteduh dalam radius. */
+export function isStormProtected(s: EconomyStruct, all: readonly EconomyStruct[]): boolean {
+  const cover = (t: string) => t === 'basic_shelter' || t === 'roof_panel';
+  if (cover(s.type)) return true;
+  return all.some((o) => o !== s && cover(o.type) && Math.hypot(o.x - s.x, o.z - s.z) <= SHELTER_COVER_RADIUS);
+}
+
+/** Majukan kebun/bor sebanyak `hours` jam pada cuaca & musim tertentu. Dipakai juga saat main (tickStructures). */
+export function advanceProducer(
+  s: EconomyStruct,
+  hours: number,
+  weather: AwayWeather,
+  season: EdenCalendar['season']
+): void {
+  if (hours <= 0) return;
+  if (s.type === 'garden_plot') {
+    s.growth = Math.min(100, (s.growth || 0) + GARDEN_GROWTH_PER_HOUR * hours * GARDEN_WEATHER_MULT[weather] * SEASON_FX[season].gardenMult);
+  } else if (s.type === 'auto_drill' && DRILL_WEATHER_OK[weather]) {
+    s.stored = Math.min(DRILL_CAP, (s.stored || 0) + DRILL_PER_HOUR * hours);
+  }
+}
+
+export interface EconomyReport {
+  gardensReady: number;
+  drillUnits: number;
+  damaged: number;
+  /** HP terendah (persen) di antara bangunan yang rusak. */
+  worstHpPct: number;
+}
+
+/** Simulasi ekonomi offline per blok cuaca (maks 24 jam terakhir). Mengubah `structs`. */
+export function simulateOfflineEconomy(structs: EconomyStruct[], startMs: number, endMs: number): EconomyReport {
+  const rep: EconomyReport = { gardensReady: 0, drillUnits: 0, damaged: 0, worstHpPct: 100 };
+  const from = Math.max(startMs, endMs - OFFLINE_CAP_SEC * 1000);
+  if (!(endMs > from) || structs.length === 0) return rep;
+  const protectedSet = new Set(structs.filter((x) => isStormProtected(x, structs)));
+  const hpBefore = new Map(structs.map((x) => [x, x.hp ?? 0] as const));
+  const storedBefore = structs.reduce((n, x) => n + (x.type === 'auto_drill' ? x.stored || 0 : 0), 0);
+
+  for (let b = Math.floor(from / AWAY_BLOCK_MS); b <= Math.floor(endMs / AWAY_BLOCK_MS); b++) {
+    const overlapMs = Math.min(endMs, (b + 1) * AWAY_BLOCK_MS) - Math.max(from, b * AWAY_BLOCK_MS);
+    if (overlapMs <= 0) continue;
+    const hours = overlapMs / 3600000;
+    const weather = weatherForBlock(b);
+    const season = seasonOfBlock(b);
+    const dmgPerHour = STORM_DAMAGE_PER_HOUR[weather];
+    for (const x of structs) {
+      advanceProducer(x, hours, weather, season);
+      if (dmgPerHour > 0 && !STORM_EXEMPT.has(x.type) && typeof x.hp === 'number' && typeof x.maxHp === 'number') {
+        const loss = dmgPerHour * hours * (protectedSet.has(x) ? PROTECTED_DAMAGE_MULT : 1);
+        x.hp = Math.max(Math.ceil(x.maxHp * MIN_HP_FRACTION), x.hp - loss);
+      }
+    }
+  }
+  for (const x of structs) {
+    if (x.type === 'garden_plot' && (x.growth || 0) >= 100) rep.gardensReady++;
+    const before = hpBefore.get(x) ?? 0;
+    if (typeof x.hp === 'number' && typeof x.maxHp === 'number' && x.hp < before - 0.001) {
+      rep.damaged++;
+      rep.worstHpPct = Math.min(rep.worstHpPct, Math.round((x.hp / x.maxHp) * 100));
+    }
+  }
+  rep.drillUnits = Math.round(structs.reduce((n, x) => n + (x.type === 'auto_drill' ? x.stored || 0 : 0), 0) - storedBefore);
+  return rep;
 }
 
 export interface AwayEntry {
@@ -277,7 +493,7 @@ export interface AwayReport {
 export function buildAwayReport(
   fromMs: number,
   toMs: number,
-  structs: Array<{ type: string; x: number; z: number; waterStored?: number; anchorSeed?: string }>
+  structs: Array<{ type: string; x: number; z: number; waterStored?: number; anchorSeed?: string; hp?: number; maxHp?: number; growth?: number; stored?: number }>
 ): AwayReport {
   const windowMs = Math.min(AWAY_MAX_WINDOW_MS, Math.max(0, toMs - fromMs));
   const start = toMs - windowMs;
@@ -307,6 +523,14 @@ export function buildAwayReport(
   const collectors = structs.filter((s) => s.type === 'water_collector').length;
   if (collectors > 0 && (fx.collectorsFilled > 0 || rainBlocks > 0)) {
     report.entries.push({ icon: '💧', text: `${collectors} penampung air terisi` });
+  }
+
+  // Ekonomi offline: kebun, bor, kerusakan badai
+  const eco = simulateOfflineEconomy(structs, start, toMs);
+  if (eco.gardensReady > 0) report.entries.push({ icon: '🌱', text: `${eco.gardensReady} kebun siap dipanen` });
+  if (eco.drillUnits > 0) report.entries.push({ icon: '⛏', text: `Bor otomatis mengumpulkan ${eco.drillUnits} batu` });
+  if (eco.damaged > 0) {
+    report.entries.push({ icon: '🛠', text: `${eco.damaged} bangunan rusak oleh badai (terparah tersisa ${eco.worstHpPct}%). Bangun tempat berteduh di dekatnya` });
   }
 
   // Kalender: hari berganti, gunung berapi, pergeseran bulan

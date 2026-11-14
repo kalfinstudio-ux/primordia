@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildAwayReport, weatherForBlock } from './data/eden';
+import { buildAwayReport, weatherForBlock, weatherAtTime, msUntilWeatherChange } from './data/eden';
 
 const H = 3600 * 1000;
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
@@ -46,4 +46,21 @@ test('rentang dibatasi 30 hari dan istirahat dilaporkan', () => {
   assert.ok(r.entries.some((x) => x.text.includes('beristirahat')));
   const short = buildAwayReport(at(2026, 11, 14, 10), at(2026, 11, 14, 10) + 2 * H, []);
   assert.ok(short.entries.some((x) => x.text.includes('beristirahat')));
+});
+
+test('cuaca saat bermain = kronik blok 6 jam (selaras dengan laporan)', () => {
+  const t = at(2026, 11, 14, 9);
+  const block = Math.floor(t / (6 * H));
+  assert.equal(weatherAtTime(t), weatherForBlock(block));
+  // Dalam satu blok cuaca konstan
+  const start = block * 6 * H;
+  assert.equal(weatherAtTime(start), weatherAtTime(start + 6 * H - 1));
+});
+
+test('sisa waktu ke pergantian cuaca selalu 1..6 jam dan jatuh tepat di batas blok', () => {
+  for (const t of [0, 1, 6 * H - 1, 6 * H, at(2026, 11, 14, 9), -5]) {
+    const left = msUntilWeatherChange(t);
+    assert.ok(left >= 1 && left <= 6 * H);
+    assert.equal((t + left) % (6 * H), 0);
+  }
 });

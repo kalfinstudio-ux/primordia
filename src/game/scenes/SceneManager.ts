@@ -1,4 +1,4 @@
-import { collectAnchors, effectivePropSeed, effectiveTerrainSeed } from '../data/eden';
+import { collectAnchors, effectivePropSeed, effectiveTerrainSeed, formatShiftCountdown, shiftWarning } from '../data/eden';
 import * as THREE from 'three';
 import { AUTOSAVE_INTERVAL_SEC, WATER_LEVEL } from '../config';
 import { Engine } from '../core/engine';
@@ -61,6 +61,7 @@ export class SceneManager {
   private lava!: LavaSystem;
   private volcano!: VolcanoSystem;
   private weather!: WeatherSystem;
+  private shiftWarnKey = '';
   private meteors!: MeteorSystem;
   private chunks!: ChunkManager;
   private remotePlayers!: RemotePlayersSystem;
@@ -389,6 +390,15 @@ export class SceneManager {
       this.edenCheckTimer += dt;
       if (this.edenCheckTimer > 30) {
         this.edenCheckTimer = 0;
+        const warn = shiftWarning();
+        if (warn.level !== 'none' && warn.key !== this.shiftWarnKey) {
+          this.shiftWarnKey = warn.key;
+          const hasAnchor = gameState.placedStructures.some((x) => x.type === 'terrain_anchor');
+          eventBus.emit('toast:show', {
+            text: `Pergeseran Besar dalam ${formatShiftCountdown(warn.msLeft)}: medan berganti.${hasAnchor ? '' : ' Pasang Jangkar Medan untuk melindungi base.'}`,
+            type: warn.level === 'imminent' ? 'warn' : 'info',
+          });
+        }
         const next = effectivePropSeed(gameState.worldSeed);
         if (next !== this.appliedEdenSeed) {
           this.appliedEdenSeed = next;

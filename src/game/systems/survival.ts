@@ -1,4 +1,4 @@
-import { perkEffects } from '../data/eden';
+import { currentSeasonFx, perkEffects } from '../data/eden';
 import type { HazardType, WeatherType, WorldEventType } from '../config';
 import { gameState } from '../core/state';
 import { getBiomeAt, type BiomeId } from '../world/biomes';
@@ -52,7 +52,7 @@ export class SurvivalSystem {
     const isNight = timeOfDay < 0.18 || timeOfDay > 0.78;
 
     const env = {
-      ambientTempC: biome.ambientTempC + heatSurgeBonus,
+      ambientTempC: biome.ambientTempC + heatSurgeBonus + currentSeasonFx().tempOffsetC,
       toxicLevel: capToxicLevelForSafeStart(
         Math.min(1, biome.toxicLevel + toxicSurgeBonus),
         px,

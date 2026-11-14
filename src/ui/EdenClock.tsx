@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { gameState } from '../game/core/state';
-import { getEdenCalendar, getImmortalAge } from '../game/data/eden';
+import { formatShiftCountdown, getEdenCalendar, getImmortalAge, seasonEffects, shiftWarning } from '../game/data/eden';
 
 /** Jam nyata, tanggal, dan umur abadi — ringkas, sebaris-dua di panel kiri atas. */
 export function EdenClock() {
@@ -12,6 +12,8 @@ export function EdenClock() {
   const now = new Date();
   const cal = getEdenCalendar(now);
   const age = getImmortalAge(gameState.bornAtMs);
+  const fx = seasonEffects(now);
+  const warn = shiftWarning(now.getTime());
   const hhmm = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   return (
     <div
@@ -26,6 +28,12 @@ export function EdenClock() {
       <div className="truncate text-amber-300">
         ♾ {age.years}th {age.days}h {age.hours}j · Thn {cal.eraYear}
       </div>
+      <div className="truncate text-stone-400">🍂 {fx.label}</div>
+      {warn.level !== 'none' && (
+        <div className={`truncate font-semibold ${warn.level === 'imminent' ? 'text-red-400 animate-pulse' : 'text-orange-300'}`}>
+          ⚠ Pergeseran Besar {formatShiftCountdown(warn.msLeft)}
+        </div>
+      )}
     </div>
   );
 }
