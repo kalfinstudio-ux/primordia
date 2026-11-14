@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
 import { isSupabaseConfigured } from '../game/net/supabaseClient';
-import { sendMagicLink, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
+import { sendMagicLink, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
 import { t } from '../game/utils/i18n';
 
 export function AuthScreen() {
@@ -31,6 +31,16 @@ export function AuthScreen() {
       setStatus(res.ok ? t('auth.authSuccess') : res.error || 'Error');
     }
     setBusy(false);
+  };
+
+  const handleGoogle = async () => {
+    setStatus(null);
+    setBusy(true);
+    const res = await signInWithGoogle();
+    if (!res.ok) {
+      setStatus(res.error || 'Error');
+      setBusy(false);
+    }
   };
 
   return (
@@ -79,6 +89,21 @@ export function AuthScreen() {
               void handleAction('signin');
             }}
           >
+            <button
+              type="button"
+              disabled={!configured || busy}
+              onClick={() => void handleGoogle()}
+              className="min-h-[44px] w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
+            >
+              {t('auth.google')}
+            </button>
+
+            <div className="flex items-center gap-3 text-[11px] text-stone-500">
+              <span className="h-px flex-1 bg-stone-800" />
+              <span>atau / or</span>
+              <span className="h-px flex-1 bg-stone-800" />
+            </div>
+
             <div>
               <label htmlFor="auth-email" className="block text-xs font-medium text-stone-300">
                 {t('auth.email')}

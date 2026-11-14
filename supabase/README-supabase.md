@@ -23,3 +23,10 @@ VITE_SUPABASE_ANON_KEY="your-public-anon-key"
 
 ## 4. Enable Email / Magic Link Auth
 In **Authentication → Providers**, ensure **Email** is enabled and add your GitHub Pages URL (e.g. `https://username.github.io/primordia/`) to **Authentication → URL Configuration → Redirect URLs**.
+
+## 5. Login dengan Google (opsional)
+1. Google Cloud Console → **APIs & Services → Credentials → OAuth client ID (Web)**. Tambahkan **Authorized redirect URI**: `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. Supabase → **Authentication → Providers → Google**: aktifkan, isi Client ID dan Client Secret.
+3. Supabase → **Authentication → URL Configuration**: isi **Site URL** dan **Redirect URLs** dengan alamat game (mis. `https://kalfinstudio-ux.github.io/primordia/`).
+4. Jalankan `supabase/migration-auth-google.sql` di SQL Editor (membuat profil otomatis untuk akun baru).
+5. Project lama: jalankan juga `supabase/migration-stage2.sql` sekali. Project baru: cukup `schema.sql` lalu `policies.sql`.

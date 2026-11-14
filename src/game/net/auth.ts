@@ -69,6 +69,17 @@ export async function sendMagicLink(email: string): Promise<{ ok: boolean; error
   return { ok: true };
 }
 
+export async function signInWithGoogle(): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: 'Supabase not configured' };
+  const sb = getSupabaseClient();
+  if (!sb) return { ok: false, error: 'Supabase unavailable' };
+  // Kembali ke halaman game yang sama (aman untuk subpath GitHub Pages, mis. /primordia/).
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true }; // browser dialihkan ke Google; sesi dipulihkan saat kembali
+}
+
 export async function signOutAccount(): Promise<void> {
   const sb = getSupabaseClient();
   if (sb) {

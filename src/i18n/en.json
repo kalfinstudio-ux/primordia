@@ -52,6 +52,7 @@
     "signIn": "Sign In",
     "signUp": "Create Account",
     "magicLink": "Send Magic Link",
+    "google": "Continue with Google",
     "continueGuest": "Continue as Guest (Offline)",
     "signOut": "Sign Out",
     "notConfigured": "Supabase is not configured in environment. Local Guest Mode is active.",

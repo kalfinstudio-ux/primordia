@@ -52,6 +52,7 @@
     "signIn": "Masuk",
     "signUp": "Daftar Baru",
     "magicLink": "Kirim Magic Link",
+    "google": "Masuk dengan Google",
     "continueGuest": "Lanjut sebagai Tamu (Offline)",
     "signOut": "Keluar",
     "notConfigured": "Supabase belum dikonfigurasi. Mode Tamu Lokal aktif sepenuhnya.",
