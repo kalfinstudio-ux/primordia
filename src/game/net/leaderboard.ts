@@ -11,10 +11,9 @@ export async function submitLeaderboardScore(score: number): Promise<boolean> {
   const sb = getSupabaseClient();
   if (!sb || gameState.user.mode !== 'authenticated' || !gameState.user.userId) return false;
   try {
-    const { error } = await sb.from('leaderboard').upsert({
-      user_id: gameState.user.userId,
-      score: Math.round(score),
-      updated_at: new Date().toISOString(),
+    // Uses server-side validated Postgres RPC with rate limiting and sanity cap
+    const { error } = await sb.rpc('submit_validated_score', {
+      p_score: Math.max(0, Math.round(score)),
     });
     return !error;
   } catch {

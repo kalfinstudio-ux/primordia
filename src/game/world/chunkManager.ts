@@ -1,258 +1,403 @@
 import * as THREE from 'three';
-import { WATER_LEVEL, WORLD_RADIUS } from '../config';
+import { CHUNK_SIZE, WATER_LEVEL } from '../config';
 import type { ProceduralAssets } from '../core/assetLoader';
-import { hashString, mulberry32, distance2D } from '../utils/math';
-import { CRYSTAL_CRATER, VOLCANO_MAIN, getDistanceToLava } from './biomes';
+import type { SpatialHashGrid } from '../core/spatialHash';
+import { gameState, type PlacedStructure } from '../core/state';
+import { eventBus } from '../core/eventBus';
+import { distance2D, hashString, mulberry32 } from '../utils/math';
+import { CRYSTAL_CRATER, VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getDistanceToLava } from './biomes';
 import type { TerrainSystem } from './terrain';
 import {
   createBasaltRockNode,
-  createCampfireModel,
   createCrystalClusterNode,
   createFumaroleVentModel,
+  createMeteorIronNode,
   createMineralVeinNode,
-  createShelterModel,
+  createObsidianNode,
+  createStructureMesh,
+  createThermalSaltNode,
   type WorldInteractable,
 } from './props';
-import type { PlacedStructure } from '../core/state';
+
+interface LoadedPropChunk {
+  key: string;
+  group: THREE.Group;
+  interactables: WorldInteractable[];
+  colliderIds: string[];
+}
 
 export class ChunkManager {
   readonly group = new THREE.Group();
   readonly interactables: WorldInteractable[] = [];
   readonly structureMeshes: THREE.Group[] = [];
-  private instancedSpires: THREE.InstancedMesh;
+  readonly spatialHash: SpatialHashGrid;
+
+  private propChunks = new Map<string, LoadedPropChunk>();
+  private extraInteractables: WorldInteractable[] = [];
+  private structureInteractables: WorldInteractable[] = [];
   private assets: ProceduralAssets;
+  private seed = 'HADEAN-01';
+  private lastCenterKey = '';
 
-  constructor(scene: THREE.Scene, terrain: TerrainSystem, seed: string, assets: ProceduralAssets) {
+  constructor(
+    scene: THREE.Scene,
+    terrain: TerrainSystem,
+    seed: string,
+    assets: ProceduralAssets,
+    spatialHash: SpatialHashGrid
+  ) {
     this.assets = assets;
-
-    // Instanced jagged basalt monolith columns across the horizon & ridges (>20 instances)
-    const spireGeo = new THREE.CylinderGeometry(0.45, 1.35, 5.5, 6);
-    spireGeo.translate(0, 2.75, 0);
-    const spireMat = new THREE.MeshStandardMaterial({
-      color: '#2b2422',
-      roughness: 0.92,
-      metalness: 0.1,
-    });
-    this.instancedSpires = new THREE.InstancedMesh(spireGeo, spireMat, 64);
-    this.instancedSpires.castShadow = true;
-    this.instancedSpires.receiveShadow = true;
-    this.group.add(this.instancedSpires);
-
+    this.spatialHash = spatialHash;
     this.populate(terrain, seed);
     scene.add(this.group);
   }
 
   populate(terrain: TerrainSystem, seed: string): void {
-    // Clear previous interactables
-    for (const item of this.interactables) {
-      this.group.remove(item.mesh);
+    this.seed = seed;
+    this.clearAllPropChunks();
+    for (const ex of this.extraInteractables) this.group.remove(ex.mesh);
+    this.extraInteractables = [];
+    this.lastCenterKey = '';
+    this.updateStreaming(terrain, gameState.playerPos.x, gameState.playerPos.z, true);
+  }
+
+  updateStreaming(terrain: TerrainSystem, px: number, pz: number, force = false): void {
+    const pcx = Math.round(px / CHUNK_SIZE);
+    const pcz = Math.round(pz / CHUNK_SIZE);
+    const centerKey = `${pcx},${pcz}`;
+    if (!force && centerKey === this.lastCenterKey) return;
+    this.lastCenterKey = centerKey;
+
+    // Discover chunk on fog-of-war map
+    if (!gameState.discoveredChunks.includes(centerKey)) {
+      gameState.discoveredChunks.push(centerKey);
     }
-    this.interactables.length = 0;
 
-    const rng = mulberry32(hashString(seed));
-    const dummy = new THREE.Object3D();
-    const tint = new THREE.Color();
-
-    // Place 64 instanced basalt spires around mid/outer world
-    let placedSpires = 0;
-    let attempts = 0;
-    while (placedSpires < 64 && attempts < 300) {
-      attempts++;
-      const angle = rng() * Math.PI * 2;
-      const dist = 24 + rng() * (WORLD_RADIUS - 26);
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
-      const y = terrain.groundHeightAt(x, z);
-      if (y < WATER_LEVEL + 0.3 || getDistanceToLava(x, z) < 5) continue;
-
-      dummy.position.set(x, y - 0.3, z);
-      const s = 0.7 + rng() * 1.4;
-      dummy.scale.set(s, s * (0.8 + rng() * 0.9), s);
-      dummy.rotation.set((rng() - 0.5) * 0.2, rng() * Math.PI * 2, (rng() - 0.5) * 0.2);
-      dummy.updateMatrix();
-      this.instancedSpires.setMatrixAt(placedSpires, dummy.matrix);
-
-      tint.set('#2b2422').offsetHSL(0, 0, (rng() - 0.5) * 0.08);
-      this.instancedSpires.setColorAt(placedSpires, tint);
-      placedSpires++;
-    }
-    this.instancedSpires.count = placedSpires;
-    this.instancedSpires.instanceMatrix.needsUpdate = true;
-    if (this.instancedSpires.instanceColor) this.instancedSpires.instanceColor.needsUpdate = true;
-    this.instancedSpires.computeBoundingSphere();
-
-    // Guaranteed starter basalt rocks & mineral veins near spawn (0, 18) for smooth onboarding
-    const guaranteedRocks = [
-      { x: -6, z: 14 },
-      { x: -9, z: 22 },
-      { x: 6, z: 12 },
-      { x: 10, z: 26 },
-    ];
-    guaranteedRocks.forEach((pt, idx) => {
-      this.addNode('rock', `rock_start_${idx}`, pt.x, pt.z, terrain, 'gather_rock');
-    });
-
-    const guaranteedMinerals = [
-      { x: -11, z: 10 },
-      { x: 12, z: 11 },
-      { x: -15, z: -2 },
-    ];
-    guaranteedMinerals.forEach((pt, idx) => {
-      this.addNode('mineral', `min_start_${idx}`, pt.x, pt.z, terrain, 'gather_mineral');
-    });
-
-    // Procedural scatter of basalt rocks and sulfur mineral veins
-    for (let i = 0; i < 24; i++) {
-      const a = rng() * Math.PI * 2;
-      const r = 14 + rng() * 72;
-      const x = Math.cos(a) * r;
-      const z = Math.sin(a) * r;
-      const y = terrain.groundHeightAt(x, z);
-      if (y < WATER_LEVEL + 0.35 || getDistanceToLava(x, z) < 5) continue;
-      if (i % 3 === 0) {
-        this.addNode('mineral', `min_${i}`, x, z, terrain, 'gather_mineral');
-      } else {
-        this.addNode('rock', `rock_${i}`, x, z, terrain, 'gather_rock');
+    // Discover nearby POIs
+    for (const poi of WORLD_POIS) {
+      if (distance2D(px, pz, poi.x, poi.z) < 42) {
+        if (!gameState.discoveredPois.some((d) => d.id === poi.id)) {
+          gameState.discoveredPois.push({ ...poi });
+          eventBus.emit('poi:discovered', poi);
+        }
       }
     }
 
-    // Primordial Crystals inside the Crystal Crater (38, -22)
-    for (let i = 0; i < 7; i++) {
-      const a = (i / 7) * Math.PI * 2;
-      const r = i === 0 ? 0.5 : 4.5 + (i % 3) * 2.2;
-      const cx = CRYSTAL_CRATER.x + Math.cos(a) * r;
-      const cz = CRYSTAL_CRATER.z + Math.sin(a) * r;
-      this.addNode('crystal', `crystal_${i}`, cx, cz, terrain, 'gather_crystal');
+    const radius = 2; // 5x5 chunks = 320m x 320m active props & colliders around player
+    const wanted = new Set<string>();
+    for (let dz = -radius; dz <= radius; dz++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        wanted.add(`${pcx + dx},${pcz + dz}`);
+      }
     }
 
-    // Toxic volcanic gas fumaroles near Mount Hadean slopes
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      const vx = VOLCANO_MAIN.x + Math.cos(a) * 19;
-      const vz = VOLCANO_MAIN.z + Math.sin(a) * 19;
-      this.addNode('gas_vent', `vent_${i}`, vx, vz, terrain, 'gather_mineral');
+    for (const [key, chunk] of this.propChunks.entries()) {
+      if (!wanted.has(key)) {
+        this.group.remove(chunk.group);
+        for (const cid of chunk.colliderIds) this.spatialHash.remove(cid);
+        this.propChunks.delete(key);
+      }
     }
 
-    // Starter shallow water collection point near (16, 22)
-    this.addWaterMarker('water_starter', 16, 22, terrain);
-    this.addWaterMarker('water_south', 8, 38, terrain);
-    this.addWaterMarker('water_east', 44, 28, terrain);
+    for (const key of wanted) {
+      if (this.propChunks.has(key)) continue;
+      const [cxStr, czStr] = key.split(',');
+      this.buildChunkProps(key, Number(cxStr), Number(czStr), terrain);
+    }
+
+    this.rebuildInteractablesIndex();
   }
 
-  private addNode(
-    kind: WorldInteractable['kind'],
+  private buildChunkProps(key: string, cx: number, cz: number, terrain: TerrainSystem): void {
+    const chunkGroup = new THREE.Group();
+    const list: WorldInteractable[] = [];
+    const colliderIds: string[] = [];
+    const rng = mulberry32(hashString(`${this.seed}_${cx}_${cz}`));
+    const baseX = cx * CHUNK_SIZE;
+    const baseZ = cz * CHUNK_SIZE;
+
+    const addProp = (
+      kind: WorldInteractable['kind'],
+      id: string,
+      x: number,
+      z: number,
+      actionKey: string,
+      colliderRadius = 0.9
+    ) => {
+      const y = terrain.groundHeightAt(x, z);
+      let mesh: THREE.Group;
+      if (kind === 'rock') mesh = createBasaltRockNode(this.assets.contactShadowTexture);
+      else if (kind === 'mineral') mesh = createMineralVeinNode(this.assets.contactShadowTexture);
+      else if (kind === 'obsidian') mesh = createObsidianNode(this.assets.contactShadowTexture);
+      else if (kind === 'salt') mesh = createThermalSaltNode(this.assets.contactShadowTexture);
+      else if (kind === 'meteor_iron') mesh = createMeteorIronNode(this.assets.contactShadowTexture);
+      else if (kind === 'crystal') mesh = createCrystalClusterNode(this.assets.contactShadowTexture);
+      else mesh = createFumaroleVentModel();
+
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rng() * Math.PI * 2;
+      chunkGroup.add(mesh);
+
+      const node: WorldInteractable = {
+        id,
+        kind,
+        actionKey,
+        x,
+        y,
+        z,
+        radius: kind === 'crystal' ? 3.2 : 2.9,
+        depleted: false,
+        mesh,
+        chunkKey: key,
+      };
+      list.push(node);
+
+      if (colliderRadius > 0) {
+        const colId = `col_${id}`;
+        colliderIds.push(colId);
+        this.spatialHash.insert({
+          id: colId,
+          x,
+          z,
+          radius: colliderRadius,
+          yMin: y - 0.5,
+          yMax: y + 2.4,
+          kind: kind === 'crystal' ? 'crystal' : kind === 'rock' ? 'rock' : 'mineral',
+        });
+      }
+    };
+
+    // Starter chunk (0,0) guaranteed landmarks & resources for smooth onboarding
+    if (cx === 0 && cz === 0) {
+      const guaranteedRocks = [
+        { x: -6, z: 14 },
+        { x: -9, z: 22 },
+        { x: 6, z: 12 },
+        { x: 10, z: 26 },
+      ];
+      guaranteedRocks.forEach((p, idx) => addProp('rock', `start_rock_${idx}`, p.x, p.z, 'gather_rock', 0.85));
+      [
+        { x: -11, z: 10 },
+        { x: 12, z: 11 },
+        { x: -15, z: -2 },
+      ].forEach((p, idx) => addProp('mineral', `start_min_${idx}`, p.x, p.z, 'gather_mineral', 0.95));
+
+      this.addWaterDisc(chunkGroup, list, 'water_starter', 16, 22, terrain, 'water', 'collect_water');
+    }
+
+    // Procedural basalt spires for vertical geological silhouette + spatial obstacle collision
+    const spireMat = new THREE.MeshStandardMaterial({ color: '#2b2422', roughness: 0.92, metalness: 0.1 });
+    for (let i = 0; i < 4; i++) {
+      const sx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 8);
+      const sz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 8);
+      if (distance2D(sx, sz, 0, 18) < 13) continue;
+      const sy = terrain.groundHeightAt(sx, sz);
+      if (sy < WATER_LEVEL + 0.3 || getDistanceToLava(sx, sz) < 5) continue;
+      const scale = 0.75 + rng() * 1.1;
+      const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * scale, 1.3 * scale, 5.2 * scale, 6), spireMat);
+      spire.position.set(sx, sy + 2.3 * scale, sz);
+      spire.rotation.set((rng() - 0.5) * 0.16, rng() * Math.PI * 2, (rng() - 0.5) * 0.16);
+      chunkGroup.add(spire);
+      const colId = `spire_${key}_${i}`;
+      colliderIds.push(colId);
+      this.spatialHash.insert({
+        id: colId,
+        x: sx,
+        z: sz,
+        radius: 1.15 * scale,
+        yMin: sy - 0.5,
+        yMax: sy + 5.2 * scale,
+        kind: 'spire',
+      });
+    }
+
+    // Biome-aware resource nodes per chunk
+    const nodeCount = 7;
+    for (let i = 0; i < nodeCount; i++) {
+      const nx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 6);
+      const nz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 6);
+      if (distance2D(nx, nz, 0, 18) < 9) continue;
+      const ny = terrain.groundHeightAt(nx, nz);
+      if (getDistanceToLava(nx, nz) < 4.5) continue;
+
+      const biome = getBiomeAt(nx, nz, ny);
+      if (ny < WATER_LEVEL + 0.1) {
+        if (i === 0) this.addWaterDisc(chunkGroup, list, `water_${key}_${i}`, nx, nz, terrain, 'water', 'collect_water');
+        continue;
+      }
+
+      if (biome.id === 'crystal_crater') {
+        addProp('crystal', `crys_${key}_${i}`, nx, nz, 'gather_crystal', 0.85);
+      } else if (biome.id === 'obsidian_fields') {
+        addProp(i % 2 === 0 ? 'obsidian' : 'rock', `obs_${key}_${i}`, nx, nz, i % 2 === 0 ? 'gather_obsidian' : 'gather_rock', 0.85);
+      } else if (biome.id === 'geyser_basin') {
+        if (i === 0) {
+          this.addWaterDisc(chunkGroup, list, `geyser_${key}`, nx, nz, terrain, 'geyser_pool', 'seed_pool');
+        } else {
+          addProp('salt', `salt_${key}_${i}`, nx, nz, 'gather_salt', 0.75);
+        }
+      } else if (biome.id === 'meteor_impact') {
+        addProp(i % 2 === 0 ? 'meteor_iron' : 'crystal', `miron_${key}_${i}`, nx, nz, i % 2 === 0 ? 'gather_meteor_iron' : 'gather_crystal', 0.9);
+      } else if (biome.id === 'sulfur_flats' || biome.id === 'volcanic_ridge') {
+        if (i === 0) addProp('gas_vent', `vent_${key}`, nx, nz, 'gather_mineral', 0.9);
+        else addProp('mineral', `min_${key}_${i}`, nx, nz, 'gather_mineral', 0.85);
+      } else {
+        addProp(i % 3 === 0 ? 'mineral' : 'rock', `res_${key}_${i}`, nx, nz, i % 3 === 0 ? 'gather_mineral' : 'gather_rock', 0.85);
+      }
+    }
+
+    // Ensure Crystal Crater (38,-22) always spawns rich crystals
+    if (distance2D(baseX, baseZ, CRYSTAL_CRATER.x, CRYSTAL_CRATER.z) < CHUNK_SIZE) {
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        addProp('crystal', `crater_main_${i}`, CRYSTAL_CRATER.x + Math.cos(a) * 5, CRYSTAL_CRATER.z + Math.sin(a) * 5, 'gather_crystal', 0.85);
+      }
+    }
+    if (distance2D(baseX, baseZ, VOLCANO_MAIN.x, VOLCANO_MAIN.z) < CHUNK_SIZE) {
+      addProp('obsidian', 'volc_obs_0', VOLCANO_MAIN.x + 14, VOLCANO_MAIN.z + 18, 'gather_obsidian', 0.85);
+    }
+
+    this.group.add(chunkGroup);
+    this.propChunks.set(key, { key, group: chunkGroup, interactables: list, colliderIds });
+  }
+
+  private addWaterDisc(
+    parent: THREE.Group,
+    list: WorldInteractable[],
     id: string,
     x: number,
     z: number,
     terrain: TerrainSystem,
+    kind: 'water' | 'geyser_pool',
     actionKey: string
   ): void {
-    const y = terrain.groundHeightAt(x, z);
-    let mesh: THREE.Group;
-    if (kind === 'rock') mesh = createBasaltRockNode(this.assets.contactShadowTexture);
-    else if (kind === 'mineral') mesh = createMineralVeinNode(this.assets.contactShadowTexture);
-    else if (kind === 'crystal') mesh = createCrystalClusterNode(this.assets.contactShadowTexture);
-    else mesh = createFumaroleVentModel();
-
-    mesh.position.set(x, y, z);
-    mesh.rotation.y = (x * 0.37 + z * 0.71) % (Math.PI * 2);
-    this.group.add(mesh);
-
-    this.interactables.push({
-      id,
-      kind,
-      actionKey,
-      x,
-      y,
-      z,
-      radius: kind === 'crystal' ? 3.2 : 2.8,
-      depleted: false,
-      mesh,
-    });
-  }
-
-  private addWaterMarker(id: string, x: number, z: number, terrain: TerrainSystem): void {
     const y = Math.max(WATER_LEVEL, terrain.groundHeightAt(x, z));
     const g = new THREE.Group();
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(1.1, 1.35, 20),
-      new THREE.MeshBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+      new THREE.RingGeometry(1.1, 1.45, 22),
+      new THREE.MeshBasicMaterial({
+        color: kind === 'geyser_pool' ? '#34d399' : '#38bdf8',
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide,
+      })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.06;
     g.add(ring);
     g.position.set(x, y, z);
-    this.group.add(g);
-
-    this.interactables.push({
-      id,
-      kind: 'water',
-      actionKey: 'collect_water',
-      x,
-      y,
-      z,
-      radius: 4.5,
-      depleted: false,
-      mesh: g,
-    });
+    parent.add(g);
+    list.push({ id, kind, actionKey, x, y, z, radius: 4.8, depleted: false, mesh: g });
   }
 
   spawnMeteorCrystal(x: number, y: number, z: number): void {
     const id = `meteor_crystal_${Date.now()}_${Math.floor(Math.random() * 999)}`;
-    const mesh = createCrystalClusterNode(this.assets.contactShadowTexture);
+    const isIron = Math.random() < 0.45;
+    const mesh = isIron
+      ? createMeteorIronNode(this.assets.contactShadowTexture)
+      : createCrystalClusterNode(this.assets.contactShadowTexture);
     mesh.position.set(x, y, z);
-    mesh.scale.setScalar(0.85);
     this.group.add(mesh);
-    this.interactables.push({
+    this.extraInteractables.push({
       id,
-      kind: 'crystal',
-      actionKey: 'gather_crystal',
+      kind: isIron ? 'meteor_iron' : 'crystal',
+      actionKey: isIron ? 'gather_meteor_iron' : 'gather_crystal',
       x,
       y,
       z,
-      radius: 3.0,
+      radius: 3.1,
       depleted: false,
       mesh,
     });
+    this.rebuildInteractablesIndex();
   }
 
   syncPlacedStructures(structures: PlacedStructure[]): void {
-    for (const m of this.structureMeshes) {
-      this.group.remove(m);
-    }
+    for (const m of this.structureMeshes) this.group.remove(m);
     this.structureMeshes.length = 0;
-
-    // Remove previous shelter interactables
-    for (let i = this.interactables.length - 1; i >= 0; i--) {
-      if (this.interactables[i].kind === 'shelter') {
-        this.interactables.splice(i, 1);
-      }
-    }
+    for (const s of this.structureInteractables) this.spatialHash.remove(`col_str_${s.id}`);
+    this.structureInteractables = [];
 
     for (const s of structures) {
-      const model =
-        s.type === 'basic_shelter'
-          ? createShelterModel(this.assets.contactShadowTexture)
-          : createCampfireModel(this.assets.contactShadowTexture);
+      const model = createStructureMesh(s.type, this.assets.contactShadowTexture);
       model.position.set(s.x, s.y, s.z);
       model.rotation.y = s.rotY;
       this.group.add(model);
       this.structureMeshes.push(model);
 
+      // Register collision for solid structures (skip flat floor_tile/roof/door walk-throughs)
+      if (s.type !== 'floor_tile' && s.type !== 'roof_panel' && s.type !== 'door_frame') {
+        const colR = s.type === 'basic_shelter' ? 2.1 : s.type === 'wall_panel' ? 1.3 : 0.85;
+        this.spatialHash.insert({
+          id: `col_str_${s.id}`,
+          x: s.x,
+          z: s.z,
+          radius: colR,
+          yMin: s.y - 0.3,
+          yMax: s.y + 2.8,
+          kind: 'structure',
+        });
+      }
+
       if (s.type === 'basic_shelter') {
-        this.interactables.push({
+        this.structureInteractables.push({
           id: s.id,
           kind: 'shelter',
           actionKey: 'rest_shelter',
           x: s.x,
           y: s.y,
           z: s.z,
-          radius: 4.2,
+          radius: 4.4,
+          depleted: false,
+          mesh: model,
+        });
+      } else if (s.type === 'storage_chest') {
+        this.structureInteractables.push({
+          id: s.id,
+          kind: 'storage_chest',
+          actionKey: 'open_storage',
+          x: s.x,
+          y: s.y,
+          z: s.z,
+          radius: 3.2,
+          depleted: false,
+          mesh: model,
+        });
+      } else if (s.type === 'water_collector') {
+        this.structureInteractables.push({
+          id: s.id,
+          kind: 'water_collector',
+          actionKey: 'collect_rain',
+          x: s.x,
+          y: s.y,
+          z: s.z,
+          radius: 3.2,
+          depleted: false,
+          mesh: model,
+        });
+      } else if (s.type === 'fast_beacon') {
+        this.structureInteractables.push({
+          id: s.id,
+          kind: 'fast_beacon',
+          actionKey: 'use_beacon',
+          x: s.x,
+          y: s.y,
+          z: s.z,
+          radius: 3.6,
           depleted: false,
           mesh: model,
         });
       }
     }
+    this.rebuildInteractablesIndex();
+  }
+
+  private rebuildInteractablesIndex(): void {
+    this.interactables.length = 0;
+    for (const ch of this.propChunks.values()) {
+      this.interactables.push(...ch.interactables);
+    }
+    this.interactables.push(...this.extraInteractables, ...this.structureInteractables);
   }
 
   findNearestInteractable(px: number, pz: number): WorldInteractable | null {
@@ -269,8 +414,16 @@ export class ChunkManager {
     return best;
   }
 
+  private clearAllPropChunks(): void {
+    for (const ch of this.propChunks.values()) {
+      this.group.remove(ch.group);
+      for (const cid of ch.colliderIds) this.spatialHash.remove(cid);
+    }
+    this.propChunks.clear();
+  }
+
   dispose(): void {
-    this.instancedSpires.geometry.dispose();
-    (this.instancedSpires.material as THREE.Material).dispose();
+    this.clearAllPropChunks();
+    this.structureMeshes.length = 0;
   }
 }

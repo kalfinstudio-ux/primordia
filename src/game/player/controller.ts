@@ -1,21 +1,37 @@
 import * as THREE from 'three';
-import { WATER_LEVEL, WORLD_RADIUS } from '../config';
+import { WATER_LEVEL, WORLD_HALF_EXTENT } from '../config';
 import { input } from '../core/input';
 import { gameState } from '../core/state';
+import { resolveCapsuleObstacles, type SpatialHashGrid } from '../core/spatialHash';
 import type { TerrainSystem } from '../world/terrain';
 import { getDistanceToLava } from '../world/biomes';
 import type { CharacterRig } from './character';
 import type { CharacterAnimator } from './animator';
+import type { GlbExplorerHandle } from './glbCharacter';
+import { clamp } from '../utils/math';
 
 const _forward = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _move = new THREE.Vector3();
+const _interp = new THREE.Vector3();
+
+export interface FixedStepResult {
+  horizontalSpeed: number;
+  distanceMoved: number;
+  inLava: boolean;
+  swimming: boolean;
+}
 
 export class PlayerController {
   readonly position = new THREE.Vector3(0, 1, 18);
+  readonly prevPosition = new THREE.Vector3(0, 1, 18);
   readonly velocity = new THREE.Vector3();
-  yaw = Math.PI; // Facing Mount Hadean volcano landmark on spawn
+  yaw = Math.PI;
   grounded = true;
+  swimming = false;
+  inLava = false;
+  lastHorizontalSpeed = 0;
+
   private coyoteTimer = 0;
   private jumpBufferTimer = 0;
   private wasGrounded = true;
@@ -31,22 +47,24 @@ export class PlayerController {
   }
 
   resetTo(x: number, z: number, yaw: number, terrain: TerrainSystem): void {
-    const y = terrain.groundHeightAt(x, z);
+    const y = Math.max(terrain.groundHeightAt(x, z), WATER_LEVEL - 0.6);
     this.position.set(x, y, z);
+    this.prevPosition.copy(this.position);
     this.velocity.set(0, 0, 0);
     this.yaw = yaw;
     this.grounded = true;
     this.wasGrounded = true;
+    this.swimming = false;
   }
 
-  update(
-    dt: number,
+  fixedStep(
+    fixedDt: number,
     cameraYaw: number,
     terrain: TerrainSystem,
-    rig: CharacterRig,
-    animator: CharacterAnimator,
-    elapsed: number
-  ): { horizontalSpeed: number; distanceMoved: number; inLava: boolean } {
+    spatialHash: SpatialHashGrid,
+    weightRatio = 1.0
+  ): FixedStepResult {
+    this.prevPosition.copy(this.position);
     const keys = gameState.settings.controls.keys;
     const axes = input.getMoveAxes();
     const wantsSprint = input.isHeld(keys.sprint) && gameState.vitals.stamina > 6;
@@ -54,16 +72,15 @@ export class PlayerController {
     if (input.consumeJustPressed(keys.jump)) {
       this.jumpBufferTimer = 0.12;
     } else {
-      this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - dt);
+      this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - fixedDt);
     }
 
-    if (this.grounded) {
+    if (this.grounded || this.swimming) {
       this.coyoteTimer = 0.1;
     } else {
-      this.coyoteTimer = Math.max(0, this.coyoteTimer - dt);
+      this.coyoteTimer = Math.max(0, this.coyoteTimer - fixedDt);
     }
 
-    // Camera-relative horizontal movement
     _forward.set(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));
     _right.set(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
     _move.set(0, 0, 0).addScaledVector(_forward, -axes.z).addScaledVector(_right, axes.x);
@@ -71,89 +88,101 @@ export class PlayerController {
     const hasInput = _move.lengthSq() > 0.001;
     if (hasInput) _move.normalize();
 
-    const groundY = terrain.groundHeightAt(this.position.x, this.position.z);
-    const inShallowWater = groundY < WATER_LEVEL - 0.1;
-    const baseSpeed = wantsSprint && hasInput ? 9.4 : 5.6;
-    const moveSpeed = inShallowWater ? baseSpeed * 0.72 : baseSpeed;
+    const currentGroundY = terrain.groundHeightAt(this.position.x, this.position.z);
+    const waterDepth = WATER_LEVEL - currentGroundY;
+    const wading = waterDepth > 0.15 && waterDepth <= 1.15;
+    this.swimming = waterDepth > 1.15;
+
+    const encumberMult = weightRatio > 1 ? Math.max(0.55, 1.35 - weightRatio * 0.35) : 1;
+    const baseSpeed = (wantsSprint && hasInput ? 9.4 : 5.6) * encumberMult;
+    const moveSpeed = this.swimming ? baseSpeed * 0.56 : wading ? baseSpeed * 0.74 : baseSpeed;
 
     const targetVx = _move.x * moveSpeed;
     const targetVz = _move.z * moveSpeed;
-    const accel = this.grounded ? 14 : 6;
-    this.velocity.x = THREE.MathUtils.lerp(this.velocity.x, targetVx, 1 - Math.exp(-accel * dt));
-    this.velocity.z = THREE.MathUtils.lerp(this.velocity.z, targetVz, 1 - Math.exp(-accel * dt));
+    const accel = this.grounded || this.swimming ? 14 : 6;
+    this.velocity.x = THREE.MathUtils.lerp(this.velocity.x, targetVx, 1 - Math.exp(-accel * fixedDt));
+    this.velocity.z = THREE.MathUtils.lerp(this.velocity.z, targetVz, 1 - Math.exp(-accel * fixedDt));
 
-    // Sprint stamina drain / recovery
-    if (wantsSprint && hasInput) {
-      gameState.vitals.stamina = Math.max(0, gameState.vitals.stamina - 18 * dt);
+    if ((wantsSprint || this.swimming) && hasInput) {
+      gameState.vitals.stamina = Math.max(0, gameState.vitals.stamina - (this.swimming ? 12 : 18) * fixedDt);
     } else {
-      gameState.vitals.stamina = Math.min(100, gameState.vitals.stamina + 14 * dt);
+      gameState.vitals.stamina = Math.min(100, gameState.vitals.stamina + 14 * fixedDt);
     }
 
-    // Jump execution with coyote time & buffering
     if (this.jumpBufferTimer > 0 && this.coyoteTimer > 0) {
-      this.velocity.y = 8.4;
+      this.velocity.y = this.swimming ? 5.2 : 8.4;
       this.grounded = false;
       this.coyoteTimer = 0;
       this.jumpBufferTimer = 0;
-      animator.triggerJump();
       this.onJumpCb?.();
     }
 
-    // Gravity
-    this.velocity.y -= 21.5 * dt;
+    this.velocity.y -= (this.swimming ? 7.5 : 21.5) * fixedDt;
 
     const prevX = this.position.x;
     const prevZ = this.position.z;
 
-    this.position.x += this.velocity.x * dt;
-    this.position.y += this.velocity.y * dt;
-    this.position.z += this.velocity.z * dt;
+    let nextX = this.position.x + this.velocity.x * fixedDt;
+    const nextY = this.position.y + this.velocity.y * fixedDt;
+    let nextZ = this.position.z + this.velocity.z * fixedDt;
 
-    // Natural caldera perimeter clamp
-    const radial = Math.hypot(this.position.x, this.position.z);
-    if (radial > WORLD_RADIUS - 4) {
-      const s = (WORLD_RADIUS - 4) / radial;
-      this.position.x *= s;
-      this.position.z *= s;
+    // Slope blocking (>46°) & downhill slide (>52°) when walking uphill
+    const candidateGroundY = terrain.groundHeightAt(nextX, nextZ);
+    const stepDeltaY = candidateGroundY - currentGroundY;
+    const slopeDeg = terrain.slopeDegreesAt(nextX, nextZ);
+
+    if (this.grounded && stepDeltaY > 0.45 && slopeDeg > 46) {
+      // Too steep to climb directly—deflect back along horizontal
+      nextX = prevX;
+      nextZ = prevZ;
+    } else if (this.grounded && slopeDeg > 52) {
+      // Slide slightly downhill
+      const eps = 0.6;
+      const gx = terrain.groundHeightAt(nextX + eps, nextZ) - terrain.groundHeightAt(nextX - eps, nextZ);
+      const gz = terrain.groundHeightAt(nextX, nextZ + eps) - terrain.groundHeightAt(nextX, nextZ - eps);
+      nextX -= gx * 3.2 * fixedDt;
+      nextZ -= gz * 3.2 * fixedDt;
     }
 
-    // Ground snap & slope check
-    const newGroundY = terrain.groundHeightAt(this.position.x, this.position.z);
-    const floorY = Math.max(newGroundY, WATER_LEVEL - 0.55);
+    // Spatial hash obstacle collision resolution (smooth sliding around rocks, spires, shelters)
+    const nearby = spatialHash.queryRadius(nextX, nextZ, 3.2);
+    const slid = resolveCapsuleObstacles(nextX, nextY, nextZ, 0.45, 1.75, nearby);
+    nextX = clamp(slid.x, -WORLD_HALF_EXTENT + 12, WORLD_HALF_EXTENT - 12);
+    nextZ = clamp(slid.z, -WORLD_HALF_EXTENT + 12, WORLD_HALF_EXTENT - 12);
 
-    if (this.position.y <= floorY + 0.02 && this.velocity.y <= 0) {
-      if (!this.wasGrounded && this.velocity.y < -4) {
-        animator.triggerLand();
+    this.position.set(nextX, nextY, nextZ);
+
+    const newGroundY = terrain.groundHeightAt(this.position.x, this.position.z);
+    const swimSurfaceY = WATER_LEVEL - 0.85;
+    const floorY = this.swimming ? Math.max(newGroundY, swimSurfaceY) : newGroundY;
+
+    if (this.position.y <= floorY + 0.04 && this.velocity.y <= 0) {
+      if (!this.wasGrounded && this.velocity.y < -4.2 && !this.swimming) {
+        this.onLandCb?.();
       }
       this.position.y = floorY;
       this.velocity.y = 0;
-      this.grounded = true;
+      this.grounded = !this.swimming;
     } else {
       this.grounded = false;
     }
     this.wasGrounded = this.grounded;
 
-    // Lava channel hazard check
     const lavaDist = getDistanceToLava(this.position.x, this.position.z);
-    const inLava = lavaDist < 2.2 && this.position.y < 1.2;
+    this.inLava = lavaDist < 2.2 && this.position.y < 1.2;
 
-    // Smooth character facing toward movement direction
     const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
+    this.lastHorizontalSpeed = horizSpeed;
     if (hasInput && horizSpeed > 0.35) {
       const targetYaw = Math.atan2(this.velocity.x, this.velocity.z);
       let diff = targetYaw - this.yaw;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.yaw += diff * Math.min(1, 12 * dt);
+      this.yaw += diff * Math.min(1, 12 * fixedDt);
     }
 
-    rig.root.position.copy(this.position);
-    rig.root.rotation.y = this.yaw;
-
-    animator.update(rig, horizSpeed, this.grounded, gameState.avatar.height, dt, elapsed);
-
     const distMoved = Math.hypot(this.position.x - prevX, this.position.z - prevZ);
-    if (this.grounded && distMoved > 0.01) {
+    if ((this.grounded || wading) && distMoved > 0.01) {
       this.stepAccum += distMoved;
       if (this.stepAccum >= 2.1) {
         this.stepAccum = 0;
@@ -168,6 +197,40 @@ export class PlayerController {
       yaw: this.yaw,
     };
 
-    return { horizontalSpeed: horizSpeed, distanceMoved: distMoved, inLava };
+    return { horizontalSpeed: horizSpeed, distanceMoved: distMoved, inLava: this.inLava, swimming: this.swimming };
+  }
+
+  renderUpdate(
+    alpha: number,
+    dt: number,
+    elapsed: number,
+    rig: CharacterRig,
+    animator: CharacterAnimator,
+    showBreathVapor: boolean,
+    lookAtOffsetYaw: number,
+    glbHandle?: GlbExplorerHandle | null
+  ): THREE.Vector3 {
+    _interp.lerpVectors(this.prevPosition, this.position, clamp(alpha, 0, 1));
+    rig.root.position.copy(_interp);
+    rig.root.rotation.y = this.yaw;
+
+    const buildScale =
+      gameState.avatar.build === 'slim' ? 0.9 : gameState.avatar.build === 'athletic' ? 1.12 : 1.0;
+
+    animator.update(
+      rig,
+      this.lastHorizontalSpeed,
+      this.grounded,
+      this.swimming,
+      gameState.avatar.height,
+      buildScale,
+      dt,
+      elapsed,
+      showBreathVapor,
+      lookAtOffsetYaw,
+      glbHandle
+    );
+
+    return _interp;
   }
 }

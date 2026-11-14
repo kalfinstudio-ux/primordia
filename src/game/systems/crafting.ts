@@ -1,22 +1,52 @@
-import { RECIPES, type CraftingRecipe } from '../config';
-import { gameState, type InventorySlot } from '../core/state';
+import { RECIPES, type CraftingRecipe, type StationType } from '../config';
+import { gameState, type InventorySlot, type PlacedStructure } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { addItemTo, getItemCountIn, removeItemFrom } from './inventory';
+import { distance2D } from '../utils/math';
 import { t } from '../utils/i18n';
 
-export function canCraftIn(slots: InventorySlot[], recipe: CraftingRecipe): boolean {
-  return recipe.ingredients.every((ing) => getItemCountIn(slots, ing.itemId) >= ing.qty);
+export function hasStationNearby(
+  station: StationType | undefined,
+  structures: PlacedStructure[],
+  px: number,
+  pz: number
+): boolean {
+  if (!station) return true;
+  return structures.some((s) => s.type === station && distance2D(px, pz, s.x, s.z) <= 8.5);
+}
+
+export function canCraftIn(
+  slots: InventorySlot[],
+  recipe: CraftingRecipe,
+  structures: PlacedStructure[] = [],
+  px = 0,
+  pz = 0,
+  checkStation = false
+): boolean {
+  const hasIngredients = recipe.ingredients.every((ing) => getItemCountIn(slots, ing.itemId) >= ing.qty);
+  if (!hasIngredients) return false;
+  if (checkStation && recipe.stationRequired) {
+    return hasStationNearby(recipe.stationRequired, structures, px, pz);
+  }
+  return true;
 }
 
 export function canCraft(recipeId: string): boolean {
   const recipe = RECIPES.find((r) => r.id === recipeId);
   if (!recipe) return false;
-  return canCraftIn(gameState.inventory, recipe);
+  return canCraftIn(
+    gameState.inventory,
+    recipe,
+    gameState.placedStructures,
+    gameState.playerPos.x,
+    gameState.playerPos.z,
+    true
+  );
 }
 
 export function craftItem(recipeId: string): boolean {
   const recipe = RECIPES.find((r) => r.id === recipeId);
-  if (!recipe || !canCraftIn(gameState.inventory, recipe)) {
+  if (!recipe || !canCraft(recipeId)) {
     return false;
   }
 
@@ -26,6 +56,17 @@ export function craftItem(recipeId: string): boolean {
   }
   next = addItemTo(next, recipe.outputId, recipe.outputQty);
   gameState.inventory = next;
+
+  if (!gameState.unlockedRecipes.includes(recipe.id)) {
+    gameState.unlockedRecipes.push(recipe.id);
+  }
+
+  // Unlock follow-up recipes triggered by crafted output
+  for (const r of RECIPES) {
+    if (r.unlocksOnItem === recipe.outputId && !gameState.unlockedRecipes.includes(r.id)) {
+      gameState.unlockedRecipes.push(r.id);
+    }
+  }
 
   eventBus.emit('audio:sfx', 'craft');
   eventBus.emit('inventory:changed', gameState.inventory);

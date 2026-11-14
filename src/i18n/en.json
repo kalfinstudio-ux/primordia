@@ -2,14 +2,15 @@
   "app": {
     "title": "PRIMORDIA",
     "subtitle": "Survive Primordial Earth",
-    "version": "Version 0.4.2-Archean"
+    "version": "Version 0.8.0-Archean"
   },
   "tips": [
     "Approach steaming shallow pools to refill water before dehydration sets in.",
     "Volcanic ash storms cut visibility—build a basic shelter early.",
     "Stay clear of red meteor impact rings; fresh impacts often leave Primordial Crystals.",
     "Body temperature spikes near lava rivers. Equip a Heat Shield when crossing rifts.",
-    "Toxic volcanic gas gathers near active craters—watch your oxygen gauge closely."
+    "Toxic volcanic gas gathers near active craters—watch your oxygen gauge closely.",
+    "Place Fast-Travel Beacons in distant biomes to jump across the 4 km primordial map."
   ],
   "splash": {
     "loading": "Generating Primordial World...",
@@ -22,13 +23,13 @@
     "prev": "Back",
     "finish": "Enter Main Menu",
     "slide1Title": "Early Earth: Hadean – Archean Eras",
-    "slide1Body": "No plants, no animals, no other humans exist yet. Only bare basalt plains, steaming shallow oceans, meteor showers, and active volcanoes.",
+    "slide1Body": "No plants, no animals, no other humans exist yet. Only bare basalt plains, steaming shallow oceans, sulfur vents, obsidian fields, meteor showers, and active volcanoes across a 4 km world.",
     "slide2Title": "Explorer Controls",
-    "slide2Body": "Desktop: WASD move, Mouse orbit camera, Space jump, Shift sprint, E interact, I inventory, B build shelter. Mobile: touch joystick & action buttons.",
-    "slide3Title": "Survival Essentials",
-    "slide3Body": "Track 5 vital meters: Health, Stamina, Body Temperature, Oxygen, and Hydration. Gather basalt, minerals, crystals, and water to craft survival gear.",
+    "slide2Body": "Desktop: WASD move, Mouse orbit camera, Space jump, Shift sprint, E interact, I inventory, B build, M map, J journal, F3 debug. Mobile: multi-touch joystick & action buttons in portrait or landscape.",
+    "slide3Title": "Survival & Tech Progression",
+    "slide3Body": "Track Health, Stamina, Body Temp, Oxygen, Hydration, Radiation, and Fatigue. Progress through 5 Tech Tiers from stone tools to Archean synthesis and the Seed of Life.",
     "slide4Title": "Automatic Graphics Calibration",
-    "slide4Body": "PRIMORDIA detected your hardware and selected a balanced graphics preset for smooth 3D playback. You can adjust this anytime in Settings.",
+    "slide4Body": "PRIMORDIA detected your hardware and selected a balanced graphics preset for smooth 3D playback. Adaptive quality will protect your framerate automatically.",
     "detectedPreset": "Detected Preset"
   },
   "menu": {
@@ -39,7 +40,9 @@
     "credits": "Credits",
     "account": "Account & Cloud",
     "guestBadge": "Local Guest Mode",
-    "signedInAs": "Signed in as"
+    "signedInAs": "Signed in as",
+    "installApp": "Install App (PWA)",
+    "offlineReady": "Offline Ready"
   },
   "auth": {
     "title": "Account & Cloud Sync",
@@ -62,9 +65,28 @@
     "defaultName": "Arka-01",
     "appearance": "Explorer Customization",
     "height": "Height",
+    "build": "Body Build",
+    "builds": {
+      "slim": "Slim",
+      "standard": "Standard",
+      "athletic": "Athletic"
+    },
     "skinTone": "Skin Tone",
     "hairColor": "Hair Color",
+    "hairStyle": "Hair / Hood",
+    "hairStyles": {
+      "short": "Short",
+      "ponytail": "Ponytail",
+      "buzz": "Buzz",
+      "hood": "Thermal Hood"
+    },
     "suitColor": "Thermal Suit Accent",
+    "packStyle": "Backpack Type",
+    "packStyles": {
+      "o2_pack": "O2 Tank Pack",
+      "expedition": "Expedition Frame",
+      "scout": "Light Scout"
+    },
     "worldSeed": "World Seed",
     "randomizeSeed": "Randomize",
     "difficulty": "Difficulty",
@@ -72,7 +94,8 @@
     "diffSurvivor": "Survivor (Standard)",
     "diffHadean": "Hadean (Extreme)",
     "start": "Launch Expedition",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "ngPlusBadge": "New Game+ Knowledge Carried"
   },
   "loadGame": {
     "title": "Load Saved Expedition",
@@ -86,7 +109,12 @@
     "delete": "Delete",
     "confirmDeleteTitle": "Delete Save Slot?",
     "confirmDeleteBody": "This save slot will be permanently removed.",
-    "back": "Back"
+    "back": "Back",
+    "conflictTitle": "Cloud Save Conflict Detected",
+    "conflictBody": "Your local save and cloud save for this slot differ. Choose which progress to keep.",
+    "keepLocal": "Keep Local",
+    "keepCloud": "Keep Cloud",
+    "keepBoth": "Keep Both (Save Local to Slot 3)"
   },
   "settings": {
     "title": "Settings",
@@ -114,6 +142,12 @@
     "ambientVol": "World Ambience",
     "sensitivity": "Camera Sensitivity",
     "joystickSize": "Touch Joystick Size",
+    "hudScale": "HUD Scale",
+    "buttonOpacity": "Touch Button Opacity",
+    "handMode": "Touch Layout",
+    "handRight": "Right-Handed (Joystick Left)",
+    "handLeft": "Left-Handed (Joystick Right)",
+    "preferLandscape": "Prefer Landscape Hint",
     "keyBindings": "Key Bindings",
     "pressKey": "Press a key...",
     "difficulty": "Difficulty",
@@ -128,7 +162,32 @@
     "confirmClearTitle": "Clear Local Data?",
     "confirmClearBody": "All local saves and settings will be erased from this browser.",
     "saveClose": "Save & Close",
-    "reset": "Reset Defaults"
+    "reset": "Reset Defaults",
+    "adaptiveDown": "Quality adjusted for smoother framerate."
+  },
+  "biomes": {
+    "shallow_ocean": "Shallow Steaming Ocean",
+    "black_basalt_plains": "Black Basalt Plains",
+    "volcanic_ridge": "Volcanic Ridge",
+    "lava_rift": "Lava Rift",
+    "sulfur_flats": "Sulfur Fumarole Flats",
+    "obsidian_fields": "Obsidian Fields",
+    "geyser_basin": "Geothermal Geyser Basin",
+    "crystal_crater": "Primordial Crystal Crater",
+    "ash_dunes": "Ash Dunes",
+    "meteor_impact": "Meteorite Impact Zone"
+  },
+  "events": {
+    "super_eruption": "SUPER-ERUPTION IMMINENT — SEEK SHELTER",
+    "toxic_surge": "TOXIC SULFUR SURGE",
+    "meteor_swarm": "ORBITAL METEOR SWARM"
+  },
+  "tutorials": {
+    "tut_water": "Hydration Tip: Walk into shallow glowing pools and press [E] to refill water.",
+    "tut_shelter": "Storm Warning: Craft and place a Basalt Shelter [B] to block acid rain and toxic gas.",
+    "tut_build": "Build Mode: Tap [R] to rotate modules, [E/Confirm] to snap-place, [Esc] to cancel.",
+    "tut_radiation": "Radiation Alert: Meteorite zones emit ionizing radiation. Use a Rad Scrubber or Hazmat Lining.",
+    "tut_fatigue": "Fatigue Low: Rest inside any Shelter to recover sleep and restore energy."
   },
   "hud": {
     "health": "Health",
@@ -136,6 +195,12 @@
     "temperature": "Body Temp",
     "oxygen": "Oxygen",
     "water": "Hydration",
+    "radiation": "Radiation",
+    "fatigue": "Rest",
+    "weight": "Weight",
+    "filter": "Gas Filter",
+    "burnStatus": "BURN",
+    "woundStatus": "WOUND",
     "objective": "Active Mission",
     "weather": {
       "clear_haze": "Orange Haze",
@@ -149,43 +214,200 @@
       "heat": "Extreme Heat",
       "toxic": "Toxic Gas",
       "meteor": "Meteor Danger",
+      "radiation": "Radiation Zone",
       "sheltered": "Sheltered"
     },
     "interact": "Press [E] to",
     "actions": {
-      "gather_rock": "Gather Basalt Rock",
-      "gather_mineral": "Mine Volcanic Mineral",
+      "gather_rock": "Gather Basalt & Clay",
+      "gather_mineral": "Mine Sulfur & Slag",
+      "gather_obsidian": "Chip Obsidian Shard",
+      "gather_salt": "Collect Thermal Salt",
+      "gather_meteor_iron": "Mine Meteorite Iron",
       "gather_crystal": "Extract Primordial Crystal",
       "collect_water": "Collect Shallow Water",
-      "light_fire": "Ignite Ember from Lava",
-      "rest_shelter": "Rest & Recover in Shelter"
+      "open_storage": "Open Storage Chest",
+      "collect_rain": "Collect Condensed Water",
+      "use_beacon": "Open Fast-Travel Map",
+      "seed_pool": "Deposit Seed of Life",
+      "rest_shelter": "Rest & Sleep in Shelter"
     },
-    "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Inventory · B Shelter · Esc Pause",
+    "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",
     "inventoryBtn": "Bag",
-    "buildBtn": "Build"
+    "mapBtn": "Map",
+    "journalBtn": "Journal",
+    "buildBtn": "Build",
+    "rotateHint": "Rotate your device to landscape for wider field of view.",
+    "fullscreenBtn": "Fullscreen",
+    "inspectItem": "Inspect",
+    "dropOne": "Drop 1",
+    "placeConfirm": "Place [E]",
+    "cancelBuild": "Cancel",
+    "tapFullscreen": "Tap the screen for fullscreen"
+  },
+  "map": {
+    "title": "Primordial Survey Map (4 km × 4 km)",
+    "close": "Close [M]",
+    "legend": "Legend",
+    "player": "Explorer",
+    "beacon": "Fast-Travel Beacon",
+    "poi": "Point of Interest",
+    "waypoint": "Custom Waypoint",
+    "clickHint": "Click/Tap terrain on the map to place a waypoint. Click a Beacon to fast-travel.",
+    "fastTravel": "Fast-Travel Here",
+    "clearWaypoint": "Clear Waypoint",
+    "discoveredChunks": "Explored Sectors"
+  },
+  "journal": {
+    "title": "Explorer Journal & Achievements",
+    "close": "Close [J]",
+    "tabDiscoveries": "Field Discoveries",
+    "tabCampaign": "Campaign (22)",
+    "tabAchievements": "Achievements",
+    "tabContracts": "Survey Contracts",
+    "unlocked": "Documented",
+    "locked": "Undiscovered — Explore further to log this entry.",
+    "contractTitle": "Repeatable Deep Survey Contract",
+    "contractDesc": "Extract 1 Primordial Crystal or 2 Meteorite Iron and travel 250m to log orbital telemetry.",
+    "contractClaim": "Complete Contract (+Score)",
+    "entries": {
+      "j_basalt": {
+        "title": "Hadean Basalt Crust",
+        "body": "Solidified mafic lava plains forming Earth's earliest stable continental shields."
+      },
+      "j_ocean": {
+        "title": "Steaming Archean Shallows",
+        "body": "Warm, iron-rich early oceans beneath an atmosphere thick with CO2 and water vapor."
+      },
+      "j_volcano": {
+        "title": "Mount Hadean Shield Caldera",
+        "body": "Hyper-active mantle plume venting continuous basaltic lava and sulfur dioxide."
+      },
+      "j_sulfur": {
+        "title": "Sulfur Fumarole Flats",
+        "body": "Geothermal vents releasing dense H2S and SO2 clouds; requires Gas Filters for extended stays."
+      },
+      "j_obsidian": {
+        "title": "Volcanic Obsidian Glass",
+        "body": "Rapidly quenched rhyolitic magma producing razor-sharp volcanic glass blades."
+      },
+      "j_geyser": {
+        "title": "Hydrothermal Geyser Basin",
+        "body": "Mineral-rich hot springs precipitating thermal salts—the cradle for prebiotic chemistry."
+      },
+      "j_crater": {
+        "title": "Crystal Impact Crater",
+        "body": "High-pressure shock metamorphism fused silicates into luminescent Primordial Crystals."
+      },
+      "j_meteor": {
+        "title": "Late Heavy Bombardment Scar",
+        "body": "Nickel-iron meteorite fragments emitting mild residual cosmic radiation."
+      },
+      "j_crystal": {
+        "title": "Primordial Crystal Resonance",
+        "body": "Piezo-luminescent lattice capable of powering Teleportation Beacons and Research Stations."
+      },
+      "j_meteor_iron": {
+        "title": "Extraterrestrial Nickel-Iron",
+        "body": "Dense asteroid alloy forged off-world, far tougher than terrestrial basalt."
+      },
+      "j_thermal_salt": {
+        "title": "Evaporite Thermal Salts",
+        "body": "Catalytic mineral salts essential for burn treatment and prebiotic lipid synthesis."
+      },
+      "j_quake": {
+        "title": "Primordial Tectonic Tremor",
+        "body": "Thin early crust fractures violently under intense mantle convection."
+      },
+      "j_ash_storm": {
+        "title": "Pyroclastic Ash Storm",
+        "body": "Fine abrasive tephra suspended in fierce thermal winds, coating thermal suits."
+      },
+      "j_acid_rain": {
+        "title": "Sulfuric Acid Precipitation",
+        "body": "Volcanic aerosols condense into corrosive rain; shelter prevents chemical burns."
+      }
+    }
+  },
+  "achievements": {
+    "ach_first_water": {
+      "name": "First Hydration",
+      "desc": "Collect water from a primordial shallow pool."
+    },
+    "ach_first_shelter": {
+      "name": "Against the Sky",
+      "desc": "Build your first Basalt Shelter."
+    },
+    "ach_crystal_finder": {
+      "name": "Shockwave Treasure",
+      "desc": "Extract a Primordial Crystal."
+    },
+    "ach_biome_walker": {
+      "name": "Continental Drifter",
+      "desc": "Explore at least 1,000 meters across early Earth."
+    },
+    "ach_metallurgist": {
+      "name": "Archean Smith",
+      "desc": "Smelt Refined Iron in a Smelter Furnace."
+    },
+    "ach_modular_architect": {
+      "name": "Outpost Engineer",
+      "desc": "Place 5+ modular habitat pieces."
+    },
+    "ach_beacon_network": {
+      "name": "Beacon Grid",
+      "desc": "Deploy a Fast-Travel Beacon."
+    },
+    "ach_seed_of_life": {
+      "name": "Dawn of Life",
+      "desc": "Synthesize and deposit the Seed of Life."
+    }
+  },
+  "storage": {
+    "title": "Basalt Storage Chest",
+    "close": "Close",
+    "playerBag": "Your Pack",
+    "chestContents": "Chest Inventory",
+    "storeOne": "Store",
+    "takeOne": "Take",
+    "emptyChest": "Storage chest is empty."
+  },
+  "victory": {
+    "title": "Dawn of the Archean: Seed of Life Planted",
+    "subtitle": "Against crushing volcanic storms, toxic sulfur clouds, and relentless bombardment, you synthesized prebiotic membranes and anchored Earth's first living precursors inside a hydrothermal spring.",
+    "scoreLabel": "Expedition Score",
+    "continueExplore": "Continue Freeform Survival",
+    "startNgPlus": "Launch New Game+ (Keep Recipes & Journal)",
+    "mainMenu": "Main Menu"
   },
   "pause": {
     "title": "Expedition Paused",
     "resume": "Resume",
-    "saveLocal": "Save to Slot 1",
+    "saveLocal": "Save Slot 1",
+    "saveSlot2": "Save Slot 2",
+    "saveSlot3": "Save Slot 3",
     "saveCloud": "Save to Cloud",
     "settings": "Settings",
     "mainMenu": "Return to Main Menu",
     "savedToast": "Game progress saved."
   },
   "inventory": {
-    "title": "Inventory & Crafting",
-    "bagTab": "Explorer Bag",
-    "craftTab": "Craft Gear",
+    "title": "Inventory, Crafting & Blueprints",
+    "bagTab": "Explorer Pack",
+    "craftTab": "Craft (5 Tiers)",
     "close": "Close [I]",
-    "empty": "Your pack is empty. Gather basalt rocks, minerals, crystals, and water across the terrain.",
+    "empty": "Your pack is empty. Gather basalt rocks, minerals, clay, and water across the terrain.",
     "use": "Use",
     "equip": "Assign Hotbar",
-    "place": "Build Here",
+    "place": "Build / Snap Place",
     "craft": "Craft",
     "missingMaterials": "Missing Materials",
-    "craftedToast": "Crafted"
+    "needStation": "Requires",
+    "craftedToast": "Crafted",
+    "unlockedRecipe": "Recipe Unlocked",
+    "allTiers": "All",
+    "tierLabel": "Tier"
   },
   "items": {
     "basalt_rock": {
@@ -194,61 +416,266 @@
     },
     "sulfur_mineral": {
       "name": "Volcanic Mineral",
-      "desc": "Primordial iron-sulfur ore chipped from fissure vents."
+      "desc": "Primordial sulfur ore chipped from fumarole vents."
     },
-    "primordial_crystal": {
-      "name": "Primordial Crystal",
-      "desc": "Luminescent high-energy crystal forged by meteor impacts."
+    "ash_clay": {
+      "name": "Ash Clay",
+      "desc": "Silty volcanic clay ideal for binding brick, filters, and bandages."
+    },
+    "silicate_sand": {
+      "name": "Silicate Sand",
+      "desc": "Fine mineral sand ready to smelt into silica glass."
+    },
+    "purified_water": {
+      "name": "Purified Water",
+      "desc": "Mineral-filtered hydration flask (+45% Water, +10% Rest)."
     },
     "stone_axe": {
       "name": "Stone Axe",
-      "desc": "Doubles stone and mineral extraction yield."
+      "desc": "Tier 1 tool doubling stone and mineral extraction yield."
     },
     "water_vessel": {
       "name": "Water Vessel",
-      "desc": "Stores shallow ocean water for emergency hydration."
+      "desc": "Refillable vessel holding shallow ocean water (+35% Water)."
     },
-    "heat_shield": {
-      "name": "Heat Shield",
-      "desc": "Deflects intense radiant heat near active lava rivers."
+    "campfire_kit": {
+      "name": "Lava Hearth",
+      "desc": "Provides steady light and warmth during Archean nightfall."
     },
     "basic_shelter": {
       "name": "Basalt Shelter",
       "desc": "Portable shelter protecting against acid rain, ash storms, and heat."
     },
-    "campfire_kit": {
-      "name": "Lava Hearth",
-      "desc": "Provides steady light and warmth during Archean nightfall."
+    "obsidian_shard": {
+      "name": "Obsidian Shard",
+      "desc": "Volcanic glass shard razor-sharp for Tier 2 blades & insulation."
+    },
+    "thermal_salt": {
+      "name": "Thermal Salt",
+      "desc": "Evaporite mineral salt harvested near hot geyser basins."
+    },
+    "iron_slag": {
+      "name": "Iron Slag",
+      "desc": "Raw iron-bearing volcanic ore ready for smelting."
+    },
+    "heat_shield": {
+      "name": "Heat Shield",
+      "desc": "Deflects intense radiant heat near active lava rivers."
+    },
+    "obsidian_pick": {
+      "name": "Obsidian Pickaxe",
+      "desc": "Tier 2 mining tool yielding 3x minerals and harvesting obsidian."
+    },
+    "gas_filter": {
+      "name": "Gas Filter",
+      "desc": "Consumable sulfur scrubber granting 100% toxic gas protection."
+    },
+    "mineral_bandage": {
+      "name": "Mineral Bandage",
+      "desc": "Heals +30 Health and cures bleeding wounds."
+    },
+    "burn_salve": {
+      "name": "Thermal Burn Salve",
+      "desc": "Cools chemical or lava burns and restores +18 Health."
+    },
+    "workbench": {
+      "name": "Explorer Workbench",
+      "desc": "Placeable station unlocking Tier 2 & Tier 3 crafting."
+    },
+    "storage_chest": {
+      "name": "Storage Chest",
+      "desc": "Persistent basalt chest storing surplus expedition materials."
+    },
+    "refined_iron": {
+      "name": "Refined Iron",
+      "desc": "Smelted structural iron ingot for outposts and advanced tools."
+    },
+    "basalt_brick": {
+      "name": "Basalt Brick",
+      "desc": "Cut masonry block for modular floor, wall, and roof panels."
+    },
+    "silica_glass": {
+      "name": "Silica Glass",
+      "desc": "Clear heat-tempered glass for collectors and research gear."
+    },
+    "smelter_furnace": {
+      "name": "Smelter Furnace",
+      "desc": "High-heat metallurgical station smelting iron, glass, and cores."
+    },
+    "water_collector": {
+      "name": "Condensation Collector",
+      "desc": "Passively gathers atmospheric steam and acid-filtered water."
+    },
+    "floor_tile": {
+      "name": "Modular Floor Tile",
+      "desc": "Snap-grid 3x3m basalt foundation slab."
+    },
+    "wall_panel": {
+      "name": "Modular Wall Panel",
+      "desc": "Snap-grid fortified habitat wall."
+    },
+    "roof_panel": {
+      "name": "Modular Roof Canopy",
+      "desc": "Snap-grid overhead shield blocking acid rain and ash."
+    },
+    "door_frame": {
+      "name": "Modular Airlock Door",
+      "desc": "Snap-grid habitat entry frame."
+    },
+    "thermal_cloak": {
+      "name": "Thermal Obsidian Cloak",
+      "desc": "Passive suit insulation cutting extreme heat and cold by 50%."
+    },
+    "expedition_pack": {
+      "name": "Expedition Pack",
+      "desc": "Increases maximum carry weight capacity by +35 kg."
+    },
+    "primordial_crystal": {
+      "name": "Primordial Crystal",
+      "desc": "Luminescent high-energy crystal forged by meteor impacts."
+    },
+    "meteor_iron": {
+      "name": "Meteorite Iron",
+      "desc": "Ultra-dense extraterrestrial alloy found at impact craters."
+    },
+    "crystal_core": {
+      "name": "Crystal Power Core",
+      "desc": "Stabilized energy core powering beacons and Tier 4 rigs."
+    },
+    "rad_scrubber": {
+      "name": "Radiation Scrubber",
+      "desc": "Reduces accumulated ionizing radiation by -55%."
+    },
+    "meteor_drill": {
+      "name": "Meteorite Drill",
+      "desc": "Tier 4 rotary extractor maximizing crystal and meteorite yield."
+    },
+    "research_station": {
+      "name": "Archean Research Lab",
+      "desc": "Tier 4/5 station enabling prebiotic chemical synthesis."
+    },
+    "fast_beacon": {
+      "name": "Fast-Travel Beacon",
+      "desc": "Warp point allowing instant travel from the Survey Map [M]."
+    },
+    "hazmat_lining": {
+      "name": "Hazmat Suit Lining",
+      "desc": "Passive radiation & toxic attenuation upgrade."
+    },
+    "amino_compound": {
+      "name": "Prebiotic Amino Compound",
+      "desc": "Synthesized organic building block catalyzed by sulfur & salts."
+    },
+    "lipid_membrane": {
+      "name": "Protocell Lipid Membrane",
+      "desc": "Self-assembling clay-catalyzed vesicular boundary."
+    },
+    "stabilizer_cell": {
+      "name": "Cryo-Thermal Stabilizer",
+      "desc": "Shields fragile prebiotic molecules in geothermal waters."
+    },
+    "seed_of_life": {
+      "name": "Seed of Life",
+      "desc": "The culmination of Archean science. Deposit in a Geyser Basin spring!"
     }
   },
   "quests": {
     "q1": {
-      "title": "First Water Source",
-      "desc": "Locate a shallow steaming pool and collect water (E)."
+      "title": "1. First Water Source",
+      "desc": "Walk to a shallow pool and collect water [E]."
     },
     "q2": {
-      "title": "Basalt Foundations",
+      "title": "2. Basalt Foundations",
       "desc": "Gather 4 Basalt Rocks and 2 Volcanic Minerals."
     },
     "q3": {
-      "title": "Survivor Gear",
-      "desc": "Craft a Stone Axe and a Water Vessel in Crafting [I]."
+      "title": "3. Survivor Gear",
+      "desc": "Craft a Stone Axe and Water Vessel [I]."
     },
     "q4": {
-      "title": "Raising Shelter",
-      "desc": "Craft and place a Basalt Shelter [B] to endure toxic storms."
+      "title": "4. Raising Shelter",
+      "desc": "Craft and place a Basalt Shelter [B] to survive storms."
     },
     "q5": {
-      "title": "Heart of the Crater",
-      "desc": "Find and extract a Primordial Crystal from the crater zone."
+      "title": "5. Heart of the Crater",
+      "desc": "Explore east and extract a Primordial Crystal."
     },
-    "completedAll": "All Starter Missions Complete — Keep Exploring Freeform!"
+    "q6": {
+      "title": "6. Field Workshop",
+      "desc": "Craft and place an Explorer Workbench."
+    },
+    "q7": {
+      "title": "7. Volcanic Glass",
+      "desc": "Venture to Obsidian Fields and gather 2 Obsidian Shards."
+    },
+    "q8": {
+      "title": "8. Obsidian Edge",
+      "desc": "Craft an Obsidian Pickaxe at your Workbench."
+    },
+    "q9": {
+      "title": "9. Breath Protection",
+      "desc": "Craft Gas Filters to endure Sulfur Flats."
+    },
+    "q10": {
+      "title": "10. Supply Cache",
+      "desc": "Build a Storage Chest to organize heavy ores."
+    },
+    "q11": {
+      "title": "11. Iron Age Dawn",
+      "desc": "Craft and place a Smelter Furnace."
+    },
+    "q12": {
+      "title": "12. Molten Metallurgy",
+      "desc": "Smelt 2 Refined Iron ingots inside the Furnace."
+    },
+    "q13": {
+      "title": "13. Modular Outpost",
+      "desc": "Place 3 modular building pieces (Floor, Wall, Roof)."
+    },
+    "q14": {
+      "title": "14. Thermal Mastery",
+      "desc": "Craft a Thermal Obsidian Cloak or Expedition Pack."
+    },
+    "q15": {
+      "title": "15. Archean Lab",
+      "desc": "Build a Tier 4 Research Station."
+    },
+    "q16": {
+      "title": "16. Starfall Alloy",
+      "desc": "Mine 2 Meteorite Iron from a Meteor Impact Zone."
+    },
+    "q17": {
+      "title": "17. Core Ignition",
+      "desc": "Smelt a Crystal Power Core."
+    },
+    "q18": {
+      "title": "18. Beacon Network",
+      "desc": "Deploy a Fast-Travel Beacon and explore 600m."
+    },
+    "q19": {
+      "title": "19. Amino Synthesis",
+      "desc": "Synthesize a Prebiotic Amino Compound at the Research Lab."
+    },
+    "q20": {
+      "title": "20. Protocell Membrane",
+      "desc": "Synthesize a Protocell Lipid Membrane."
+    },
+    "q21": {
+      "title": "21. Seed of Life",
+      "desc": "Assemble the Seed of Life at the Research Lab."
+    },
+    "q22": {
+      "title": "22. Cradle of Biology",
+      "desc": "Travel to a Geothermal Geyser Basin and deposit the Seed of Life [E]."
+    },
+    "completedAll": "Campaign Complete! Enjoy Freeform Archean Survival or NG+."
   },
   "gameOver": {
     "title": "Explorer Incapacitated",
-    "reasonTemp": "Hyperthermia from extreme volcanic heat.",
+    "reasonTemp": "Hyperthermia or hypothermia from extreme temperatures.",
     "reasonOxygen": "Asphyxiation inside dense volcanic gas.",
     "reasonDehydration": "Severe dehydration on the barren plains.",
+    "reasonRadiation": "Acute radiation sickness from meteorite fallout.",
     "reasonMeteor": "Struck directly by a falling meteor.",
     "reasonGeneric": "Explorer vitals reached critical zero.",
     "statTime": "Time Survived",
@@ -259,9 +686,16 @@
   },
   "credits": {
     "title": "Credits & Build Info",
-    "lead": "PRIMORDIA — Early Earth Survival Simulation (Hadean – Archean)",
-    "engine": "Powered by procedural Three.js WebGL, Web Audio API, React UI Shell, and optional Supabase Cloud Sync.",
+    "lead": "PRIMORDIA — Open-World Primordial Earth Survival (Hadean – Archean)",
+    "engine": "Procedural chunk-streamed Three.js WebGL, fixed-timestep physics, Web Audio synthesis, React UI, PWA offline cache, and optional Supabase Cloud Sync.",
     "back": "Back"
+  },
+  "errors": {
+    "title": "Simulation Recovery",
+    "body": "An unexpected display error interrupted the interface. Your last autosave remains safe.",
+    "copyDebug": "Copy Debug Info",
+    "copied": "Copied!",
+    "reload": "Reload App"
   },
   "common": {
     "confirm": "Confirm",

@@ -3,6 +3,8 @@ import type { WeatherType } from '../config';
 import { gameState } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import type { SkySystem } from './sky';
+import type { TerrainSystem } from './terrain';
+import { distance2D } from '../utils/math';
 
 const PARTICLE_COUNT = 160;
 const _dummy = new THREE.Object3D();
@@ -23,6 +25,10 @@ export class WeatherSystem {
   private particleMesh: THREE.InstancedMesh;
   private particleMat: THREE.MeshBasicMaterial;
   private offsets: Float32Array;
+  private boltMesh: THREE.Mesh;
+  private boltTimer = 0;
+  private strikeRing: THREE.Mesh;
+  private strikePending: { x: number; z: number; delay: number } | null = null;
 
   constructor(scene: THREE.Scene) {
     const geo = new THREE.BoxGeometry(0.06, 0.7, 0.06);
@@ -41,6 +47,23 @@ export class WeatherSystem {
       this.offsets[i * 3 + 2] = (Math.random() - 0.5) * 48;
     }
     scene.add(this.particleMesh);
+
+    // Lightning strike bolt + ground telegraph ring
+    this.boltMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.45, 55, 6),
+      new THREE.MeshBasicMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.9 })
+    );
+    this.boltMesh.visible = false;
+    scene.add(this.boltMesh);
+
+    const ringGeo = new THREE.RingGeometry(1.8, 2.3, 24);
+    ringGeo.rotateX(-Math.PI / 2);
+    this.strikeRing = new THREE.Mesh(
+      ringGeo,
+      new THREE.MeshBasicMaterial({ color: '#38bdf8', side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
+    );
+    this.strikeRing.visible = false;
+    scene.add(this.strikeRing);
   }
 
   setWeather(weather: WeatherType, scene: THREE.Scene, sky: SkySystem): void {
@@ -56,7 +79,7 @@ export class WeatherSystem {
     eventBus.emit('weather:changed', weather);
   }
 
-  update(dt: number, scene: THREE.Scene, sky: SkySystem, centerPos: THREE.Vector3): void {
+  update(dt: number, scene: THREE.Scene, sky: SkySystem, centerPos: THREE.Vector3, terrain?: TerrainSystem): void {
     this.timer -= dt;
     if (this.timer <= 0) {
       this.seqIndex = (this.seqIndex + 1) % WEATHER_SEQUENCE.length;
@@ -64,12 +87,38 @@ export class WeatherSystem {
       this.timer = this.currentWeather === 'clear_haze' ? 40 : 24;
     }
 
-    if (this.currentWeather === 'electrical_storm') {
+    if (this.boltTimer > 0) {
+      this.boltTimer -= dt;
+      if (this.boltTimer <= 0) this.boltMesh.visible = false;
+    }
+
+    if (this.strikePending) {
+      this.strikePending.delay -= dt;
+      if (this.strikePending.delay <= 0) {
+        const { x, z } = this.strikePending;
+        const y = terrain ? terrain.groundHeightAt(x, z) : 0;
+        this.boltMesh.position.set(x, y + 27, z);
+        this.boltMesh.visible = true;
+        this.boltTimer = 0.18;
+        this.strikeRing.visible = false;
+        this.strikePending = null;
+        sky.triggerLightning();
+        eventBus.emit('world:lightning', { intensity: 1, x, z, dist: distance2D(centerPos.x, centerPos.z, x, z) });
+      }
+    }
+
+    if (this.currentWeather === 'electrical_storm' && !this.strikePending) {
       this.lightningTimer -= dt;
       if (this.lightningTimer <= 0) {
-        this.lightningTimer = 4.5 + Math.random() * 5;
-        sky.triggerLightning();
-        eventBus.emit('world:lightning', { intensity: 1 });
+        this.lightningTimer = 4.5 + Math.random() * 4.5;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 10 + Math.random() * 24;
+        const sx = centerPos.x + Math.cos(angle) * dist;
+        const sz = centerPos.z + Math.sin(angle) * dist;
+        const sy = terrain ? terrain.groundHeightAt(sx, sz) : centerPos.y;
+        this.strikeRing.position.set(sx, sy + 0.12, sz);
+        this.strikeRing.visible = true;
+        this.strikePending = { x: sx, z: sz, delay: 1.1 };
       }
     }
 
@@ -108,5 +157,9 @@ export class WeatherSystem {
   dispose(): void {
     this.particleMesh.geometry.dispose();
     this.particleMat.dispose();
+    this.boltMesh.geometry.dispose();
+    (this.boltMesh.material as THREE.Material).dispose();
+    this.strikeRing.geometry.dispose();
+    (this.strikeRing.material as THREE.Material).dispose();
   }
 }

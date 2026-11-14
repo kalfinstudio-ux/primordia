@@ -6,7 +6,8 @@ import { computeHazardState, stepVitals } from './player/stats';
 import { addItemTo, getItemCountIn, removeItemFrom } from './systems/inventory';
 import { canCraftIn } from './systems/crafting';
 import { RECIPES } from './config';
-import { getQuestProgressLabel, isQuestSatisfied } from './systems/quests';
+import { createInitialVitals } from './core/state';
+import { getQuestProgressLabel, isQuestSatisfied, type QuestEvalInput } from './systems/quests';
 
 test('deterministic noise returns identical samples for identical seeds', () => {
   const n1 = createNoise2D('HADEAN-01');
@@ -32,10 +33,11 @@ test('biome classifier identifies volcano ridge, crystal crater, and shallow oce
 });
 
 test('survival vitals heat up near lava and recover inside shelter', () => {
-  const base = { health: 80, stamina: 100, temperature: 37, oxygen: 70, water: 80 };
+  const base = { ...createInitialVitals(), health: 80, oxygen: 70, water: 80 };
   const hotEnv = {
     ambientTempC: 66,
     toxicLevel: 0.45,
+    radiationLevel: 0,
     weather: 'ash_storm' as const,
     isNight: false,
     inShelter: false,
@@ -74,21 +76,34 @@ test('inventory stacking and crafting recipe validation work accurately', () => 
 });
 
 test('starter quest chain evaluates completion criteria correctly', () => {
-  const emptySnap = {
+  const emptySnap: QuestEvalInput = {
     waterCollectedCount: 0,
     basaltCount: 1,
     mineralCount: 0,
-    hasAxe: false,
-    hasVessel: false,
-    shelterCount: 0,
+    obsidianCount: 0,
+    meteorIronCount: 0,
     crystalsExtractedCount: 0,
+    distanceExplored: 0,
+    campaignComplete: false,
+    hasItem: () => false,
+    countItem: () => 0,
+    structures: [],
   };
   assert.equal(isQuestSatisfied('q1', emptySnap), false);
   assert.equal(getQuestProgressLabel('q1', emptySnap), '0/1');
 
   assert.equal(isQuestSatisfied('q1', { ...emptySnap, waterCollectedCount: 1 }), true);
   assert.equal(isQuestSatisfied('q2', { ...emptySnap, basaltCount: 4, mineralCount: 2 }), true);
-  assert.equal(isQuestSatisfied('q3', { ...emptySnap, hasAxe: true, hasVessel: true }), true);
-  assert.equal(isQuestSatisfied('q4', { ...emptySnap, shelterCount: 1 }), true);
+  assert.equal(
+    isQuestSatisfied('q3', { ...emptySnap, hasItem: (id) => id === 'stone_axe' || id === 'water_vessel' }),
+    true
+  );
+  assert.equal(
+    isQuestSatisfied('q4', {
+      ...emptySnap,
+      structures: [{ id: 's1', type: 'basic_shelter', x: 0, y: 0, z: 0, rotY: 0, hp: 100, maxHp: 100 }],
+    }),
+    true
+  );
   assert.equal(isQuestSatisfied('q5', { ...emptySnap, crystalsExtractedCount: 1 }), true);
 });

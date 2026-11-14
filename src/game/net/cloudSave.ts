@@ -1,5 +1,5 @@
 import { gameState } from '../core/state';
-import type { SaveSlotData } from '../systems/saveLoad';
+import { migrateSaveData, type SaveSlotData } from '../systems/saveLoad';
 import { getSupabaseClient } from './supabaseClient';
 
 export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
@@ -14,6 +14,7 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
         slot: snapshot.slot,
         world_seed: snapshot.worldSeed,
         player_state: {
+          saveVersion: snapshot.saveVersion,
           avatar: snapshot.avatar,
           vitals: snapshot.vitals,
           inventory: snapshot.inventory,
@@ -22,10 +23,19 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
         },
         world_state: {
           placedStructures: snapshot.placedStructures,
+          storageInventories: snapshot.storageInventories,
           completedQuests: snapshot.completedQuests,
           activeQuestIdx: snapshot.activeQuestIdx,
+          discoveredChunks: snapshot.discoveredChunks,
+          discoveredPois: snapshot.discoveredPois,
+          customWaypoints: snapshot.customWaypoints,
+          unlockedRecipes: snapshot.unlockedRecipes,
+          journalUnlocked: snapshot.journalUnlocked,
+          campaignComplete: snapshot.campaignComplete,
           waterCollectedCount: snapshot.waterCollectedCount,
           crystalsExtractedCount: snapshot.crystalsExtractedCount,
+          obsidianCollectedCount: snapshot.obsidianCollectedCount,
+          meteorIronCollectedCount: snapshot.meteorIronCollectedCount,
           distanceExplored: snapshot.distanceExplored,
         },
         playtime: snapshot.playtimeSec,
@@ -56,24 +66,18 @@ export async function listCloudSaves(): Promise<SaveSlotData[]> {
     return data.map((row) => {
       const p = (row.player_state || {}) as Record<string, unknown>;
       const w = (row.world_state || {}) as Record<string, unknown>;
-      return {
-        slot: Number(row.slot) || 1,
-        source: 'cloud' as const,
-        worldSeed: String(row.world_seed || 'HADEAN-01'),
-        difficulty: (p.difficulty as SaveSlotData['difficulty']) || 'survivor',
-        avatar: (p.avatar as SaveSlotData['avatar']) || gameState.avatar,
-        vitals: (p.vitals as SaveSlotData['vitals']) || gameState.vitals,
-        inventory: (p.inventory as SaveSlotData['inventory']) || [],
-        playerPos: (p.playerPos as SaveSlotData['playerPos']) || { x: 0, y: 0, z: 18, yaw: Math.PI },
-        placedStructures: (w.placedStructures as SaveSlotData['placedStructures']) || [],
-        completedQuests: (w.completedQuests as string[]) || [],
-        activeQuestIdx: Number(w.activeQuestIdx) || 0,
-        waterCollectedCount: Number(w.waterCollectedCount) || 0,
-        crystalsExtractedCount: Number(w.crystalsExtractedCount) || 0,
-        distanceExplored: Number(w.distanceExplored) || 0,
-        playtimeSec: Number(row.playtime) || 0,
-        updatedAt: String(row.updated_at || new Date().toISOString()),
-      };
+      return migrateSaveData(
+        {
+          ...p,
+          ...w,
+          slot: Number(row.slot) || 1,
+          source: 'cloud',
+          worldSeed: String(row.world_seed || 'HADEAN-01'),
+          playtimeSec: Number(row.playtime) || 0,
+          updatedAt: String(row.updated_at || new Date().toISOString()),
+        },
+        'cloud'
+      );
     });
   } catch {
     return [];

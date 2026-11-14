@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WATER_LEVEL, WORLD_RADIUS } from '../config';
+import { WATER_LEVEL } from '../config';
 
 export class WaterSystem {
   readonly mesh: THREE.Mesh;
@@ -8,7 +8,8 @@ export class WaterSystem {
   private timeUniform = { value: 0 };
 
   constructor(scene: THREE.Scene) {
-    this.geometry = new THREE.PlaneGeometry(WORLD_RADIUS * 2.5, WORLD_RADIUS * 2.5, 48, 48);
+    // Moving ocean surface centered around explorer so shallow oceans extend seamlessly across 4km world
+    this.geometry = new THREE.PlaneGeometry(520, 520, 48, 48);
     this.geometry.rotateX(-Math.PI / 2);
 
     this.material = new THREE.MeshStandardMaterial({
@@ -21,7 +22,6 @@ export class WaterSystem {
       opacity: 0.84,
     });
 
-    // Subtle PBR vertex ripple via onBeforeCompile
     this.material.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = this.timeUniform;
       shader.vertexShader =
@@ -42,8 +42,13 @@ export class WaterSystem {
     scene.add(this.mesh);
   }
 
-  update(dt: number): void {
+  update(dt: number, centerPos?: THREE.Vector3): void {
     this.timeUniform.value += dt;
+    if (centerPos) {
+      // Snap to 16m grid to eliminate sub-vertex wave shimmering
+      this.mesh.position.x = Math.round(centerPos.x / 16) * 16;
+      this.mesh.position.z = Math.round(centerPos.z / 16) * 16;
+    }
   }
 
   dispose(): void {

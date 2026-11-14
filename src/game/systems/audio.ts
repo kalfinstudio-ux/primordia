@@ -7,6 +7,7 @@ class ProceduralAudioSystem {
   private ambientGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
+  private windFilter: BiquadFilterNode | null = null;
   private droneStarted = false;
 
   constructor() {
@@ -49,11 +50,23 @@ class ProceduralAudioSystem {
     this.sfxGain.gain.setTargetAtTime(a.sfx * 0.55, this.ctx.currentTime, 0.05);
   }
 
+  setBiomeAmbience(biomeId: string): void {
+    if (!this.ctx || !this.windFilter) return;
+    const freq =
+      biomeId === 'volcanic_ridge' || biomeId === 'lava_rift'
+        ? 460
+        : biomeId === 'shallow_ocean' || biomeId === 'geyser_basin'
+          ? 240
+          : biomeId === 'sulfur_flats'
+            ? 520
+            : 320;
+    this.windFilter.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.4);
+  }
+
   private startAmbientDrone(): void {
     if (!this.ctx || !this.ambientGain || !this.musicGain) return;
     this.droneStarted = true;
 
-    // Deep volcanic Hadean sub-oscillator drone
     const osc = this.ctx.createOscillator();
     osc.type = 'triangle';
     osc.frequency.value = 52;
@@ -64,7 +77,6 @@ class ProceduralAudioSystem {
     filter.connect(this.musicGain);
     osc.start();
 
-    // Filtered pink-ish wind noise for primordial atmosphere
     const bufSize = this.ctx.sampleRate * 2;
     const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -77,13 +89,21 @@ class ProceduralAudioSystem {
     const noise = this.ctx.createBufferSource();
     noise.buffer = buf;
     noise.loop = true;
-    const windFilter = this.ctx.createBiquadFilter();
-    windFilter.type = 'bandpass';
-    windFilter.frequency.value = 320;
-    windFilter.Q.value = 1.2;
-    noise.connect(windFilter);
-    windFilter.connect(this.ambientGain);
+    this.windFilter = this.ctx.createBiquadFilter();
+    this.windFilter.type = 'bandpass';
+    this.windFilter.frequency.value = 320;
+    this.windFilter.Q.value = 1.2;
+    noise.connect(this.windFilter);
+    this.windFilter.connect(this.ambientGain);
     noise.start();
+  }
+
+  playFootstep(surface: 'basalt' | 'ash' | 'water' | 'crystal' | 'obsidian' | 'sulfur'): void {
+    if (surface === 'water') this.playSfx('step_water');
+    else if (surface === 'crystal') this.playSfx('step_crystal');
+    else if (surface === 'ash') this.playSfx('step_ash');
+    else if (surface === 'obsidian') this.playSfx('step_obsidian');
+    else this.playSfx('step');
   }
 
   playSfx(kind: string): void {
@@ -98,14 +118,38 @@ class ProceduralAudioSystem {
 
     const jitter = 0.92 + Math.random() * 0.16;
 
-    if (kind === 'step') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(110 * jitter, now);
+    if (kind === 'step' || kind === 'step_obsidian') {
+      osc.type = kind === 'step_obsidian' ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime((kind === 'step_obsidian' ? 165 : 110) * jitter, now);
       osc.frequency.exponentialRampToValueAtTime(48, now + 0.08);
       gain.gain.setValueAtTime(0.22, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
       osc.start(now);
       osc.stop(now + 0.1);
+    } else if (kind === 'step_ash') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(75 * jitter, now);
+      osc.frequency.exponentialRampToValueAtTime(36, now + 0.11);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    } else if (kind === 'step_water') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(280 * jitter, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.12);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    } else if (kind === 'step_crystal') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(620 * jitter, now);
+      osc.frequency.exponentialRampToValueAtTime(340, now + 0.1);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+      osc.start(now);
+      osc.stop(now + 0.12);
     } else if (kind === 'jump') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(170, now);
@@ -130,19 +174,20 @@ class ProceduralAudioSystem {
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
       osc.start(now);
       osc.stop(now + 0.24);
-    } else if (kind === 'craft' || kind === 'crystal' || kind === 'quest') {
+    } else if (kind === 'craft' || kind === 'crystal' || kind === 'quest' || kind === 'victory') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(440, now);
       osc.frequency.setValueAtTime(660, now + 0.09);
+      if (kind === 'victory') osc.frequency.setValueAtTime(880, now + 0.2);
       gain.gain.setValueAtTime(0.28, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (kind === 'victory' ? 0.65 : 0.34));
       osc.start(now);
-      osc.stop(now + 0.36);
-    } else if (kind === 'meteor' || kind === 'thunder') {
+      osc.stop(now + (kind === 'victory' ? 0.67 : 0.36));
+    } else if (kind === 'meteor' || kind === 'thunder' || kind === 'event') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(90, now);
+      osc.frequency.setValueAtTime(kind === 'event' ? 140 : 90, now);
       osc.frequency.exponentialRampToValueAtTime(28, now + 0.55);
-      gain.gain.setValueAtTime(0.45, now);
+      gain.gain.setValueAtTime(0.42, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
       osc.start(now);
       osc.stop(now + 0.62);

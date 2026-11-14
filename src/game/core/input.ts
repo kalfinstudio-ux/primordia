@@ -2,8 +2,8 @@ import { gameState } from './state';
 import { clamp } from '../utils/math';
 
 export interface TouchInputState {
-  moveX: number; // -1..1
-  moveY: number; // -1..1 (forward negative or positive handled cleanly)
+  moveX: number;
+  moveY: number;
   lookDeltaX: number;
   lookDeltaY: number;
 }
@@ -25,6 +25,11 @@ class InputManager {
   private canvasEl: HTMLElement | null = null;
   private bound = false;
 
+  // Multi-touch pointer tracking directly on canvas for seamless look-while-moving
+  private canvasTouchId: number | null = null;
+  private canvasTouchX = 0;
+  private canvasTouchY = 0;
+
   attach(canvas: HTMLElement): void {
     this.canvasEl = canvas;
     if (this.bound) return;
@@ -38,6 +43,11 @@ class InputManager {
     canvas.addEventListener('mousedown', this.onMouseDown);
     window.addEventListener('mousemove', this.onMouseMove);
     window.addEventListener('mouseup', this.onMouseUp);
+
+    canvas.addEventListener('touchstart', this.onCanvasTouchStart, { passive: true });
+    canvas.addEventListener('touchmove', this.onCanvasTouchMove, { passive: true });
+    canvas.addEventListener('touchend', this.onCanvasTouchEnd, { passive: true });
+    canvas.addEventListener('touchcancel', this.onCanvasTouchEnd, { passive: true });
   }
 
   detach(): void {
@@ -47,6 +57,10 @@ class InputManager {
     document.removeEventListener('visibilitychange', this.onVisibility);
     if (this.canvasEl) {
       this.canvasEl.removeEventListener('mousedown', this.onMouseDown);
+      this.canvasEl.removeEventListener('touchstart', this.onCanvasTouchStart);
+      this.canvasEl.removeEventListener('touchmove', this.onCanvasTouchMove);
+      this.canvasEl.removeEventListener('touchend', this.onCanvasTouchEnd);
+      this.canvasEl.removeEventListener('touchcancel', this.onCanvasTouchEnd);
     }
     window.removeEventListener('mousemove', this.onMouseMove);
     window.removeEventListener('mouseup', this.onMouseUp);
@@ -58,10 +72,13 @@ class InputManager {
     this.heldCodes.clear();
     this.justPressedCodes.clear();
     this.draggingLook = false;
+    this.canvasTouchId = null;
     this.mouseDeltaX = 0;
     this.mouseDeltaY = 0;
     this.touchState.moveX = 0;
     this.touchState.moveY = 0;
+    this.touchState.lookDeltaX = 0;
+    this.touchState.lookDeltaY = 0;
   };
 
   private onVisibility = (): void => {
@@ -111,6 +128,39 @@ class InputManager {
     this.draggingLook = false;
   };
 
+  private onCanvasTouchStart = (e: TouchEvent): void => {
+    if (this.canvasTouchId !== null) return;
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    this.canvasTouchId = touch.identifier;
+    this.canvasTouchX = touch.clientX;
+    this.canvasTouchY = touch.clientY;
+  };
+
+  private onCanvasTouchMove = (e: TouchEvent): void => {
+    if (this.canvasTouchId === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === this.canvasTouchId) {
+        this.touchState.lookDeltaX += t.clientX - this.canvasTouchX;
+        this.touchState.lookDeltaY += t.clientY - this.canvasTouchY;
+        this.canvasTouchX = t.clientX;
+        this.canvasTouchY = t.clientY;
+        break;
+      }
+    }
+  };
+
+  private onCanvasTouchEnd = (e: TouchEvent): void => {
+    if (this.canvasTouchId === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === this.canvasTouchId) {
+        this.canvasTouchId = null;
+        break;
+      }
+    }
+  };
+
   setTouchJoystick(x: number, y: number): void {
     this.touchState.moveX = clamp(x, -1, 1);
     this.touchState.moveY = clamp(y, -1, 1);
@@ -123,6 +173,11 @@ class InputManager {
 
   triggerVirtualKey(code: string): void {
     this.justPressedCodes.add(code);
+  }
+
+  setVirtualHold(code: string, down: boolean): void {
+    if (down) this.heldCodes.add(code);
+    else this.heldCodes.delete(code);
   }
 
   isHeld(code: string): boolean {

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { WeatherType } from '../config';
+import { WORLD_HALF_EXTENT, type WeatherType } from '../config';
 import type { TerrainSystem } from './terrain';
 import { distance2D } from '../utils/math';
 import { eventBus } from '../core/eventBus';
@@ -44,9 +44,10 @@ export class MeteorSystem {
 
   private spawnMeteor(terrain: TerrainSystem, playerPos: THREE.Vector3): void {
     const angle = Math.random() * Math.PI * 2;
-    const dist = 12 + Math.random() * 28;
-    const tx = THREE.MathUtils.clamp(playerPos.x + Math.cos(angle) * dist, -90, 90);
-    const tz = THREE.MathUtils.clamp(playerPos.z + Math.sin(angle) * dist, -90, 90);
+    const dist = 10 + Math.random() * 34;
+    const bound = WORLD_HALF_EXTENT - 24;
+    const tx = THREE.MathUtils.clamp(playerPos.x + Math.cos(angle) * dist, -bound, bound);
+    const tz = THREE.MathUtils.clamp(playerPos.z + Math.sin(angle) * dist, -bound, bound);
     const ty = terrain.groundHeightAt(tx, tz);
 
     const meteorGroup = new THREE.Group();
@@ -59,7 +60,6 @@ export class MeteorSystem {
     meteorGroup.add(core, tail);
     meteorGroup.position.set(tx + 18, ty + 48, tz - 14);
 
-    // Ground danger telegraph ring
     const ring = new THREE.Mesh(this.ringGeo, this.ringMat);
     ring.position.set(tx, ty + 0.08, tz);
 
@@ -82,12 +82,14 @@ export class MeteorSystem {
     weather: WeatherType,
     terrain: TerrainSystem,
     playerPos: THREE.Vector3,
-    onImpact: (x: number, y: number, z: number, playerDist: number) => void
+    onImpact: (x: number, y: number, z: number, playerDist: number) => void,
+    swarmMultiplier = 1
   ): void {
-    const rate = weather === 'meteor_shower' ? 2.4 : 11.0;
+    const baseRate = weather === 'meteor_shower' ? 2.4 : 11.0;
+    const rate = baseRate / swarmMultiplier;
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) {
-      this.spawnTimer = rate + Math.random() * 2.5;
+      this.spawnTimer = rate + Math.random() * 2.2;
       this.spawnMeteor(terrain, playerPos);
     }
 
@@ -103,15 +105,12 @@ export class MeteorSystem {
       );
       m.mesh.rotation.x += dt * 4;
       m.mesh.rotation.z += dt * 3;
-
-      const ringScale = 0.6 + progress * 0.65;
-      m.ring.scale.setScalar(ringScale);
+      m.ring.scale.setScalar(0.6 + progress * 0.65);
 
       if (m.countdown <= 0) {
         const pDist = distance2D(playerPos.x, playerPos.z, m.targetX, m.targetZ);
         onImpact(m.targetX, m.targetY, m.targetZ, pDist);
         eventBus.emit('world:meteorImpact', { x: m.targetX, z: m.targetZ, playerDist: pDist });
-
         this.group.remove(m.mesh);
         this.group.remove(m.ring);
         this.meteors.splice(i, 1);

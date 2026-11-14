@@ -4,6 +4,7 @@ import { SceneManager } from './scenes/SceneManager';
 import { applySaveDataToState, getLatestLocalSave, saveGameToSlot, type SaveSlotData } from './systems/saveLoad';
 import { audioSystem } from './systems/audio';
 import { initAuthSession } from './net/auth';
+import { submitLeaderboardScore } from './net/leaderboard';
 import { writeStorage } from './utils/storage';
 import { eventBus } from './core/eventBus';
 import { t } from './utils/i18n';
@@ -42,16 +43,28 @@ export function completeOnboarding(): void {
   setScreen('menu');
 }
 
-export function startNewExpedition(seed: string, avatar: AvatarConfig, difficulty: DifficultyLevel): void {
+export function startNewExpedition(
+  seed: string,
+  avatar: AvatarConfig,
+  difficulty: DifficultyLevel,
+  preserveKnowledge = false
+): void {
   audioSystem.unlock();
   const updatedSettings = {
     ...gameState.settings,
     gameplay: { ...gameState.settings.gameplay, difficulty },
   };
   saveSettingsToLocal(updatedSettings);
-  resetRunState(seed, avatar);
+  resetRunState(seed, avatar, preserveKnowledge);
   setScreen('hud');
   manager?.enterWorld(true);
+}
+
+export function startNewGamePlus(): void {
+  gameState.newGamePlusCount += 1;
+  writeStorage('ng_plus_count', gameState.newGamePlusCount);
+  const nextSeed = `ARCHEAN-NG${gameState.newGamePlusCount}-${Math.floor(100 + Math.random() * 899)}`;
+  startNewExpedition(nextSeed, gameState.avatar, gameState.settings.gameplay.difficulty, true);
 }
 
 export function continueLatestExpedition(): void {
@@ -74,6 +87,31 @@ export function loadExpedition(save: SaveSlotData): void {
   applySaveDataToState(save);
   setScreen('hud');
   manager?.enterWorld(false);
+}
+
+export function fastTravelToBeacon(x: number, z: number): void {
+  audioSystem.unlock();
+  manager?.fastTravelTo(x, z);
+}
+
+export function computeExpeditionScore(): number {
+  return Math.round(
+    gameState.completedQuests.length * 150 +
+      gameState.distanceExplored * 0.5 +
+      gameState.crystalsExtractedCount * 80 +
+      gameState.surveyContractsCleared * 250 +
+      (gameState.campaignComplete ? 1000 : 0)
+  );
+}
+
+export function completeSurveyContract(): boolean {
+  const hasRichOre = gameState.crystalsExtractedCount >= 1 || gameState.meteorIronCollectedCount >= 2;
+  if (!hasRichOre || gameState.distanceExplored < 250) return false;
+  gameState.surveyContractsCleared += 1;
+  void submitLeaderboardScore(computeExpeditionScore());
+  audioSystem.playSfx('quest');
+  eventBus.emit('toast:show', { text: `${t('journal.contractTitle')} ✓`, type: 'success' });
+  return true;
 }
 
 export function returnToMainMenu(): void {

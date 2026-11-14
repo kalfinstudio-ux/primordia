@@ -3,12 +3,7 @@ import React from 'react';
 export function PrimordiaEmblem({ className = 'w-10 h-10' }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
-      <polygon
-        points="24,4 44,38 4,38"
-        stroke="#ea580c"
-        strokeWidth="2.5"
-        fill="#1c1512"
-      />
+      <polygon points="24,4 44,38 4,38" stroke="#ea580c" strokeWidth="2.5" fill="#1c1512" />
       <polygon points="24,13 33,34 15,34" fill="#ea580c" opacity="0.28" />
       <path d="M19 26 L24 14 L29 26 L24 22 Z" fill="#f97316" />
       <line x1="8" y1="42" x2="40" y2="42" stroke="#f59e0b" strokeWidth="2" />
@@ -19,6 +14,7 @@ export function PrimordiaEmblem({ className = 'w-10 h-10' }: { className?: strin
 export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; color?: string }) {
   switch (iconType) {
     case 'rock':
+    case 'brick':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <polygon points="5,18 3,11 9,5 17,6 21,13 18,19" fill={color} stroke="#1c1917" strokeWidth="1.5" />
@@ -26,6 +22,9 @@ export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; co
         </svg>
       );
     case 'mineral':
+    case 'salt':
+    case 'clay':
+    case 'sand':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <polygon points="12,3 20,9 17,20 7,20 4,9" fill="#44403c" stroke="#1c1917" strokeWidth="1.5" />
@@ -33,6 +32,8 @@ export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; co
         </svg>
       );
     case 'crystal':
+    case 'shard':
+    case 'glass':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <polygon points="12,2 17,9 15,21 9,21 7,9" fill={color} stroke="#fff7ed" strokeWidth="1.2" />
@@ -47,6 +48,7 @@ export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; co
         </svg>
       );
     case 'vessel':
+    case 'flask':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <rect x="9" y="3" width="6" height="3" rx="1" fill="#78716c" />
@@ -54,6 +56,7 @@ export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; co
         </svg>
       );
     case 'shield':
+    case 'suit':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <path d="M12 3 L20 6 V12 C20 16.5 16.5 19.8 12 21 C7.5 19.8 4 16.5 4 12 V6 Z" fill={color} stroke="#1c1917" strokeWidth="1.5" />
@@ -61,10 +64,45 @@ export function ItemIcon({ iconType, color = '#f97316' }: { iconType: string; co
         </svg>
       );
     case 'shelter':
+    case 'module':
       return (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
           <polygon points="12,4 22,13 20,13 20,20 4,20 4,13 2,13" fill="#44403c" stroke={color} strokeWidth="1.5" />
           <rect x="10" y="13" width="4" height="7" fill="#ea580c" />
+        </svg>
+      );
+    case 'station':
+    case 'chest':
+    case 'pack':
+      return (
+        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
+          <rect x="4" y="6" width="16" height="13" rx="2" fill="#292524" stroke={color} strokeWidth="1.6" />
+          <line x1="4" y1="11" x2="20" y2="11" stroke={color} strokeWidth="1.4" />
+          <rect x="10" y="9" width="4" height="4" fill="#fbbf24" />
+        </svg>
+      );
+    case 'ingot':
+      return (
+        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
+          <polygon points="5,16 8,8 19,8 16,16" fill={color} stroke="#1c1917" strokeWidth="1.4" />
+          <polygon points="3,18 6,11 17,11 14,18" fill={color} opacity="0.75" />
+        </svg>
+      );
+    case 'filter':
+    case 'med':
+      return (
+        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="3" fill="#292524" stroke={color} strokeWidth="1.5" />
+          <path d="M12 8 V16 M8 12 H16" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'beacon':
+    case 'seed':
+      return (
+        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="7" stroke={color} strokeWidth="1.6" />
+          <circle cx="12" cy="12" r="3" fill={color} />
+          <line x1="12" y1="2" x2="12" y2="6" stroke={color} strokeWidth="1.5" />
         </svg>
       );
     default:

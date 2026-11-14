@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { setScreen } from '../game/core/state';
 import { loadExpedition } from '../game/main';
+import { saveToCloud } from '../game/net/cloudSave';
 import { deleteSaveSlot, getAllAvailableSaves, type SaveSlotData } from '../game/systems/saveLoad';
+import { readStorage, writeStorage } from '../game/utils/storage';
 import { t } from '../game/utils/i18n';
 import { ConfirmDialog } from './ConfirmDialog';
+import { CloudConflictDialog } from './CloudConflictDialog';
 
 function formatPlaytime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -13,13 +16,15 @@ function formatPlaytime(sec: number): string {
 
 export function LoadGameScreen() {
   const [saves, setSaves] = useState<SaveSlotData[]>([]);
+  const [conflicts, setConflicts] = useState<Array<{ slot: number; local: SaveSlotData; cloud: SaveSlotData }>>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<SaveSlotData | null>(null);
 
   const refresh = async () => {
     setLoading(true);
-    const list = await getAllAvailableSaves();
-    setSaves(list);
+    const res = await getAllAvailableSaves();
+    setSaves(res.saves);
+    setConflicts(res.conflicts);
     setLoading(false);
   };
 
@@ -27,21 +32,41 @@ export function LoadGameScreen() {
     void refresh();
   }, []);
 
+  const activeConflict = conflicts[0] || null;
+
+  const resolveConflict = async (choice: 'local' | 'cloud' | 'both') => {
+    if (!activeConflict) return;
+    if (choice === 'local') {
+      await saveToCloud(activeConflict.local);
+    } else if (choice === 'cloud') {
+      const all = readStorage<Record<string, unknown>>('save_slots', {});
+      all[String(activeConflict.slot)] = { ...activeConflict.cloud, source: 'local' };
+      writeStorage('save_slots', all);
+    } else {
+      const all = readStorage<Record<string, unknown>>('save_slots', {});
+      all['3'] = { ...activeConflict.local, slot: 3, source: 'local' };
+      all[String(activeConflict.slot)] = { ...activeConflict.cloud, source: 'local' };
+      writeStorage('save_slots', all);
+    }
+    setConflicts((prev) => prev.slice(1));
+    await refresh();
+  };
+
   return (
-    <main className="fixed inset-0 z-30 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
-      <section className="primordia-scroll max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-6 sm:p-8 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-stone-800 pb-4">
-          <h2 className="font-display text-3xl font-semibold text-stone-100">{t('loadGame.title')}</h2>
+    <main className="fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
+      <section className="primordia-scroll max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-5 sm:p-7 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-stone-800 pb-3.5">
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold text-stone-100">{t('loadGame.title')}</h2>
           <button
             type="button"
             onClick={() => setScreen('menu')}
-            className="min-h-[44px] rounded-lg px-4 py-2 text-sm text-stone-300 hover:bg-stone-800"
+            className="min-h-[40px] rounded-lg px-4 py-1.5 text-sm text-stone-300 hover:bg-stone-800"
           >
             {t('loadGame.back')}
           </button>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-5 space-y-3">
           {loading ? (
             <div className="py-8 text-center text-sm text-stone-400">{t('splash.loading')}</div>
           ) : saves.length === 0 ? (
@@ -52,7 +77,7 @@ export function LoadGameScreen() {
             saves.map((save) => (
               <div
                 key={`${save.source}_${save.slot}`}
-                className="flex flex-col justify-between gap-4 rounded-lg border border-stone-800 bg-stone-900/70 p-4 sm:flex-row sm:items-center"
+                className="flex flex-col justify-between gap-3 rounded-lg border border-stone-800 bg-stone-900/70 p-4 sm:flex-row sm:items-center"
               >
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-stone-100">
@@ -80,14 +105,14 @@ export function LoadGameScreen() {
                   <button
                     type="button"
                     onClick={() => loadExpedition(save)}
-                    className="min-h-[44px] rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+                    className="min-h-[42px] rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-500"
                   >
                     {t('loadGame.load')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPendingDelete(save)}
-                    className="min-h-[44px] rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-sm text-stone-300 hover:border-red-700 hover:text-red-300"
+                    className="min-h-[42px] rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-sm text-stone-300 hover:border-red-700 hover:text-red-300"
                   >
                     {t('loadGame.delete')}
                   </button>
@@ -97,6 +122,13 @@ export function LoadGameScreen() {
           )}
         </div>
       </section>
+
+      <CloudConflictDialog
+        conflict={activeConflict}
+        onKeepLocal={() => void resolveConflict('local')}
+        onKeepCloud={() => void resolveConflict('cloud')}
+        onKeepBoth={() => void resolveConflict('both')}
+      />
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

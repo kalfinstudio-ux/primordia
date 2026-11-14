@@ -2,7 +2,13 @@ export type LanguageCode = 'id' | 'en';
 export type DifficultyLevel = 'explorer' | 'survivor' | 'hadean';
 export type GraphicsPreset = 'low' | 'medium' | 'high';
 export type WeatherType = 'clear_haze' | 'ash_storm' | 'acid_rain' | 'electrical_storm' | 'meteor_shower';
-export type HazardType = 'safe' | 'heat' | 'toxic' | 'meteor' | 'sheltered';
+export type HazardType = 'safe' | 'heat' | 'toxic' | 'meteor' | 'radiation' | 'sheltered';
+export type WorldEventType = 'none' | 'super_eruption' | 'toxic_surge' | 'meteor_swarm';
+export type HandMode = 'right' | 'left';
+export type BodyBuild = 'slim' | 'standard' | 'athletic';
+export type HairStyle = 'short' | 'ponytail' | 'buzz' | 'hood';
+export type PackStyle = 'o2_pack' | 'expedition' | 'scout';
+
 export type ScreenName =
   | 'splash'
   | 'onboarding'
@@ -14,6 +20,10 @@ export type ScreenName =
   | 'hud'
   | 'pause'
   | 'inventory'
+  | 'map'
+  | 'journal'
+  | 'storage'
+  | 'victory'
   | 'gameOver'
   | 'credits';
 
@@ -27,12 +37,14 @@ export interface KeyBindings {
   interact: string;
   inventory: string;
   build: string;
+  map: string;
+  journal: string;
 }
 
 export interface GameSettings {
   graphics: {
     preset: GraphicsPreset;
-    viewDistance: number; // 70 - 180
+    viewDistance: number; // 70 - 220
     shadows: boolean;
     particles: boolean;
     fpsLimit: number; // 30 | 60 | 120
@@ -47,6 +59,10 @@ export interface GameSettings {
   controls: {
     sensitivity: number; // 0.3 - 2.0
     joystickSize: number; // 0.8 - 1.4
+    hudScale: number; // 0.75 - 1.25
+    buttonOpacity: number; // 0.45 - 1.0
+    handMode: HandMode;
+    preferLandscape: boolean;
     keys: KeyBindings;
   };
   gameplay: {
@@ -60,37 +76,26 @@ export interface GameSettings {
 export interface AvatarConfig {
   name: string;
   height: number; // 0.9 - 1.15
+  build: BodyBuild;
   skinTone: string;
   hairColor: string;
+  hairStyle: HairStyle;
   suitColor: string;
+  packStyle: PackStyle;
 }
 
-export interface ItemDefinition {
-  id: string;
-  category: 'resource' | 'tool' | 'consumable' | 'structure';
-  stackable: boolean;
-  maxStack: number;
-  iconType: string;
-  color: string;
-}
+export * from './data/items';
+export * from './data/recipes';
+export * from './data/quests';
 
-export interface CraftingRecipe {
-  id: string;
-  outputId: string;
-  outputQty: number;
-  ingredients: Array<{ itemId: string; qty: number }>;
-}
-
-export interface QuestDefinition {
-  id: string;
-  order: number;
-  targetType: 'collect_water' | 'gather_materials' | 'craft_gear' | 'place_shelter' | 'extract_crystal';
-}
-
-export const GAME_VERSION = '0.4.2-Archean';
-export const WORLD_RADIUS = 115;
+export const GAME_VERSION = '0.8.0-Archean';
+export const SAVE_VERSION = 2;
+export const WORLD_RADIUS = 115; // Legacy starter landmark zone radius
+export const WORLD_HALF_EXTENT = 2048; // 4km x 4km open world (-2048..+2048)
+export const CHUNK_SIZE = 64;
 export const WATER_LEVEL = -1.2;
 export const AUTOSAVE_INTERVAL_SEC = 60;
+export const BASE_CARRY_WEIGHT = 45;
 
 export const SUPABASE_CONFIG = {
   url: (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SUPABASE_URL || '',
@@ -100,15 +105,18 @@ export const SUPABASE_CONFIG = {
 export const DEFAULT_AVATAR: AvatarConfig = {
   name: 'Arka-01',
   height: 1.0,
+  build: 'standard',
   skinTone: '#c68b59',
   hairColor: '#1c1917',
+  hairStyle: 'short',
   suitColor: '#ea580c',
+  packStyle: 'o2_pack',
 };
 
 export const DEFAULT_SETTINGS: GameSettings = {
   graphics: {
     preset: 'medium',
-    viewDistance: 120,
+    viewDistance: 135,
     shadows: true,
     particles: true,
     fpsLimit: 60,
@@ -123,6 +131,10 @@ export const DEFAULT_SETTINGS: GameSettings = {
   controls: {
     sensitivity: 1.0,
     joystickSize: 1.0,
+    hudScale: 1.0,
+    buttonOpacity: 0.9,
+    handMode: 'right',
+    preferLandscape: false,
     keys: {
       forward: 'KeyW',
       backward: 'KeyS',
@@ -133,6 +145,8 @@ export const DEFAULT_SETTINGS: GameSettings = {
       interact: 'KeyE',
       inventory: 'KeyI',
       build: 'KeyB',
+      map: 'KeyM',
+      journal: 'KeyJ',
     },
   },
   gameplay: {
@@ -142,125 +156,3 @@ export const DEFAULT_SETTINGS: GameSettings = {
   },
   language: 'id',
 };
-
-export const ITEMS: Record<string, ItemDefinition> = {
-  basalt_rock: {
-    id: 'basalt_rock',
-    category: 'resource',
-    stackable: true,
-    maxStack: 50,
-    iconType: 'rock',
-    color: '#78716c',
-  },
-  sulfur_mineral: {
-    id: 'sulfur_mineral',
-    category: 'resource',
-    stackable: true,
-    maxStack: 50,
-    iconType: 'mineral',
-    color: '#eab308',
-  },
-  primordial_crystal: {
-    id: 'primordial_crystal',
-    category: 'resource',
-    stackable: true,
-    maxStack: 20,
-    iconType: 'crystal',
-    color: '#fb923c',
-  },
-  stone_axe: {
-    id: 'stone_axe',
-    category: 'tool',
-    stackable: false,
-    maxStack: 1,
-    iconType: 'axe',
-    color: '#a8a29e',
-  },
-  water_vessel: {
-    id: 'water_vessel',
-    category: 'consumable',
-    stackable: false,
-    maxStack: 1,
-    iconType: 'vessel',
-    color: '#38bdf8',
-  },
-  heat_shield: {
-    id: 'heat_shield',
-    category: 'tool',
-    stackable: false,
-    maxStack: 1,
-    iconType: 'shield',
-    color: '#f97316',
-  },
-  basic_shelter: {
-    id: 'basic_shelter',
-    category: 'structure',
-    stackable: true,
-    maxStack: 5,
-    iconType: 'shelter',
-    color: '#d6d3d1',
-  },
-  campfire_kit: {
-    id: 'campfire_kit',
-    category: 'structure',
-    stackable: true,
-    maxStack: 5,
-    iconType: 'fire',
-    color: '#ef4444',
-  },
-};
-
-export const RECIPES: CraftingRecipe[] = [
-  {
-    id: 'recipe_stone_axe',
-    outputId: 'stone_axe',
-    outputQty: 1,
-    ingredients: [
-      { itemId: 'basalt_rock', qty: 2 },
-      { itemId: 'sulfur_mineral', qty: 1 },
-    ],
-  },
-  {
-    id: 'recipe_water_vessel',
-    outputId: 'water_vessel',
-    outputQty: 1,
-    ingredients: [
-      { itemId: 'basalt_rock', qty: 2 },
-    ],
-  },
-  {
-    id: 'recipe_heat_shield',
-    outputId: 'heat_shield',
-    outputQty: 1,
-    ingredients: [
-      { itemId: 'basalt_rock', qty: 2 },
-      { itemId: 'sulfur_mineral', qty: 2 },
-    ],
-  },
-  {
-    id: 'recipe_basic_shelter',
-    outputId: 'basic_shelter',
-    outputQty: 1,
-    ingredients: [
-      { itemId: 'basalt_rock', qty: 4 },
-      { itemId: 'sulfur_mineral', qty: 1 },
-    ],
-  },
-  {
-    id: 'recipe_campfire_kit',
-    outputId: 'campfire_kit',
-    outputQty: 1,
-    ingredients: [
-      { itemId: 'basalt_rock', qty: 2 },
-      { itemId: 'sulfur_mineral', qty: 1 },
-    ],
-  },
-];
-
-export const STARTER_QUESTS: QuestDefinition[] = [
-  { id: 'q1', order: 1, targetType: 'collect_water' },
-  { id: 'q2', order: 2, targetType: 'gather_materials' },
-  { id: 'q3', order: 3, targetType: 'craft_gear' },
-  { id: 'q4', order: 4, targetType: 'place_shelter' },
-  { id: 'q5', order: 5, targetType: 'extract_crystal' },
-];

@@ -16,7 +16,7 @@ export function GameOverModal() {
       role="dialog"
       aria-modal="true"
     >
-      <section className="w-full max-w-md rounded-xl border border-red-900/70 bg-[#160e0d] p-6 sm:p-8 shadow-2xl">
+      <section className="primordia-scroll max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-xl border border-red-900/70 bg-[#160e0d] p-5 sm:p-7 shadow-2xl">
         <h2 className="font-display text-3xl font-bold text-red-400">{t('gameOver.title')}</h2>
         <p className="mt-2 text-sm text-stone-300">{t(`gameOver.${gameState.deathReason}`)}</p>
 

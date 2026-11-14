@@ -6,8 +6,8 @@ import { PrimordiaEmblem } from './ItemIcon';
 
 export function CreditsScreen() {
   return (
-    <main className="fixed inset-0 z-30 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
-      <section className="w-full max-w-lg rounded-xl border border-stone-800 bg-[#14100e] p-6 sm:p-8 shadow-2xl">
+    <main className="fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
+      <section className="primordia-scroll max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-5 sm:p-7 shadow-2xl">
         <div className="flex items-center gap-3">
           <PrimordiaEmblem className="h-10 w-10" />
           <div>

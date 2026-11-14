@@ -1,6 +1,6 @@
 # Supabase Cloud Setup Guide — PRIMORDIA
 
-PRIMORDIA works 100% offline in **Local Guest Mode** out of the box. To enable cloud saves, settings synchronization, and the global leaderboard, connect a free Supabase project:
+PRIMORDIA works 100% offline in **Local Guest Mode** out of the box. To enable cloud saves, conflict resolution, settings synchronization, and the validated global leaderboard, connect a free Supabase project:
 
 ## 1. Create a Supabase Project
 1. Go to [supabase.com](https://supabase.com) and create a new project.
@@ -10,8 +10,8 @@ PRIMORDIA works 100% offline in **Local Guest Mode** out of the box. To enable c
 
 ## 2. Run Database Schema & RLS Policies
 1. In the Supabase dashboard, open **SQL Editor**.
-2. Paste and run the contents of `supabase/schema.sql`.
-3. Paste and run the contents of `supabase/policies.sql`.
+2. Paste and run `supabase/schema.sql` (creates `cloud_saves`, `user_settings`, `leaderboard`, and the rate-limited `submit_validated_score` Postgres RPC).
+3. Paste and run `supabase/policies.sql` (configures row-level security policies and restricts direct leaderboard writes).
 
 ## 3. Configure Environment Variables
 Create a `.env` file (or set GitHub Actions Repository Secrets for GitHub Pages builds):

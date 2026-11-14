@@ -4,6 +4,7 @@ import {
   type DifficultyLevel,
   type GameSettings,
   type GraphicsPreset,
+  type HandMode,
   type KeyBindings,
   type LanguageCode,
 } from '../game/config';
@@ -13,6 +14,7 @@ import { clearAllGameStorage, writeStorage } from '../game/utils/storage';
 import { eventBus } from '../game/core/eventBus';
 import { t } from '../game/utils/i18n';
 import { ConfirmDialog } from './ConfirmDialog';
+import { usePWAInstall } from './pwaInstall';
 
 type TabId = 'graphics' | 'audio' | 'controls' | 'gameplay' | 'language' | 'account';
 
@@ -21,6 +23,7 @@ export function SettingsScreen() {
   const [draft, setDraft] = useState<GameSettings>(() => JSON.parse(JSON.stringify(gameState.settings)));
   const [listeningKey, setListeningKey] = useState<keyof KeyBindings | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const { canInstall, promptInstall } = usePWAInstall();
 
   const returnTarget = gameState.previousScreen === 'pause' ? 'pause' : 'menu';
 
@@ -30,7 +33,7 @@ export function SettingsScreen() {
   };
 
   const applyPreset = (preset: GraphicsPreset) => {
-    const viewDistance = preset === 'low' ? 85 : preset === 'medium' ? 120 : 165;
+    const viewDistance = preset === 'low' ? 85 : preset === 'medium' ? 125 : 175;
     const shadows = preset !== 'low';
     const particles = preset !== 'low';
     applyAndSave({
@@ -59,30 +62,27 @@ export function SettingsScreen() {
   const tabs: TabId[] = ['graphics', 'audio', 'controls', 'gameplay', 'language', 'account'];
 
   return (
-    <main className="fixed inset-0 z-40 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.88)' }}>
-      <section className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border border-stone-800 bg-[#14100e] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-stone-800 px-6 py-4">
-          <h2 className="font-display text-3xl font-semibold text-stone-100">{t('settings.title')}</h2>
+    <main className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.88)' }}>
+      <section className="flex max-h-[92dvh] w-full max-w-3xl flex-col rounded-xl border border-stone-800 bg-[#14100e] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-stone-800 px-5 py-3.5">
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold text-stone-100">{t('settings.title')}</h2>
           <button
             type="button"
             onClick={() => setScreen(returnTarget)}
-            className="min-h-[44px] rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-500"
+            className="min-h-[40px] rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-orange-500"
           >
             {t('settings.saveClose')}
           </button>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex flex-wrap gap-1 border-b border-stone-800 px-6 py-2">
+        <div className="flex flex-wrap gap-1 border-b border-stone-800 px-5 py-2">
           {tabs.map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`min-h-[40px] whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                tab === id
-                  ? 'bg-orange-600 text-white'
-                  : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+              className={`min-h-[38px] whitespace-nowrap rounded-lg px-3 py-1 text-xs sm:text-sm font-medium transition-colors ${
+                tab === id ? 'bg-orange-600 text-white' : 'text-stone-300 hover:bg-stone-800 hover:text-white'
               }`}
             >
               {t(`settings.tabs.${id}`)}
@@ -90,8 +90,7 @@ export function SettingsScreen() {
           ))}
         </div>
 
-        {/* Tab content */}
-        <div className="primordia-scroll flex-1 space-y-5 overflow-y-auto p-6">
+        <div className="primordia-scroll flex-1 space-y-5 overflow-y-auto p-5">
           {tab === 'graphics' && (
             <>
               <div>
@@ -102,7 +101,7 @@ export function SettingsScreen() {
                       key={p}
                       type="button"
                       onClick={() => applyPreset(p)}
-                      className={`min-h-[44px] rounded-lg border text-sm font-medium ${
+                      className={`min-h-[42px] rounded-lg border text-sm font-medium ${
                         draft.graphics.preset === p
                           ? 'border-orange-500 bg-orange-600/20 text-orange-200'
                           : 'border-stone-800 bg-stone-900 text-stone-300 hover:bg-stone-800'
@@ -123,54 +122,30 @@ export function SettingsScreen() {
                   id="view-dist"
                   type="range"
                   min="70"
-                  max="180"
+                  max="220"
                   step="5"
                   value={draft.graphics.viewDistance}
                   onChange={(e) =>
-                    applyAndSave({
-                      ...draft,
-                      graphics: { ...draft.graphics, viewDistance: Number(e.target.value) },
-                    })
+                    applyAndSave({ ...draft, graphics: { ...draft.graphics, viewDistance: Number(e.target.value) } })
                   }
                   className="mt-2 w-full accent-orange-600"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-200">{t('settings.shadows')}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    applyAndSave({
-                      ...draft,
-                      graphics: { ...draft.graphics, shadows: !draft.graphics.shadows },
-                    })
-                  }
-                  className={`min-h-[40px] rounded-lg px-4 text-sm font-medium ${
-                    draft.graphics.shadows ? 'bg-orange-600 text-white' : 'bg-stone-800 text-stone-300'
-                  }`}
-                >
-                  {draft.graphics.shadows ? t('common.on') : t('common.off')}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-200">{t('settings.particles')}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    applyAndSave({
-                      ...draft,
-                      graphics: { ...draft.graphics, particles: !draft.graphics.particles },
-                    })
-                  }
-                  className={`min-h-[40px] rounded-lg px-4 text-sm font-medium ${
-                    draft.graphics.particles ? 'bg-orange-600 text-white' : 'bg-stone-800 text-stone-300'
-                  }`}
-                >
-                  {draft.graphics.particles ? t('common.on') : t('common.off')}
-                </button>
-              </div>
+              <ToggleRow
+                label={t('settings.shadows')}
+                enabled={draft.graphics.shadows}
+                onToggle={() =>
+                  applyAndSave({ ...draft, graphics: { ...draft.graphics, shadows: !draft.graphics.shadows } })
+                }
+              />
+              <ToggleRow
+                label={t('settings.particles')}
+                enabled={draft.graphics.particles}
+                onToggle={() =>
+                  applyAndSave({ ...draft, graphics: { ...draft.graphics, particles: !draft.graphics.particles } })
+                }
+              />
 
               <div>
                 <div className="text-xs font-medium text-stone-300">{t('settings.fpsLimit')}</div>
@@ -179,9 +154,7 @@ export function SettingsScreen() {
                     <button
                       key={fps}
                       type="button"
-                      onClick={() =>
-                        applyAndSave({ ...draft, graphics: { ...draft.graphics, fpsLimit: fps } })
-                      }
+                      onClick={() => applyAndSave({ ...draft, graphics: { ...draft.graphics, fpsLimit: fps } })}
                       className={`font-mono-tabular min-h-[40px] rounded-lg border text-sm ${
                         draft.graphics.fpsLimit === fps
                           ? 'border-orange-500 bg-orange-600/20 text-orange-200'
@@ -219,10 +192,7 @@ export function SettingsScreen() {
                     step="0.05"
                     value={draft.audio[field]}
                     onChange={(e) =>
-                      applyAndSave({
-                        ...draft,
-                        audio: { ...draft.audio, [field]: Number(e.target.value) },
-                      })
+                      applyAndSave({ ...draft, audio: { ...draft.audio, [field]: Number(e.target.value) } })
                     }
                     className="mt-2 w-full accent-orange-600"
                   />
@@ -232,50 +202,78 @@ export function SettingsScreen() {
           )}
 
           {tab === 'controls' && (
-            <div className="space-y-5">
-              <div>
-                <div className="flex justify-between text-sm text-stone-300">
-                  <label htmlFor="cam-sens">{t('settings.sensitivity')}</label>
-                  <span className="font-mono-tabular">{draft.controls.sensitivity.toFixed(1)}x</span>
-                </div>
-                <input
-                  id="cam-sens"
-                  type="range"
-                  min="0.4"
-                  max="2.0"
-                  step="0.1"
-                  value={draft.controls.sensitivity}
-                  onChange={(e) =>
-                    applyAndSave({
-                      ...draft,
-                      controls: { ...draft.controls, sensitivity: Number(e.target.value) },
-                    })
-                  }
-                  className="mt-2 w-full accent-orange-600"
-                />
-              </div>
+            <div className="space-y-4">
+              <SliderRow
+                id="cam-sens"
+                label={t('settings.sensitivity')}
+                valueText={`${draft.controls.sensitivity.toFixed(1)}x`}
+                min={0.4}
+                max={2.0}
+                step={0.1}
+                value={draft.controls.sensitivity}
+                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, sensitivity: v } })}
+              />
+              <SliderRow
+                id="joy-size"
+                label={t('settings.joystickSize')}
+                valueText={`${Math.round(draft.controls.joystickSize * 100)}%`}
+                min={0.8}
+                max={1.4}
+                step={0.1}
+                value={draft.controls.joystickSize}
+                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, joystickSize: v } })}
+              />
+              <SliderRow
+                id="hud-scale"
+                label={t('settings.hudScale')}
+                valueText={`${Math.round(draft.controls.hudScale * 100)}%`}
+                min={0.75}
+                max={1.25}
+                step={0.05}
+                value={draft.controls.hudScale}
+                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, hudScale: v } })}
+              />
+              <SliderRow
+                id="btn-opacity"
+                label={t('settings.buttonOpacity')}
+                valueText={`${Math.round(draft.controls.buttonOpacity * 100)}%`}
+                min={0.45}
+                max={1.0}
+                step={0.05}
+                value={draft.controls.buttonOpacity}
+                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, buttonOpacity: v } })}
+              />
 
               <div>
-                <div className="flex justify-between text-sm text-stone-300">
-                  <label htmlFor="joy-size">{t('settings.joystickSize')}</label>
-                  <span className="font-mono-tabular">{Math.round(draft.controls.joystickSize * 100)}%</span>
+                <div className="text-xs font-medium text-stone-300">{t('settings.handMode')}</div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(['right', 'left'] as HandMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => applyAndSave({ ...draft, controls: { ...draft.controls, handMode: mode } })}
+                      className={`min-h-[40px] rounded-lg border px-3 text-xs font-medium ${
+                        draft.controls.handMode === mode
+                          ? 'border-orange-500 bg-orange-600/20 text-orange-200'
+                          : 'border-stone-800 bg-stone-900 text-stone-300'
+                      }`}
+                    >
+                      {t(mode === 'right' ? 'settings.handRight' : 'settings.handLeft')}
+                    </button>
+                  ))}
                 </div>
-                <input
-                  id="joy-size"
-                  type="range"
-                  min="0.8"
-                  max="1.4"
-                  step="0.1"
-                  value={draft.controls.joystickSize}
-                  onChange={(e) =>
-                    applyAndSave({
-                      ...draft,
-                      controls: { ...draft.controls, joystickSize: Number(e.target.value) },
-                    })
-                  }
-                  className="mt-2 w-full accent-orange-600"
-                />
               </div>
+
+              <ToggleRow
+                label={t('settings.preferLandscape')}
+                enabled={draft.controls.preferLandscape}
+                onToggle={() =>
+                  applyAndSave({
+                    ...draft,
+                    controls: { ...draft.controls, preferLandscape: !draft.controls.preferLandscape },
+                  })
+                }
+              />
 
               <div>
                 <div className="mb-2 text-xs font-medium text-stone-300">{t('settings.keyBindings')}</div>
@@ -289,7 +287,7 @@ export function SettingsScreen() {
                       <button
                         type="button"
                         onClick={() => handleKeyCapture(action)}
-                        className="font-mono-tabular min-h-[36px] rounded border border-stone-700 bg-stone-950 px-3 text-xs text-orange-300 hover:border-orange-500"
+                        className="font-mono-tabular min-h-[34px] rounded border border-stone-700 bg-stone-950 px-3 text-xs text-orange-300 hover:border-orange-500"
                       >
                         {listeningKey === action ? t('settings.pressKey') : draft.controls.keys[action]}
                       </button>
@@ -311,9 +309,7 @@ export function SettingsScreen() {
                       <button
                         key={d}
                         type="button"
-                        onClick={() =>
-                          applyAndSave({ ...draft, gameplay: { ...draft.gameplay, difficulty: d } })
-                        }
+                        onClick={() => applyAndSave({ ...draft, gameplay: { ...draft.gameplay, difficulty: d } })}
                         className={`min-h-[44px] rounded-lg border px-2 text-xs font-medium ${
                           draft.gameplay.difficulty === d
                             ? 'border-orange-500 bg-orange-600/20 text-orange-200'
@@ -327,23 +323,13 @@ export function SettingsScreen() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-200">{t('settings.showHud')}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    applyAndSave({
-                      ...draft,
-                      gameplay: { ...draft.gameplay, showHud: !draft.gameplay.showHud },
-                    })
-                  }
-                  className={`min-h-[40px] rounded-lg px-4 text-sm font-medium ${
-                    draft.gameplay.showHud ? 'bg-orange-600 text-white' : 'bg-stone-800 text-stone-300'
-                  }`}
-                >
-                  {draft.gameplay.showHud ? t('common.on') : t('common.off')}
-                </button>
-              </div>
+              <ToggleRow
+                label={t('settings.showHud')}
+                enabled={draft.gameplay.showHud}
+                onToggle={() =>
+                  applyAndSave({ ...draft, gameplay: { ...draft.gameplay, showHud: !draft.gameplay.showHud } })
+                }
+              />
 
               <div>
                 <div className="text-xs font-medium text-stone-300">{t('settings.units')}</div>
@@ -352,9 +338,7 @@ export function SettingsScreen() {
                     <button
                       key={u}
                       type="button"
-                      onClick={() =>
-                        applyAndSave({ ...draft, gameplay: { ...draft.gameplay, units: u } })
-                      }
+                      onClick={() => applyAndSave({ ...draft, gameplay: { ...draft.gameplay, units: u } })}
                       className={`min-h-[44px] rounded-lg border text-sm font-medium ${
                         draft.gameplay.units === u
                           ? 'border-orange-500 bg-orange-600/20 text-orange-200'
@@ -398,6 +382,16 @@ export function SettingsScreen() {
 
           {tab === 'account' && (
             <div className="space-y-3">
+              {canInstall && (
+                <button
+                  type="button"
+                  onClick={() => void promptInstall()}
+                  className="min-h-[44px] w-full rounded-lg border border-orange-600/70 bg-orange-950/30 px-4 py-2 text-left text-sm font-medium text-orange-200 hover:bg-orange-950/60"
+                >
+                  {t('menu.installApp')}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={async () => {
@@ -456,5 +450,61 @@ export function SettingsScreen() {
         }}
       />
     </main>
+  );
+}
+
+function ToggleRow({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-stone-200">{label}</span>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`min-h-[38px] rounded-lg px-4 text-sm font-medium ${
+          enabled ? 'bg-orange-600 text-white' : 'bg-stone-800 text-stone-300'
+        }`}
+      >
+        {enabled ? t('common.on') : t('common.off')}
+      </button>
+    </div>
+  );
+}
+
+function SliderRow({
+  id,
+  label,
+  valueText,
+  min,
+  max,
+  step,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  valueText: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex justify-between text-sm text-stone-300">
+        <label htmlFor={id}>{label}</label>
+        <span className="font-mono-tabular">{valueText}</span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-2 w-full accent-orange-600"
+      />
+    </div>
   );
 }

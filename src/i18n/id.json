@@ -2,17 +2,18 @@
   "app": {
     "title": "PRIMORDIA",
     "subtitle": "Bertahan Hidup di Bumi Purba",
-    "version": "Versi 0.4.2-Archean"
+    "version": "Versi 0.8.0-Archean"
   },
   "tips": [
-    "Dekati genangan air hangat untuk mengisi wadah air sebelum oksigen menipis.",
-    "Angin abu vulkanik menurunkan jarak pandang—bangun tempat berlindung lebih awal.",
-    "Hindari zona merah jatuhan meteor; puing meteor sering membawa Kristal Primordial.",
-    "Suhu tubuh melonjak tajam di dekat sungai lava. Gunakan Perisai Panas saat melintas.",
-    "Gas beracun berkumpul di sekitar kawah aktif—perhatikan indikator oksigen di HUD."
+    "Dekati genangan air hangat untuk mengisi wadah air sebelum dehidrasi.",
+    "Badai abu menurunkan jarak pandang—bangun tempat berlindung lebih awal.",
+    "Hindari lingkaran merah meteor; puing meteor membawa Kristal & Besi Meteorit.",
+    "Suhu tubuh melonjak di dekat sungai lava. Gunakan Perisai Panas atau Jubah Termal.",
+    "Gas beracun berkumpul di kawah sulfur—gunakan Filter Gas untuk perlindungan.",
+    "Pasang Suar Teleportasi di bioma jauh untuk berpindah cepat di peta 4 km."
   ],
   "splash": {
-    "loading": "Memuat Dunia Primordial...",
+    "loading": "Membangkitkan Dunia Primordial...",
     "ready": "Siap Menjelajah",
     "tipLabel": "Catatan Penjelajah"
   },
@@ -22,13 +23,13 @@
     "prev": "Kembali",
     "finish": "Masuk ke Menu Utama",
     "slide1Title": "Bumi Awal: Era Hadean – Archean",
-    "slide1Body": "Belum ada tumbuhan, hewan, atau manusia lain. Hanya dataran basalt panas, samudra dangkal yang mengepul, hujan meteor, dan gunung api purba.",
+    "slide1Body": "Belum ada tumbuhan, hewan, atau manusia lain. Hanya dataran basalt, samudra dangkal mengepul, dataran sulfur, ladang obsidian, hujan meteor, dan gunung api aktif seluas 4 km.",
     "slide2Title": "Kendali Penjelajah",
-    "slide2Body": "Desktop: WASD bergerak, Mouse mengarahkan kamera, Spasi melompat, Shift berlari, E berinteraksi, I inventaris, B bangun tempat berlindung. Ponsel: gunakan joystick sentuh & tombol aksi.",
-    "slide3Title": "Aturan Bertahan Hidup",
-    "slide3Body": "Pantau 5 indikator utama: Kesehatan, Stamina, Suhu Tubuh, Oksigen, dan Hidrasi. Kumpulkan batu, mineral, kristal, serta air untuk merakit peralatan.",
+    "slide2Body": "Desktop: WASD gerak, Mouse kamera, Spasi lompat, Shift lari, E aksi, I tas, B bangun, M peta, J jurnal, F3 debug. Ponsel: joystick multi-sentuh & tombol aksi di mode potret atau lanskap.",
+    "slide3Title": "Survival & Progres Teknologi",
+    "slide3Body": "Pantau Kesehatan, Stamina, Suhu Tubuh, Oksigen, Hidrasi, Radiasi, dan Kelelahan. Naikkan 5 Tingkat Teknologi dari kapak batu hingga sintesis Benih Kehidupan.",
     "slide4Title": "Kalibrasi Grafis Otomatis",
-    "slide4Body": "Sistem mendeteksi perangkat Anda dan memilih preset grafis optimal agar simulasi 3D berjalan stabil. Anda dapat mengubahnya kapan saja di Pengaturan.",
+    "slide4Body": "Sistem mendeteksi perangkat Anda dan memilih preset grafis seimbang. Kualitas adaptif juga otomatis menjaga kelancaran framerate.",
     "detectedPreset": "Preset Terdeteksi"
   },
   "menu": {
@@ -39,11 +40,13 @@
     "credits": "Kredit",
     "account": "Akun & Cloud",
     "guestBadge": "Mode Tamu Lokal",
-    "signedInAs": "Masuk sebagai"
+    "signedInAs": "Masuk sebagai",
+    "installApp": "Pasang Aplikasi (PWA)",
+    "offlineReady": "Siap Offline"
   },
   "auth": {
     "title": "Akun & Sinkronisasi Cloud",
-    "subtitle": "Masuk dengan Supabase untuk menyimpan progres ke cloud, atau lanjutkan secara offline sebagai tamu.",
+    "subtitle": "Masuk dengan Supabase untuk menyinkronkan progres lintas perangkat, atau main offline sebagai tamu.",
     "email": "Email",
     "password": "Kata Sandi",
     "signIn": "Masuk",
@@ -51,7 +54,7 @@
     "magicLink": "Kirim Magic Link",
     "continueGuest": "Lanjut sebagai Tamu (Offline)",
     "signOut": "Keluar",
-    "notConfigured": "Supabase belum dikonfigurasi di environment. Mode Tamu Lokal aktif sepenuhnya.",
+    "notConfigured": "Supabase belum dikonfigurasi. Mode Tamu Lokal aktif sepenuhnya.",
     "magicSent": "Tautan masuk telah dikirim ke email Anda.",
     "authSuccess": "Berhasil masuk ke akun.",
     "back": "Kembali"
@@ -60,11 +63,30 @@
     "title": "Persiapan Ekspedisi Baru",
     "explorerName": "Nama Penjelajah",
     "defaultName": "Arka-01",
-    "appearance": "Kustomisasi Penjelajah",
+    "appearance": "Kustomisasi Penjelajah 3D",
     "height": "Tinggi Tubuh",
+    "build": "Postur Tubuh",
+    "builds": {
+      "slim": "Ramping",
+      "standard": "Standar",
+      "athletic": "Atletis"
+    },
     "skinTone": "Warna Kulit",
     "hairColor": "Warna Rambut",
+    "hairStyle": "Gaya Rambut / Tudung",
+    "hairStyles": {
+      "short": "Pendek",
+      "ponytail": "Kuncir",
+      "buzz": "Cepak",
+      "hood": "Tudung Termal"
+    },
     "suitColor": "Warna Pelindung Suit",
+    "packStyle": "Model Ransel",
+    "packStyles": {
+      "o2_pack": "Tabung O2",
+      "expedition": "Rangka Ekspedisi",
+      "scout": "Pengintai Ringan"
+    },
     "worldSeed": "Benih Dunia (Seed)",
     "randomizeSeed": "Acak",
     "difficulty": "Tingkat Kesulitan",
@@ -72,7 +94,8 @@
     "diffSurvivor": "Penyintas (Standar)",
     "diffHadean": "Hadean (Ekstrem)",
     "start": "Mulai Ekspedisi",
-    "cancel": "Batal"
+    "cancel": "Batal",
+    "ngPlusBadge": "Pengetahuan New Game+ Aktif"
   },
   "loadGame": {
     "title": "Muat Ekspedisi Tersimpan",
@@ -86,7 +109,12 @@
     "delete": "Hapus",
     "confirmDeleteTitle": "Hapus Simpanan?",
     "confirmDeleteBody": "Data simpanan ini akan dihapus permanen.",
-    "back": "Kembali"
+    "back": "Kembali",
+    "conflictTitle": "Konflik Simpanan Cloud Terdeteksi",
+    "conflictBody": "Simpanan lokal dan cloud pada slot ini berbeda. Pilih progres yang ingin dipertahankan.",
+    "keepLocal": "Pertahankan Lokal",
+    "keepCloud": "Gunakan Cloud",
+    "keepBoth": "Simpan Keduanya (Lokal ke Slot 3)"
   },
   "settings": {
     "title": "Pengaturan",
@@ -114,6 +142,12 @@
     "ambientVol": "Ambien Alam",
     "sensitivity": "Sensitivitas Kamera",
     "joystickSize": "Ukuran Joystick Sentuh",
+    "hudScale": "Skala HUD",
+    "buttonOpacity": "Transparansi Tombol Sentuh",
+    "handMode": "Tata Letak Tangan",
+    "handRight": "Normal (Joystick Kiri)",
+    "handLeft": "Kidal (Joystick Kanan)",
+    "preferLandscape": "Petunjuk Mode Lanskap",
     "keyBindings": "Pemetaan Tombol",
     "pressKey": "Tekan tombol...",
     "difficulty": "Tingkat Kesulitan",
@@ -128,7 +162,32 @@
     "confirmClearTitle": "Hapus Semua Data Lokal?",
     "confirmClearBody": "Semua simpanan lokal dan pengaturan akan dihapus dari browser ini.",
     "saveClose": "Simpan & Tutup",
-    "reset": "Setel Ulang"
+    "reset": "Setel Ulang",
+    "adaptiveDown": "Kualitas grafis disesuaikan otomatis demi kelancaran FPS."
+  },
+  "biomes": {
+    "shallow_ocean": "Samudra Dangkal Mengepul",
+    "black_basalt_plains": "Dataran Basalt Hitam",
+    "volcanic_ridge": "Punggungan Vulkanik",
+    "lava_rift": "Celah Sungai Lava",
+    "sulfur_flats": "Dataran Fumarol Sulfur",
+    "obsidian_fields": "Ladang Obsidian",
+    "geyser_basin": "Cekungan Geyser Termal",
+    "crystal_crater": "Kawah Kristal Primordial",
+    "ash_dunes": "Bukit Abu Vulkanik",
+    "meteor_impact": "Zona Tumbukan Meteorit"
+  },
+  "events": {
+    "super_eruption": "ERUPSI SUPER SEGERA TERJADI — CARI PERLINDUNGAN",
+    "toxic_surge": "GELOMBANG GAS SULFUR BERACUN",
+    "meteor_swarm": "BADAI HUJAN METEOR ORBITAL"
+  },
+  "tutorials": {
+    "tut_water": "Tips Hidrasi: Masuk ke genangan air dangkal dan tekan [E] untuk mengisi air.",
+    "tut_shelter": "Peringatan Badai: Rakit dan pasang Shelter Basalt [B] agar aman dari hujan asam & gas.",
+    "tut_build": "Mode Bangun: Tekan [R] untuk memutar modul, [E/Pasang] untuk menempelkan, [Esc] batal.",
+    "tut_radiation": "Radiasi Terdeteksi: Zona meteorit memancarkan radiasi. Gunakan Penyerap Radiasi atau Lapisan Hazmat.",
+    "tut_fatigue": "Kelelahan Tinggi: Beristirahatlah di dalam Shelter untuk memulihkan energi tidur."
   },
   "hud": {
     "health": "Kesehatan",
@@ -136,6 +195,12 @@
     "temperature": "Suhu Tubuh",
     "oxygen": "Oksigen",
     "water": "Hidrasi",
+    "radiation": "Radiasi",
+    "fatigue": "Istirahat",
+    "weight": "Beban",
+    "filter": "Filter Gas",
+    "burnStatus": "TERBAKAR",
+    "woundStatus": "LUKA",
     "objective": "Misi Aktif",
     "weather": {
       "clear_haze": "Kabut Oranye",
@@ -149,43 +214,200 @@
       "heat": "Panas Ekstrem",
       "toxic": "Gas Beracun",
       "meteor": "Bahaya Meteor",
+      "radiation": "Zona Radiasi",
       "sheltered": "Terlindung Shelter"
     },
     "interact": "Tekan [E] untuk",
     "actions": {
-      "gather_rock": "Ambil Batu Basalt",
-      "gather_mineral": "Tambang Mineral",
+      "gather_rock": "Ambil Basalt & Lempung",
+      "gather_mineral": "Tambang Sulfur & Bijih Besi",
+      "gather_obsidian": "Pecah Serpihan Obsidian",
+      "gather_salt": "Ambil Garam Termal",
+      "gather_meteor_iron": "Tambang Besi Meteorit",
       "gather_crystal": "Ekstrak Kristal Primordial",
       "collect_water": "Ambil Air Hangat",
-      "light_fire": "Nyalakan Api dari Lava",
-      "rest_shelter": "Berlindung & Pulihkan Kondisi"
+      "open_storage": "Buka Peti Penyimpanan",
+      "collect_rain": "Ambil Air Kondensasi",
+      "use_beacon": "Buka Peta Teleportasi",
+      "seed_pool": "Tanam Benih Kehidupan",
+      "rest_shelter": "Istirahat & Tidur di Shelter"
     },
-    "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas & Rakit · B Shelter · Esc Jeda",
+    "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas · B Bangun · M Peta · J Jurnal · F3 Debug",
     "pauseBtn": "Jeda",
     "inventoryBtn": "Tas",
-    "buildBtn": "Bangun"
+    "mapBtn": "Peta",
+    "journalBtn": "Jurnal",
+    "buildBtn": "Bangun",
+    "rotateHint": "Putar ponsel ke posisi lanskap untuk jarak pandang lebih luas.",
+    "fullscreenBtn": "Layar Penuh",
+    "inspectItem": "Periksa",
+    "dropOne": "Buang 1",
+    "placeConfirm": "Pasang [E]",
+    "cancelBuild": "Batal",
+    "tapFullscreen": "Ketuk layar untuk mode layar penuh"
+  },
+  "map": {
+    "title": "Peta Survei Primordial (4 km × 4 km)",
+    "close": "Tutup [M]",
+    "legend": "Legenda",
+    "player": "Penjelajah",
+    "beacon": "Suar Teleportasi",
+    "poi": "Titik Penting",
+    "waypoint": "Penanda Pribadi",
+    "clickHint": "Klik/Sentuh area peta untuk menaruh penanda. Klik Suar untuk berpindah cepat.",
+    "fastTravel": "Teleportasi ke Sini",
+    "clearWaypoint": "Hapus Penanda",
+    "discoveredChunks": "Sektor Terjelajahi"
+  },
+  "journal": {
+    "title": "Jurnal Penjelajah & Pencapaian",
+    "close": "Tutup [J]",
+    "tabDiscoveries": "Temuan Lapangan",
+    "tabCampaign": "Kampanye (22)",
+    "tabAchievements": "Pencapaian",
+    "tabContracts": "Kontrak Survei",
+    "unlocked": "Tercatat",
+    "locked": "Belum ditemukan — Jelajahi lebih jauh untuk mencatat entri ini.",
+    "contractTitle": "Kontrak Survei Ulang Lapangan",
+    "contractDesc": "Ekstrak 1 Kristal Primordial atau 2 Besi Meteorit dan jelajahi 250m untuk mengirim telemetri.",
+    "contractClaim": "Selesaikan Kontrak (+Skor)",
+    "entries": {
+      "j_basalt": {
+        "title": "Kerak Basalt Hadean",
+        "body": "Dataran lava mafik membeku yang membentuk perisai benua paling awal di Bumi."
+      },
+      "j_ocean": {
+        "title": "Samudra Dangkal Archean",
+        "body": "Lautan awal yang hangat dan kaya besi di bawah atmosfer CO2 dan uap air pekat."
+      },
+      "j_volcano": {
+        "title": "Kaldera Gunung Hadean",
+        "body": "Titik panas mantel yang memuntahkan lava basaltik dan gas sulfur dioksida."
+      },
+      "j_sulfur": {
+        "title": "Dataran Fumarol Sulfur",
+        "body": "Ventilasi geotermal pelepas awan H2S dan SO2; wajib memakai Filter Gas."
+      },
+      "j_obsidian": {
+        "title": "Kaca Vulkanik Obsidian",
+        "body": "Magma kaya silika yang mendingin mendadak membentuk kaca vulkanik tajam."
+      },
+      "j_geyser": {
+        "title": "Cekungan Geyser Hidrotermal",
+        "body": "Mata air panas kaya mineral pengendap garam termal—kandidat awal reaksi prebiotik."
+      },
+      "j_crater": {
+        "title": "Kawah Kristal Tumbukan",
+        "body": "Tekanan hantaman asteroid melebur silikat menjadi Kristal Primordial bercahaya."
+      },
+      "j_meteor": {
+        "title": "Jejak Hujan Meteor Berat",
+        "body": "Pecahan meteorit nikel-besi yang memancarkan radiasi kosmik ringan."
+      },
+      "j_crystal": {
+        "title": "Resonansi Kristal Primordial",
+        "body": "Kisi kristal berenergi tinggi untuk menyalakan Suar Teleportasi dan Lab Riset."
+      },
+      "j_meteor_iron": {
+        "title": "Nikel-Besi Ekstraterestrial",
+        "body": "Paduan logam asteroid yang jauh lebih kuat daripada batuan basalt biasa."
+      },
+      "j_thermal_salt": {
+        "title": "Garam Termal Evaporit",
+        "body": "Garam mineral katalitik untuk salep luka bakar dan sintesis membran lipid."
+      },
+      "j_quake": {
+        "title": "Gempa Tektonik Purba",
+        "body": "Kerak awal yang tipis kerap retak hebat akibat konveksi mantel bumi."
+      },
+      "j_ash_storm": {
+        "title": "Badai Abu Piroklastik",
+        "body": "Partikel abu halus mengotori baju pelindung dan mengurangi jarak pandang."
+      },
+      "j_acid_rain": {
+        "title": "Hujan Asam Sulfat",
+        "body": "Aerosol vulkanik turun menjadi hujan korosif; berlindunglah di shelter."
+      }
+    }
+  },
+  "achievements": {
+    "ach_first_water": {
+      "name": "Hidrasi Pertama",
+      "desc": "Ambil air dari genangan dangkal purba."
+    },
+    "ach_first_shelter": {
+      "name": "Melawan Langit",
+      "desc": "Bangun Shelter Basalt pertamamu."
+    },
+    "ach_crystal_finder": {
+      "name": "Harta Tumbukan",
+      "desc": "Ekstrak Kristal Primordial."
+    },
+    "ach_biome_walker": {
+      "name": "Pengelana Benua",
+      "desc": "Jelajahi jarak minimal 1.000 meter di Bumi purba."
+    },
+    "ach_metallurgist": {
+      "name": "Pandai Besi Archean",
+      "desc": "Lebur Besi Murni di Tungku Peleburan."
+    },
+    "ach_modular_architect": {
+      "name": "Arsitek Pos",
+      "desc": "Pasang minimal 5 modul bangunan."
+    },
+    "ach_beacon_network": {
+      "name": "Jaringan Suar",
+      "desc": "Dirikan Suar Teleportasi."
+    },
+    "ach_seed_of_life": {
+      "name": "Fajar Kehidupan",
+      "desc": "Sintesis dan tanam Benih Kehidupan."
+    }
+  },
+  "storage": {
+    "title": "Peti Penyimpanan Basalt",
+    "close": "Tutup",
+    "playerBag": "Tas Penjelajah",
+    "chestContents": "Isi Peti",
+    "storeOne": "Simpan",
+    "takeOne": "Ambil",
+    "emptyChest": "Peti penyimpanan kosong."
+  },
+  "victory": {
+    "title": "Fajar Archean: Benih Kehidupan Tertanam",
+    "subtitle": "Di tengah badai vulkanik, gas sulfur beracun, dan hujan meteor, Anda berhasil mensintesis membran prebiotik dan menanam cikal bakal kehidupan pertama di mata air hidrotermal.",
+    "scoreLabel": "Skor Ekspedisi",
+    "continueExplore": "Lanjutkan Survival Bebas",
+    "startNgPlus": "Mulai New Game+ (Bawa Resep & Jurnal)",
+    "mainMenu": "Menu Utama"
   },
   "pause": {
     "title": "Ekspedisi Dijeda",
     "resume": "Lanjutkan",
-    "saveLocal": "Simpan ke Slot 1",
+    "saveLocal": "Simpan Slot 1",
+    "saveSlot2": "Simpan Slot 2",
+    "saveSlot3": "Simpan Slot 3",
     "saveCloud": "Simpan ke Cloud",
     "settings": "Pengaturan",
     "mainMenu": "Kembali ke Menu Utama",
     "savedToast": "Progres permainan tersimpan."
   },
   "inventory": {
-    "title": "Inventaris & Perakitan",
+    "title": "Inventaris, Perakitan & Cetak Biru",
     "bagTab": "Tas Penjelajah",
-    "craftTab": "Rakit Peralatan",
+    "craftTab": "Rakit (5 Tingkat)",
     "close": "Tutup [I]",
-    "empty": "Tas masih kosong. Kumpulkan batu, mineral, kristal, dan air di permukaan.",
+    "empty": "Tas masih kosong. Kumpulkan batu, mineral, lempung, dan air di permukaan.",
     "use": "Gunakan",
-    "equip": "Pasang ke Hotbar",
-    "place": "Bangun di Lokasi",
+    "equip": "Pasang Hotbar",
+    "place": "Bangun / Tempelkan",
     "craft": "Rakit",
     "missingMaterials": "Bahan Kurang",
-    "craftedToast": "Berhasil merakit"
+    "needStation": "Butuh",
+    "craftedToast": "Berhasil merakit",
+    "unlockedRecipe": "Resep Terbuka",
+    "allTiers": "Semua",
+    "tierLabel": "Tingkat"
   },
   "items": {
     "basalt_rock": {
@@ -194,61 +416,266 @@
     },
     "sulfur_mineral": {
       "name": "Mineral Vulkanik",
-      "desc": "Bijih logam dan sulfur purba dari celah batuan."
+      "desc": "Bijih sulfur purba dari celah fumarol."
     },
-    "primordial_crystal": {
-      "name": "Kristal Primordial",
-      "desc": "Kristal bercahaya berenergi tinggi dari kawah meteor."
+    "ash_clay": {
+      "name": "Lempung Abu",
+      "desc": "Lempung vulkanik halus untuk bata, filter, dan perban."
+    },
+    "silicate_sand": {
+      "name": "Pasir Silikat",
+      "desc": "Pasir mineral halus untuk dilebur menjadi kaca silika."
+    },
+    "purified_water": {
+      "name": "Air Murni",
+      "desc": "Air tersaring mineral (+45% Hidrasi, +10% Istirahat)."
     },
     "stone_axe": {
       "name": "Kapak Batu",
-      "desc": "Mempercepat pengumpulan batu dan mineral di lapangan."
+      "desc": "Alat Tingkat 1 yang menggandakan hasil tambang."
     },
     "water_vessel": {
       "name": "Wadah Air",
-      "desc": "Menampung air dari kolam dangkal untuk diminum saat haus."
+      "desc": "Wadah isi ulang untuk minum saat haus (+35% Hidrasi)."
+    },
+    "campfire_kit": {
+      "name": "Perapian Lava",
+      "desc": "Sumber cahaya dan kehangatan di malam Archean."
+    },
+    "basic_shelter": {
+      "name": "Shelter Basalt",
+      "desc": "Tempat berlindung dari hujan asam, badai abu, dan panas."
+    },
+    "obsidian_shard": {
+      "name": "Serpihan Obsidian",
+      "desc": "Kaca vulkanik tajam untuk alat Tingkat 2 & insulasi."
+    },
+    "thermal_salt": {
+      "name": "Garam Termal",
+      "desc": "Garam mineral dari cekungan geyser panas."
+    },
+    "iron_slag": {
+      "name": "Bijih Besi Vulkanik",
+      "desc": "Bijih besi mentah siap dilebur di tungku."
     },
     "heat_shield": {
       "name": "Perisai Panas",
       "desc": "Mengurangi panas ekstrem di dekat sungai lava."
     },
-    "basic_shelter": {
-      "name": "Shelter Basalt",
-      "desc": "Tempat berlindung portabel dari hujan asam, badai abu, dan panas."
+    "obsidian_pick": {
+      "name": "Beliung Obsidian",
+      "desc": "Alat Tingkat 2 dengan hasil 3x dan mampu menambang obsidian."
     },
-    "campfire_kit": {
-      "name": "Perapian Lava",
-      "desc": "Sumber cahaya dan penghangat stabil di malam Archean."
+    "gas_filter": {
+      "name": "Filter Gas Beracun",
+      "desc": "Menahan 100% gas beracun sulfur hingga filter habis."
+    },
+    "mineral_bandage": {
+      "name": "Perban Mineral",
+      "desc": "Memulihkan +30 Kesehatan dan menghentikan luka."
+    },
+    "burn_salve": {
+      "name": "Salep Luka Bakar",
+      "desc": "Meredakan luka bakar lava/asam dan memulihkan +18 Kesehatan."
+    },
+    "workbench": {
+      "name": "Meja Kerja Penjelajah",
+      "desc": "Stasiun untuk merakit peralatan Tingkat 2 & 3."
+    },
+    "storage_chest": {
+      "name": "Peti Penyimpanan",
+      "desc": "Peti batu untuk menyimpan barang berlebih."
+    },
+    "refined_iron": {
+      "name": "Besi Murni",
+      "desc": "Batangan besi hasil peleburan untuk bangunan & alat."
+    },
+    "basalt_brick": {
+      "name": "Bata Basalt",
+      "desc": "Blok batu potong untuk lantai, dinding, dan atap modular."
+    },
+    "silica_glass": {
+      "name": "Kaca Silika",
+      "desc": "Kaca tahan panas untuk penampung air & instrumen riset."
+    },
+    "smelter_furnace": {
+      "name": "Tungku Peleburan",
+      "desc": "Stasiun metalurgi bersuhu tinggi untuk besi & kaca."
+    },
+    "water_collector": {
+      "name": "Penampung Kondensasi",
+      "desc": "Mengumpulkan uap air dan menyaring hujan asam otomatis."
+    },
+    "floor_tile": {
+      "name": "Lantai Modular",
+      "desc": "Pelat fondasi basalt 3x3m yang menempel rapi ke kisi."
+    },
+    "wall_panel": {
+      "name": "Dinding Modular",
+      "desc": "Panel dinding pos penjelajah yang kokoh."
+    },
+    "roof_panel": {
+      "name": "Atap Modular",
+      "desc": "Pelindung atap penahan hujan asam dan abu."
+    },
+    "door_frame": {
+      "name": "Pintu Airlock Modular",
+      "desc": "Bingkai pintu masuk pos modular."
+    },
+    "thermal_cloak": {
+      "name": "Jubah Termal Obsidian",
+      "desc": "Insulasi pasif pemotong suhu ekstrem hingga 50%."
+    },
+    "expedition_pack": {
+      "name": "Ransel Ekspedisi",
+      "desc": "Menambah kapasitas beban bawaan +35 kg."
+    },
+    "primordial_crystal": {
+      "name": "Kristal Primordial",
+      "desc": "Kristal berenergi tinggi hasil tumbukan meteor."
+    },
+    "meteor_iron": {
+      "name": "Besi Meteorit",
+      "desc": "Logam paduan luar angkasa yang sangat tangguh."
+    },
+    "crystal_core": {
+      "name": "Inti Energi Kristal",
+      "desc": "Sumber daya stabil untuk Suar & teknologi Tingkat 4."
+    },
+    "rad_scrubber": {
+      "name": "Penyerap Radiasi",
+      "desc": "Menurunkan paparan radiasi sebesar -55%."
+    },
+    "meteor_drill": {
+      "name": "Bor Meteorit",
+      "desc": "Ekstraktor Tingkat 4 untuk kristal dan besi meteorit."
+    },
+    "research_station": {
+      "name": "Lab Riset Archean",
+      "desc": "Stasiun Tingkat 4/5 untuk sintesis kimia prebiotik."
+    },
+    "fast_beacon": {
+      "name": "Suar Teleportasi",
+      "desc": "Titik pindah cepat lewat Peta Survei [M]."
+    },
+    "hazmat_lining": {
+      "name": "Lapisan Suit Hazmat",
+      "desc": "Pelindung pasif terhadap radiasi dan gas beracun."
+    },
+    "amino_compound": {
+      "name": "Senyawa Amino Prebiotik",
+      "desc": "Blok penyusun organik hasil katalis sulfur & garam."
+    },
+    "lipid_membrane": {
+      "name": "Membran Lipid Protosel",
+      "desc": "Lapisan vesikula pelindung yang terkatalis lempung."
+    },
+    "stabilizer_cell": {
+      "name": "Kapsul Stabilisator",
+      "desc": "Menjaga molekul prebiotik tetap utuh di air panas."
+    },
+    "seed_of_life": {
+      "name": "Benih Kehidupan",
+      "desc": "Puncak sains Archean. Tanam di mata air Cekungan Geyser!"
     }
   },
   "quests": {
     "q1": {
-      "title": "Jejak Air Pertama",
-      "desc": "Temukan kolam air dangkal dan isi persediaan air (E)."
+      "title": "1. Jejak Air Pertama",
+      "desc": "Masuk ke kolam dangkal dan isi air [E]."
     },
     "q2": {
-      "title": "Fondasi Basalt",
+      "title": "2. Fondasi Basalt",
       "desc": "Kumpulkan 4 Batu Basalt dan 2 Mineral Vulkanik."
     },
     "q3": {
-      "title": "Peralatan Penyintas",
-      "desc": "Rakit Kapak Batu dan Wadah Air di menu Perakitan [I]."
+      "title": "3. Peralatan Penyintas",
+      "desc": "Rakit Kapak Batu dan Wadah Air [I]."
     },
     "q4": {
-      "title": "Tempat Berlindung",
-      "desc": "Rakit dan dirikan Shelter Basalt [B] untuk menahan cuaca ekstrem."
+      "title": "4. Tempat Berlindung",
+      "desc": "Rakit dan pasang Shelter Basalt [B] untuk menahan badai."
     },
     "q5": {
-      "title": "Jantung Kawah",
-      "desc": "Temukan dan ekstrak Kristal Primordial dari zona kawah meteor."
+      "title": "5. Jantung Kawah",
+      "desc": "Pergi ke timur dan ekstrak Kristal Primordial."
     },
-    "completedAll": "Semua Misi Pemula Selesai — Teruskan Eksplorasi Bebas!"
+    "q6": {
+      "title": "6. Bengkel Lapangan",
+      "desc": "Rakit dan dirikan Meja Kerja Penjelajah."
+    },
+    "q7": {
+      "title": "7. Kaca Vulkanik",
+      "desc": "Jelajahi Ladang Obsidian dan kumpulkan 2 Serpihan Obsidian."
+    },
+    "q8": {
+      "title": "8. Mata Beliung",
+      "desc": "Rakit Beliung Obsidian di Meja Kerja."
+    },
+    "q9": {
+      "title": "9. Pelindung Napas",
+      "desc": "Rakit Filter Gas untuk menembus Dataran Sulfur."
+    },
+    "q10": {
+      "title": "10. Gudang Bekal",
+      "desc": "Dirikan Peti Penyimpanan untuk menampung bijih berat."
+    },
+    "q11": {
+      "title": "11. Fajar Zaman Besi",
+      "desc": "Rakit dan tempatkan Tungku Peleburan."
+    },
+    "q12": {
+      "title": "12. Metalurgi Purba",
+      "desc": "Lebur 2 Besi Murni di dalam Tungku Peleburan."
+    },
+    "q13": {
+      "title": "13. Pos Modular",
+      "desc": "Pasang 3 modul bangunan (Lantai, Dinding, atau Atap)."
+    },
+    "q14": {
+      "title": "14. Penguasa Termal",
+      "desc": "Rakit Jubah Termal Obsidian atau Ransel Ekspedisi."
+    },
+    "q15": {
+      "title": "15. Laboratorium Archean",
+      "desc": "Dirikan Lab Riset Archean Tingkat 4."
+    },
+    "q16": {
+      "title": "16. Logam Bintang Jatuh",
+      "desc": "Tambang 2 Besi Meteorit di Zona Tumbukan Meteorit."
+    },
+    "q17": {
+      "title": "17. Penyalaan Inti",
+      "desc": "Lebur 1 Inti Energi Kristal."
+    },
+    "q18": {
+      "title": "18. Jaringan Suar",
+      "desc": "Pasang Suar Teleportasi dan jelajahi jarak 600m."
+    },
+    "q19": {
+      "title": "19. Sintesis Amino",
+      "desc": "Sintesis Senyawa Amino Prebiotik di Lab Riset."
+    },
+    "q20": {
+      "title": "20. Membran Protosel",
+      "desc": "Sintesis Membran Lipid Protosel."
+    },
+    "q21": {
+      "title": "21. Benih Kehidupan",
+      "desc": "Rakit Benih Kehidupan di Lab Riset."
+    },
+    "q22": {
+      "title": "22. Buaian Biologi",
+      "desc": "Pergi ke Cekungan Geyser dan tanam Benih Kehidupan [E]."
+    },
+    "completedAll": "Kampanye Selesai! Lanjutkan Survival Bebas atau NG+."
   },
   "gameOver": {
     "title": "Penjelajah Tumbang",
-    "reasonTemp": "Hipertermia akibat panas ekstrem lava.",
+    "reasonTemp": "Hipertermia atau hipotermia akibat suhu ekstrem.",
     "reasonOxygen": "Kehabisan oksigen di zona gas beracun.",
     "reasonDehydration": "Dehidrasi berat di dataran kering.",
+    "reasonRadiation": "Keracunan radiasi akut dari zona meteorit.",
     "reasonMeteor": "Terkena hantaman langsung meteor.",
     "reasonGeneric": "Kondisi vital penjelajah mencapai nol.",
     "statTime": "Waktu Bertahan",
@@ -260,8 +687,15 @@
   "credits": {
     "title": "Kredit & Informasi",
     "lead": "PRIMORDIA — Simulasi Survival Bumi Purba (Hadean – Archean)",
-    "engine": "Dibangun dengan Three.js WebGL Prosedural, Web Audio API, React Shell, dan dukungan Cloud Supabase.",
+    "engine": "Dibangun dengan Three.js Chunk Streaming, Fisika Fixed-Timestep, Web Audio, React UI, PWA Offline, dan sinkronisasi opsional Supabase.",
     "back": "Kembali"
+  },
+  "errors": {
+    "title": "Pemulihan Simulasi",
+    "body": "Terjadi gangguan tampilan tak terduga. Simpanan otomatis terakhir Anda tetap aman.",
+    "copyDebug": "Salin Info Debug",
+    "copied": "Tersalin!",
+    "reload": "Muat Ulang"
   },
   "common": {
     "confirm": "Konfirmasi",
