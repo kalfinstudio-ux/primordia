@@ -141,6 +141,8 @@ export interface RuntimeGameState {
   previousScreen: ScreenName;
   onboardingDone: boolean;
   worldSeed: string;
+  /** Waktu lahir (ms epoch, waktu nyata). Umur abadi dihitung dari sini dan tidak pernah direset. */
+  bornAtMs: number;
   avatar: AvatarConfig;
   settings: GameSettings;
   user: UserSession;
@@ -229,6 +231,7 @@ export const gameState: RuntimeGameState = {
   previousScreen: 'menu',
   onboardingDone: readStorage<boolean>('onboarding_done', false),
   worldSeed: 'HADEAN-01',
+  bornAtMs: Date.now(),
   avatar: { ...DEFAULT_AVATAR, ...readStorage<Partial<AvatarConfig>>('last_avatar', {}) },
   settings: loadInitialSettings(),
   user: { mode: 'guest', userId: null, email: null },
@@ -300,6 +303,7 @@ export function saveSettingsToLocal(next: GameSettings): void {
 
 export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowledge = false): void {
   gameState.worldSeed = seed || 'HADEAN-01';
+  if (!preserveKnowledge) gameState.bornAtMs = Date.now();
   gameState.avatar = { ...DEFAULT_AVATAR, ...avatar };
   writeStorage('last_avatar', gameState.avatar);
   gameState.vitals = createInitialVitals();

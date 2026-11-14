@@ -1,3 +1,4 @@
+import { realTimeOfDay } from '../data/eden';
 import * as THREE from 'three';
 import type { WeatherType } from '../config';
 import { gameState } from '../core/state';
@@ -123,8 +124,8 @@ export class SkySystem {
   }
 
   update(dt: number, scene: THREE.Scene, centerPos: THREE.Vector3, weather: WeatherType): void {
-    // 1 full day/night cycle every ~240 seconds
-    this.timeOfDay = (this.timeOfDay + dt / 240) % 1;
+    // Waktu mengikuti jam nyata perangkat (0 = tengah malam, 0.5 = tengah hari)
+    this.timeOfDay = realTimeOfDay(new Date());
     this.flashIntensity = Math.max(0, this.flashIntensity - dt * 3.8);
     this.skyMat.uniforms.uFlash.value = this.flashIntensity;
 

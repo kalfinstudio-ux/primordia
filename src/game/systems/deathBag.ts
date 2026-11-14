@@ -1,3 +1,4 @@
+import { recordDeathOnServer } from '../net/immortal';
 import { BALANCE } from '../data/balance';
 import { gameState, setScreen, type DeathBag, type InventorySlot } from '../core/state';
 import { eventBus } from '../core/eventBus';
@@ -110,6 +111,7 @@ export function handlePlayerDeath(reason: string): void {
   gameState.deathBags = res.bags;
   gameState.inventory = res.inventory;
   gameState.deathReason = reason;
+  void recordDeathOnServer(); // umur abadi TIDAK direset; hanya hitung kematian
   gameState.vitals.filterDurability = 0;
   eventBus.emit('deathbags:changed', gameState.deathBags);
   eventBus.emit('audio:sfx', 'gameover');

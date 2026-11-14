@@ -1,3 +1,4 @@
+import { syncImmortalAge } from './immortal';
 import { gameState } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
@@ -16,6 +17,7 @@ export async function initAuthSession(): Promise<void> {
       };
       eventBus.emit('auth:changed', gameState.user);
       void pullCloudSettings();
+      void syncImmortalAge();
     }
     sb.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
@@ -28,6 +30,7 @@ export async function initAuthSession(): Promise<void> {
         gameState.user = { mode: 'guest', userId: null, email: null };
       }
       eventBus.emit('auth:changed', gameState.user);
+      if (session?.user) void syncImmortalAge();
     });
   } catch {
     // Offline fallback silently keeps guest mode

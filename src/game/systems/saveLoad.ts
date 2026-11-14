@@ -1,3 +1,4 @@
+import { sanitizeBornAt } from '../data/eden';
 import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
   type DeathBag,
@@ -39,6 +40,7 @@ export interface SaveSlotData {
   meteorIronCollectedCount: number;
   playerPos: { x: number; y: number; z: number; yaw: number };
   playtimeSec: number;
+  bornAtMs?: number;
   distanceExplored: number;
   updatedAt: string;
 }
@@ -99,6 +101,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     meteorIronCollectedCount: Number(raw.meteorIronCollectedCount) || 0,
     playerPos: (raw.playerPos as SaveSlotData['playerPos']) || { x: 0, y: 0, z: 18, yaw: Math.PI },
     playtimeSec: Number(raw.playtimeSec) || 0,
+    bornAtMs: raw.bornAtMs === undefined ? undefined : sanitizeBornAt(raw.bornAtMs),
     distanceExplored: Number(raw.distanceExplored) || 0,
     updatedAt: String(raw.updatedAt || new Date().toISOString()),
   };
@@ -141,6 +144,7 @@ export function buildCurrentSaveSnapshot(slot: number): SaveSlotData {
     meteorIronCollectedCount: gameState.meteorIronCollectedCount,
     playerPos: { ...gameState.playerPos },
     playtimeSec: Math.round(gameState.playtimeSec),
+    bornAtMs: gameState.bornAtMs,
     distanceExplored: Math.round(gameState.distanceExplored),
     updatedAt: new Date().toISOString(),
   };
@@ -226,6 +230,7 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.meteorIronCollectedCount = data.meteorIronCollectedCount;
   gameState.playerPos = { ...data.playerPos };
   gameState.playtimeSec = data.playtimeSec;
+  gameState.bornAtMs = sanitizeBornAt(data.bornAtMs);
   gameState.distanceExplored = data.distanceExplored;
   gameState.activeWorldLoaded = true;
 }

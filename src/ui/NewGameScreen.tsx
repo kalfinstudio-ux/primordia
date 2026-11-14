@@ -1,3 +1,4 @@
+import { ERA_LORE, ERA_NAME, getEdenCalendar, randomPrimordialName } from '../game/data/eden';
 import React, { useState } from 'react';
 import type { AvatarConfig, BodyBuild, DifficultyLevel, HairStyle, PackStyle } from '../game/config';
 import { gameState, setScreen } from '../game/core/state';
@@ -13,7 +14,7 @@ const HAIR_STYLES: HairStyle[] = ['short', 'ponytail', 'buzz', 'hood'];
 const PACK_STYLES: PackStyle[] = ['o2_pack', 'expedition', 'scout'];
 
 export function NewGameScreen() {
-  const [name, setName] = useState(gameState.avatar.name || t('newGame.defaultName'));
+  const [name, setName] = useState(() => gameState.avatar.name && gameState.avatar.name !== t('newGame.defaultName') ? gameState.avatar.name : randomPrimordialName());
   const [height, setHeight] = useState(gameState.avatar.height);
   const [build, setBuild] = useState<BodyBuild>(gameState.avatar.build || 'standard');
   const [skinTone, setSkinTone] = useState(gameState.avatar.skinTone);
@@ -86,6 +87,16 @@ export function NewGameScreen() {
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 min-h-[42px] w-full rounded-lg border border-stone-800 bg-stone-950 px-3 py-2 text-sm text-stone-100 focus:border-orange-500 focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={() => setName(randomPrimordialName())}
+                className="mt-1.5 text-xs text-orange-400 hover:text-orange-300"
+              >
+                🎲 Nama acak baru
+              </button>
+              <p className="mt-2 text-[11px] leading-snug text-stone-400">
+                <span className="font-semibold text-stone-200">{ERA_NAME}</span> — {getEdenCalendar().label}. {ERA_LORE[1]}
+              </p>
             </div>
 
             <div>

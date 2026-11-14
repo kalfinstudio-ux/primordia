@@ -1,3 +1,4 @@
+import { EdenClock } from './EdenClock';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Volume2,
@@ -293,6 +294,7 @@ export function HudScreen() {
 
   return (
     <div className="safe-hud-pad pointer-events-none fixed inset-0 z-20 flex flex-col justify-between">
+      <EdenClock />
 
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (
         <div

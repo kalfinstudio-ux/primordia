@@ -1,3 +1,4 @@
+import { effectivePropSeed, effectiveTerrainSeed } from '../data/eden';
 import * as THREE from 'three';
 import { AUTOSAVE_INTERVAL_SEC, WATER_LEVEL } from '../config';
 import { Engine } from '../core/engine';
@@ -82,6 +83,8 @@ export class SceneManager {
   private currentFps = 60;
   private lastBiomeSound = '';
   private ready = false;
+  private appliedEdenSeed = '';
+  private edenCheckTimer = 0;
   private unsubs: Array<() => void> = [];
 
   constructor(container: HTMLElement) {
@@ -186,9 +189,10 @@ export class SceneManager {
     const sz = resetPlayer ? 18 : p.z;
     const syaw = resetPlayer ? Math.PI : p.yaw;
 
-    this.terrain.setSeed(gameState.worldSeed);
+    this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed);
+    this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
     this.terrain.updateStreaming(sx, sz, true);
-    this.chunks.populate(this.terrain, gameState.worldSeed);
+    this.chunks.populate(this.terrain, this.appliedEdenSeed);
     this.chunks.updateStreaming(this.terrain, sx, sz, true);
     this.chunks.syncPlacedStructures(gameState.placedStructures);
 
@@ -380,6 +384,18 @@ export class SceneManager {
       this.terrain.updateStreaming(pos.x, pos.z);
       this.chunks.updateStreaming(this.terrain, pos.x, pos.z);
 
+      // Peta mengikuti kalender nyata: cek pergantian hari/bulan/tahun tiap ~30 dtk
+      this.edenCheckTimer += dt;
+      if (this.edenCheckTimer > 30) {
+        this.edenCheckTimer = 0;
+        const next = effectivePropSeed(gameState.worldSeed);
+        if (next !== this.appliedEdenSeed) {
+          this.appliedEdenSeed = next;
+          this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
+          this.chunks.populate(this.terrain, next);
+          eventBus.emit('toast:show', { text: 'Hari baru: peta berubah mengikuti waktu dunia nyata.', type: 'info' });
+        }
+      }
       this.activeEvent = this.worldEvents.update(dt, this.weather.currentWeather);
       this.sky.update(dt, this.engine.scene, pos, this.weather.currentWeather);
       this.water.update(dt, pos);
