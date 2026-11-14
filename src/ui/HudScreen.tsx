@@ -1,4 +1,5 @@
 import { AwayReportModal } from './AwayReportModal';
+import { SocialPanel } from './SocialPanel';
 import { EdenClock } from './EdenClock';
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
   Eye,
   EyeOff,
   Flag,
+  Users,
 } from 'lucide-react';
 import { ITEMS, WORLD_RADIUS } from '../game/config';
 import { BALANCE } from '../game/data/balance';
@@ -57,6 +59,8 @@ export function HudScreen() {
   const [inspectIdx, setInspectIdx] = useState<number | null>(null);
   const [joyKnob, setJoyKnob] = useState({ x: 0, y: 0 });
   const [emoteOpen, setEmoteOpen] = useState(false);
+  const [socialUnread, setSocialUnread] = useState(0);
+  useEffect(() => eventBus.on<number>('social:unread', (n) => setSocialUnread(typeof n === 'number' ? n : 0)), []);
   const hudMode = useSyncExternalStore(subscribeHudMode, getHudMode, getHudMode);
   const [modeFlash, setModeFlash] = useState<string | null>(null);
   const modeFlashTimer = useRef<number | null>(null);
@@ -347,6 +351,7 @@ export function HudScreen() {
   return (
     <div className="hud-root safe-hud-pad pointer-events-none fixed inset-0 z-20">
       <AwayReportModal />
+      <SocialPanel />
       {critical && <div className="hud-critical-vignette animate-pulse" aria-hidden="true" />}
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (
         <div
@@ -556,6 +561,18 @@ export function HudScreen() {
                 <HudIconBtn label={muted ? t('hud.soundOff') : t('hud.soundOn')} onClick={toggleMute}>
                   {muted ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
                 </HudIconBtn>
+                {(snap.online.status === 'online' || gameState.user.mode === 'authenticated') && (
+                  <div className="relative">
+                    <HudIconBtn label={t('hud.socialBtn')} onClick={() => eventBus.emit('social:open')}>
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-amber-300" />
+                    </HudIconBtn>
+                    {socialUnread > 0 && (
+                      <span className="pointer-events-none absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 text-[10px] font-bold leading-4 text-white">
+                        {socialUnread > 9 ? '9+' : socialUnread}
+                      </span>
+                    )}
+                  </div>
+                )}
                 {snap.online.status === 'online' && (
                   <HudIconBtn label={t('mp.emoteBtn')} onClick={() => setEmoteOpen((o) => !o)}>
                     <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" />

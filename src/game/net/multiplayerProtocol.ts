@@ -27,6 +27,8 @@ export interface PlayerInfo {
   name: string;
   avatar: AvatarConfig;
   joinedAt: number;
+  /** ID akun Supabase (hanya bila pemain login). Tidak tepercaya: profil selalu diambil dari server. */
+  userId?: string;
 }
 
 export interface PosMessage {
@@ -48,6 +50,7 @@ const BUILDS: BodyBuild[] = ['slim', 'standard', 'athletic'];
 const HAIRS: HairStyle[] = ['short', 'ponytail', 'buzz', 'hood'];
 const PACKS: PackStyle[] = ['o2_pack', 'expedition', 'scout'];
 const ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const DEFAULT_NAME = 'Penjelajah';
 
@@ -97,15 +100,21 @@ export function sanitizeAvatar(raw: unknown, name: string): AvatarConfig {
   };
 }
 
+export function isUuid(v: unknown): v is string {
+  return typeof v === 'string' && UUID_RE.test(v);
+}
+
 export function parsePresence(key: string, raw: unknown): PlayerInfo | null {
   if (!ID_RE.test(key) || !isRecord(raw)) return null;
   const name = sanitizeName(raw.name);
-  return {
+  const info: PlayerInfo = {
     id: key,
     name,
     avatar: sanitizeAvatar(raw.avatar, name),
     joinedAt: clampNum(raw.joinedAt, 0, 8.64e15, 0),
   };
+  if (isUuid(raw.uid)) info.userId = raw.uid.toLowerCase();
+  return info;
 }
 
 export function parsePos(raw: unknown, halfExtent: number): PosMessage | null {

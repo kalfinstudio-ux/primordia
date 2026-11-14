@@ -89,3 +89,13 @@ test('shouldSendPos: interval, gerak, dan heartbeat', () => {
   assert.equal(shouldSendPos(last, { ...cur, anim: 'walk' }, 1300), true); // ganti animasi
   assert.equal(shouldSendPos(last, cur, 2100), true); // heartbeat
 });
+
+test('parsePresence membaca uid akun hanya bila berformat UUID', () => {
+  const uid = '123e4567-e89b-12d3-a456-426614174000';
+  const ok = parsePresence('p_abc12345', { name: 'Adam', avatar: {}, joinedAt: 1, uid: uid.toUpperCase() });
+  assert.equal(ok?.userId, uid);
+  const bad = parsePresence('p_abc12345', { name: 'Adam', avatar: {}, joinedAt: 1, uid: "x'; drop table" });
+  assert.equal(bad?.userId, undefined);
+  const guest = parsePresence('p_abc12345', { name: 'Tamu', avatar: {}, joinedAt: 1 });
+  assert.equal(guest?.userId, undefined);
+});

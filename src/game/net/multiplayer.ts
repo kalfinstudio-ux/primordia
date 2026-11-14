@@ -38,6 +38,14 @@ export interface RemotePlayerState {
   anim: AnimState;
   speed: number;
   lastSeen: number;
+  /** ID akun Supabase pemain itu bila ia login (null untuk tamu). */
+  userId: string | null;
+}
+
+export interface NearbyPlayer {
+  id: string;
+  name: string;
+  userId: string | null;
 }
 
 export interface LocalPose {
@@ -109,6 +117,11 @@ class MultiplayerClient {
     return this.remote.values();
   }
 
+  /** Daftar pemain lain di kamar yang sama (dari Presence), untuk panel sosial. */
+  getNearby(): NearbyPlayer[] {
+    return [...this.roster.values()].map((p) => ({ id: p.id, name: p.name, userId: p.userId ?? null }));
+  }
+
   enterWorld(seed: string): void {
     this.inWorld = true;
     this.seed = seed;
@@ -172,10 +185,12 @@ class MultiplayerClient {
     eventBus.emit('mp:status', next);
   }
 
-  private myInfo(): Omit<PlayerInfo, 'id'> {
+  private myInfo(): Omit<PlayerInfo, 'id' | 'userId'> & { uid?: string } {
     const a = gameState.avatar;
     const name = sanitizeName(a.name);
+    const uid = gameState.user.mode === 'authenticated' ? gameState.user.userId : null;
     return {
+      ...(uid ? { uid } : {}),
       name,
       avatar: {
         name,
@@ -308,6 +323,7 @@ class MultiplayerClient {
       if (info) {
         r.name = info.name;
         r.avatar = info.avatar;
+        r.userId = info.userId ?? null;
       } else if (now - r.lastSeen > MP_PRESENCE_GRACE_MS) {
         this.remote.delete(id);
         this.lastInboundAt.delete(id);
@@ -337,6 +353,7 @@ class MultiplayerClient {
       existing.anim = msg.anim;
       existing.speed = msg.speed;
       existing.lastSeen = now;
+      existing.userId = this.roster.get(msg.id)?.userId ?? existing.userId;
       return;
     }
     if (this.remote.size >= MP_MAX_PER_ROOM + 2) return;
@@ -352,6 +369,7 @@ class MultiplayerClient {
       anim: msg.anim,
       speed: msg.speed,
       lastSeen: now,
+      userId: info?.userId ?? null,
     });
   }
 

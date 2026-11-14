@@ -9,6 +9,9 @@ PRIMORDIA works 100% offline in **Local Guest Mode** out of the box. To enable c
    - **anon / public key** (Never copy or expose the `service_role` secret key in the frontend).
 
 ## 2. Run Database Schema & RLS Policies
+**Cara cepat:** jalankan satu file `supabase/setup-all.sql` di SQL Editor (gabungan semua di bawah, aman diulang), lalu lanjut ke langkah 3.
+
+Atau manual:
 1. In the Supabase dashboard, open **SQL Editor**.
 2. Paste and run `supabase/schema.sql` (creates `cloud_saves`, `user_settings`, `leaderboard`, and the rate-limited `submit_validated_score` Postgres RPC).
 3. Paste and run `supabase/policies.sql` (configures row-level security policies and restricts direct leaderboard writes).
@@ -35,6 +38,7 @@ In **Authentication → Providers**, ensure **Email** is enabled and add your Gi
 Tidak perlu SQL tambahan. Fitur ini hanya memakai **Realtime Broadcast + Presence**, yang aktif secara bawaan di project Supabase.
 - Pemain dengan **seed dunia yang sama** masuk ke kamar yang sama (`primordia:<seed>:<nomor>`), maksimal 8 pemain per kamar; pemain ke-9 dan seterusnya otomatis pindah ke kamar berikutnya.
 - Yang dikirim ke pemain lain: nama, penampilan, posisi, arah, dan animasi. Inventaris, save, dan data akun tidak pernah dikirim.
-- Bawaan: aktif untuk pemain yang sudah login, mati untuk tamu. Pemain bisa mengubahnya di menu Jeda → Mode Online.
+- Bawaan: aktif untuk semua pemain (tamu maupun login). Pemain bisa mematikannya di menu Jeda → Mode Online.
+- Agar pemain saling bertemu, mereka harus memakai **seed dunia yang sama** (bawaan `HADEAN-01`).
 - Kamar bersifat publik (siapa pun yang tahu nama kamar dan anon key bisa ikut mendengar). Data yang beredar hanya yang tercantum di atas. Pelanggaran/cheat belum dicegah di Tahap A (tanpa server otoritatif).
 - Free tier Supabase memiliki batas koneksi Realtime bersamaan dan pesan per detik; cek **Project Settings → Realtime** / halaman harga untuk angka terbarunya.
