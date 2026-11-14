@@ -3,7 +3,7 @@
  * Modul ini murni (tanpa supabase/three) supaya mudah diuji. Semua data dari pemain lain
  * dianggap tidak tepercaya: selalu lewat sanitize/parse sebelum dipakai.
  */
-import type { AvatarConfig, BodyBuild, HairStyle, PackStyle } from '../config';
+import type { AvatarConfig, BodyBuild, Gender, HairStyle, PackStyle } from '../config';
 
 export const MP_MAX_PER_ROOM = 8;
 export const MP_MAX_SHARDS = 6;
@@ -47,7 +47,8 @@ export interface EmoteMessage {
 }
 
 const BUILDS: BodyBuild[] = ['slim', 'standard', 'athletic'];
-const HAIRS: HairStyle[] = ['short', 'ponytail', 'buzz', 'hood'];
+const HAIRS: HairStyle[] = ['short', 'ponytail', 'buzz', 'hood', 'long', 'bun', 'braid'];
+const GENDERS: Gender[] = ['male', 'female'];
 const PACKS: PackStyle[] = ['o2_pack', 'expedition', 'scout'];
 const ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -90,6 +91,7 @@ export function sanitizeAvatar(raw: unknown, name: string): AvatarConfig {
   const r = isRecord(raw) ? raw : {};
   return {
     name,
+    gender: GENDERS.includes(r.gender as Gender) ? (r.gender as Gender) : 'male',
     height: clampNum(r.height, 0.9, 1.15, 1.0),
     build: BUILDS.includes(r.build as BodyBuild) ? (r.build as BodyBuild) : 'standard',
     skinTone: sanitizeColor(r.skinTone, '#c68b59'),

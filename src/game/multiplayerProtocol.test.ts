@@ -44,6 +44,14 @@ test('sanitizeAvatar menolak warna/enum tidak valid dan menjepit tinggi', () => 
   assert.equal(sanitizeAvatar(null, 'N').name, 'N');
 });
 
+test('sanitizeAvatar: gender dan gaya rambut baru divalidasi', () => {
+  assert.equal(sanitizeAvatar({ gender: 'female', hairStyle: 'braid' }, 'N').gender, 'female');
+  assert.equal(sanitizeAvatar({ gender: 'female', hairStyle: 'braid' }, 'N').hairStyle, 'braid');
+  assert.equal(sanitizeAvatar({ gender: 'alien' }, 'N').gender, 'male');
+  assert.equal(sanitizeAvatar({}, 'N').gender, 'male');
+  assert.equal(sanitizeAvatar({ hairStyle: 'mohawk' }, 'N').hairStyle, 'short');
+});
+
 test('parsePresence menolak key/payload tidak valid', () => {
   assert.equal(parsePresence('bad key!', {}), null);
   assert.equal(parsePresence('p_abc12345', 'x'), null);

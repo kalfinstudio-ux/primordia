@@ -6,7 +6,8 @@ export type HazardType = 'safe' | 'heat' | 'toxic' | 'meteor' | 'radiation' | 's
 export type WorldEventType = 'none' | 'super_eruption' | 'toxic_surge' | 'meteor_swarm';
 export type HandMode = 'right' | 'left';
 export type BodyBuild = 'slim' | 'standard' | 'athletic';
-export type HairStyle = 'short' | 'ponytail' | 'buzz' | 'hood';
+export type HairStyle = 'short' | 'ponytail' | 'buzz' | 'hood' | 'long' | 'bun' | 'braid';
+export type Gender = 'male' | 'female';
 export type PackStyle = 'o2_pack' | 'expedition' | 'scout';
 
 export type ScreenName =
@@ -76,6 +77,7 @@ export interface GameSettings {
 
 export interface AvatarConfig {
   name: string;
+  gender: Gender;
   height: number; // 0.9 - 1.15
   build: BodyBuild;
   skinTone: string;
@@ -105,6 +107,7 @@ export const SUPABASE_CONFIG = {
 
 export const DEFAULT_AVATAR: AvatarConfig = {
   name: 'Arka-01',
+  gender: 'male',
   height: 1.0,
   build: 'standard',
   skinTone: '#c68b59',

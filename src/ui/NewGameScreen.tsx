@@ -1,6 +1,6 @@
 import { ERA_LORE, ERA_NAME, getEdenCalendar, randomPrimordialName } from '../game/data/eden';
 import React, { useState } from 'react';
-import type { AvatarConfig, BodyBuild, DifficultyLevel, HairStyle, PackStyle } from '../game/config';
+import type { AvatarConfig, BodyBuild, DifficultyLevel, Gender, HairStyle, PackStyle } from '../game/config';
 import { gameState, setScreen } from '../game/core/state';
 import { startNewExpedition } from '../game/main';
 import { t } from '../game/utils/i18n';
@@ -10,11 +10,13 @@ const SKIN_TONES = ['#f1c27d', '#c68b59', '#8d5524', '#5c3818'];
 const HAIR_COLORS = ['#1c1917', '#57361c', '#9a3412', '#d6d3d1'];
 const SUIT_COLORS = ['#ea580c', '#d97706', '#0284c7', '#65a30d'];
 const BUILDS: BodyBuild[] = ['slim', 'standard', 'athletic'];
-const HAIR_STYLES: HairStyle[] = ['short', 'ponytail', 'buzz', 'hood'];
+const GENDERS: Gender[] = ['male', 'female'];
+const HAIR_STYLES: HairStyle[] = ['short', 'buzz', 'ponytail', 'long', 'bun', 'braid', 'hood'];
 const PACK_STYLES: PackStyle[] = ['o2_pack', 'expedition', 'scout'];
 
 export function NewGameScreen() {
   const [name, setName] = useState(() => gameState.avatar.name && gameState.avatar.name !== t('newGame.defaultName') ? gameState.avatar.name : randomPrimordialName());
+  const [gender, setGender] = useState<Gender>(gameState.avatar.gender === 'female' ? 'female' : 'male');
   const [height, setHeight] = useState(gameState.avatar.height);
   const [build, setBuild] = useState<BodyBuild>(gameState.avatar.build || 'standard');
   const [skinTone, setSkinTone] = useState(gameState.avatar.skinTone);
@@ -27,6 +29,7 @@ export function NewGameScreen() {
 
   const previewAvatar: AvatarConfig = {
     name: name.trim() || t('newGame.defaultName'),
+    gender,
     height,
     build,
     skinTone,
@@ -34,6 +37,13 @@ export function NewGameScreen() {
     hairStyle,
     suitColor,
     packStyle,
+  };
+
+  // Ganti jenis kelamin: gaya rambut bawaan ikut menyesuaikan (tetap bisa diubah lagi).
+  const chooseGender = (g: Gender) => {
+    setGender(g);
+    if (g === 'female' && (hairStyle === 'short' || hairStyle === 'buzz')) setHairStyle('long');
+    if (g === 'male' && (hairStyle === 'long' || hairStyle === 'bun' || hairStyle === 'braid')) setHairStyle('short');
   };
 
   const randomizeSeed = () => {
@@ -148,6 +158,25 @@ export function NewGameScreen() {
 
           <div className="space-y-3.5">
             <div className="text-xs font-medium text-stone-300">{t('newGame.appearance')}</div>
+
+            <div>
+              <span className="block text-xs text-stone-400">{t('newGame.gender')}</span>
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                {GENDERS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    aria-pressed={gender === g}
+                    onClick={() => chooseGender(g)}
+                    className={`min-h-[40px] rounded-lg border px-2 text-sm font-medium ${
+                      gender === g ? 'border-orange-500 bg-orange-600/20 text-orange-200' : 'border-stone-800 bg-stone-900 text-stone-300'
+                    }`}
+                  >
+                    {t(`newGame.genders.${g}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div>
               <div className="flex justify-between text-xs text-stone-400">

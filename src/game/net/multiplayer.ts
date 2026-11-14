@@ -194,6 +194,7 @@ class MultiplayerClient {
       name,
       avatar: {
         name,
+        gender: a.gender,
         height: a.height,
         build: a.build,
         skinTone: a.skinTone,

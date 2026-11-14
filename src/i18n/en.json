@@ -80,7 +80,10 @@
       "short": "Short",
       "ponytail": "Ponytail",
       "buzz": "Buzz",
-      "hood": "Thermal Hood"
+      "hood": "Thermal Hood",
+      "long": "Long & Loose",
+      "bun": "Bun",
+      "braid": "Braid"
     },
     "suitColor": "Thermal Suit Accent",
     "packStyle": "Backpack Type",
@@ -97,7 +100,12 @@
     "diffHadean": "Hadean (Extreme)",
     "start": "Launch Expedition",
     "cancel": "Cancel",
-    "ngPlusBadge": "New Game+ Knowledge Carried"
+    "ngPlusBadge": "New Game+ Knowledge Carried",
+    "gender": "Gender",
+    "genders": {
+      "male": "Male",
+      "female": "Female"
+    }
   },
   "loadGame": {
     "title": "Load Saved Expedition",

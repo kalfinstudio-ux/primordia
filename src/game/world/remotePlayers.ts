@@ -121,7 +121,7 @@ export class RemotePlayersSystem {
 
   private appearanceKey(s: RemotePlayerState): string {
     const a = s.avatar;
-    return [a.height, a.build, a.skinTone, a.hairColor, a.hairStyle, a.suitColor, a.packStyle].join('|');
+    return [a.gender, a.height, a.build, a.skinTone, a.hairColor, a.hairStyle, a.suitColor, a.packStyle].join('|');
   }
 
   private showBubble(e: Entry, text: string): void {

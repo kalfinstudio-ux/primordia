@@ -80,7 +80,10 @@
       "short": "Pendek",
       "ponytail": "Kuncir",
       "buzz": "Cepak",
-      "hood": "Tudung Termal"
+      "hood": "Tudung Termal",
+      "long": "Panjang Terurai",
+      "bun": "Sanggul",
+      "braid": "Kepang"
     },
     "suitColor": "Warna Pelindung Suit",
     "packStyle": "Model Ransel",
@@ -97,7 +100,12 @@
     "diffHadean": "Hadean (Ekstrem)",
     "start": "Mulai Ekspedisi",
     "cancel": "Batal",
-    "ngPlusBadge": "Pengetahuan New Game+ Aktif"
+    "ngPlusBadge": "Pengetahuan New Game+ Aktif",
+    "gender": "Jenis Kelamin",
+    "genders": {
+      "male": "Pria",
+      "female": "Wanita"
+    }
   },
   "loadGame": {
     "title": "Muat Ekspedisi Tersimpan",
