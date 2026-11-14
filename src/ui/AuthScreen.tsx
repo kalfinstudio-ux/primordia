@@ -1,44 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
 import { isSupabaseConfigured } from '../game/net/supabaseClient';
-import { sendMagicLink, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
+import { sendMagicLink, signInWithPassword, signInWithProvider, signOutAccount, signUpWithPassword, type OAuthProviderId } from '../game/net/auth';
 import { t } from '../game/utils/i18n';
-import { getBase44Identity, signInWithBase44, signOutBase44, type Base44Identity } from '../game/net/base44';
+import { LOGO_DISCORD, LOGO_GITHUB, LOGO_GOOGLE } from './brandLogos';
 
-// Logo resmi: taruh file di public/logos/google.svg dan public/logos/base44.svg
-function BrandLogo({ name }: { name: 'google' | 'base44' }) {
-  const [ok, setOk] = useState(true);
-  if (!ok) return null;
-  return <img src={`logos/${name}.svg`} alt="" aria-hidden className="h-5 w-5 shrink-0" onError={() => setOk(false)} />;
-}
+const OAUTH_BTN =
+  'flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-lg border border-[#8E918F] bg-[#131314] px-4 py-2.5 text-sm font-medium text-[#E3E3E3] hover:bg-[#1f1f21] disabled:opacity-40';
 
 export function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [b44, setB44] = useState<Base44Identity | null>(null);
-
-  useEffect(() => {
-    void getBase44Identity().then(setB44);
-  }, []);
-
-  const handleBase44 = async () => {
-    setStatus(null);
-    if (!email.trim() || !password) {
-      setStatus('Email dan kata sandi Base44 diperlukan.');
-      return;
-    }
-    setBusy(true);
-    const res = await signInWithBase44(email.trim(), password);
-    if (res.ok && res.identity) {
-      setB44(res.identity);
-      setStatus(`Masuk Base44 sebagai ${res.identity.name}.`);
-    } else {
-      setStatus(res.error || 'Error');
-    }
-    setBusy(false);
-  };
 
   const configured = isSupabaseConfigured();
   const isSignedIn = gameState.user.mode === 'authenticated';
@@ -63,10 +37,10 @@ export function AuthScreen() {
     setBusy(false);
   };
 
-  const handleGoogle = async () => {
+  const handleProvider = async (provider: OAuthProviderId) => {
     setStatus(null);
     setBusy(true);
-    const res = await signInWithGoogle();
+    const res = await signInWithProvider(provider);
     if (!res.ok) {
       setStatus(res.error || 'Error');
       setBusy(false);
@@ -119,37 +93,23 @@ export function AuthScreen() {
               void handleAction('signin');
             }}
           >
-            <button
-              type="button"
-              disabled={!configured || busy}
-              onClick={() => void handleGoogle()}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
-            >
-              <BrandLogo name="google" />
+            <button type="button" disabled={!configured || busy} onClick={() => void handleProvider('google')} className={OAUTH_BTN}>
+              {/* Ikon resmi Google (tema gelap); margin negatif memangkas garis tepi bawaan file */}
+              <span className="inline-block h-6 w-6 shrink-0 overflow-hidden">
+                <img src={LOGO_GOOGLE} alt="" aria-hidden className="-m-px h-[26px] w-[26px] max-w-none" />
+              </span>
               <span>{t('auth.google')}</span>
             </button>
 
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void handleBase44()}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
-            >
-              <BrandLogo name="base44" />
-              <span>Masuk dengan Base44</span>
+            <button type="button" disabled={!configured || busy} onClick={() => void handleProvider('github')} className={OAUTH_BTN}>
+              <img src={LOGO_GITHUB} alt="" aria-hidden className="h-5 w-5 shrink-0" />
+              <span>Masuk dengan GitHub</span>
             </button>
-            {b44 && (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-stone-800 bg-stone-900/90 px-3 py-2 text-xs text-stone-300">
-                <span>Base44: <span className="font-semibold text-orange-400">{b44.name}</span></span>
-                <button
-                  type="button"
-                  onClick={() => { void signOutBase44().then(() => setB44(null)); }}
-                  className="text-stone-400 underline hover:text-white"
-                >
-                  Keluar
-                </button>
-              </div>
-            )}
+
+            <button type="button" disabled={!configured || busy} onClick={() => void handleProvider('discord')} className={OAUTH_BTN}>
+              <span>Masuk dengan</span>
+              <img src={LOGO_DISCORD} alt="Discord" className="h-4 w-auto shrink-0" />
+            </button>
 
             <div className="flex items-center gap-3 text-[11px] text-stone-500">
               <span className="h-px flex-1 bg-stone-800" />
@@ -166,7 +126,7 @@ export function AuthScreen() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={busy}
+                disabled={!configured || busy}
                 placeholder="explorer@primordia.earth"
                 className="mt-1 min-h-[44px] w-full rounded-lg border border-stone-800 bg-stone-950 px-3 py-2 text-sm text-stone-100 placeholder-stone-600 focus:border-orange-500 focus:outline-none disabled:opacity-50"
               />
@@ -181,7 +141,7 @@ export function AuthScreen() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={busy}
+                disabled={!configured || busy}
                 className="mt-1 min-h-[44px] w-full rounded-lg border border-stone-800 bg-stone-950 px-3 py-2 text-sm text-stone-100 focus:border-orange-500 focus:outline-none disabled:opacity-50"
               />
             </div>
