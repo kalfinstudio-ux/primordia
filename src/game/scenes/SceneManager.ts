@@ -520,6 +520,7 @@ export class SceneManager {
       debug: {
         fps: this.currentFps,
         activeChunks: this.terrain.getActiveChunkCount(),
+        pendingChunks: this.terrain.getPendingChunkCount(),
         drawCalls: this.engine.renderer.info.render.calls,
         playerX: p.x,
         playerY: p.y,

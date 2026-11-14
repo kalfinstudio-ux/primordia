@@ -4,6 +4,28 @@ import { createNoise2D, type Noise2D } from './noise';
 import { buildChunkGeometryData, sampleWorldHeight } from './terrainHeight';
 import type { ProceduralAssets } from '../core/assetLoader';
 import { gameState } from '../core/state';
+import {
+  SYNC_RING_DISTANCE,
+  computeWantedChunks,
+  diffChunks,
+  radiusChunksForViewDistance,
+  type ChunkSpec,
+} from './chunkScheduler';
+
+interface ChunkGeometryData {
+  positions: Float32Array;
+  colors: Float32Array;
+  normals: Float32Array;
+  indices: Uint32Array;
+}
+
+interface WorkerResult extends Partial<ChunkGeometryData> {
+  jobId: number;
+  chunkX: number;
+  chunkZ: number;
+  segments: number;
+  error?: string;
+}
 
 interface ActiveTerrainChunk {
   key: string;
@@ -13,16 +35,39 @@ interface ActiveTerrainChunk {
   mesh: THREE.Mesh;
 }
 
+interface WorkerSlot {
+  worker: Worker;
+  busy: number;
+}
+
+interface InflightJob {
+  spec: ChunkSpec;
+  epoch: number;
+  slot: WorkerSlot;
+}
+
+const MAX_WORKERS = 2;
+const MAX_JOBS_PER_WORKER = 2;
+/** Anggaran waktu per frame untuk fallback tanpa Worker (ms). Minimal 1 chunk per frame. */
+const FALLBACK_BUDGET_MS = 5;
+
 export class TerrainSystem {
   readonly group = new THREE.Group();
   readonly material: THREE.MeshStandardMaterial;
   private noise: Noise2D;
   private seed: string;
   private chunks = new Map<string, ActiveTerrainChunk>();
-  private pendingKeys = new Map<string, number>();
-  private worker: Worker | null = null;
+
+  // Penjadwalan streaming
+  private wanted = new Map<string, number>(); // key -> segments yang diinginkan
+  private queue: ChunkSpec[] = []; // belum dikirim, urut terdekat dulu
+  private inflight = new Map<number, InflightJob>();
+  private slots: WorkerSlot[] = [];
   private nextJobId = 1;
+  private epoch = 0; // naik tiap ganti seed / clear; hasil worker lama dibuang
+  private dirty = false; // butuh replan walau pemain belum pindah chunk
   private lastCenterKey = '';
+  private lastRadius = -1;
 
   constructor(seed: string, assets: ProceduralAssets) {
     this.seed = seed;
@@ -36,15 +81,7 @@ export class TerrainSystem {
       roughnessMap: assets.basaltRoughnessMap,
     });
 
-    try {
-      if (typeof Worker !== 'undefined') {
-        this.worker = new Worker(new URL('./terrainWorker.ts', import.meta.url), { type: 'module' });
-        this.worker.onmessage = this.onWorkerMessage;
-      }
-    } catch {
-      this.worker = null;
-    }
-
+    this.createWorkers();
     this.updateStreaming(0, 18, true);
   }
 
@@ -52,12 +89,19 @@ export class TerrainSystem {
     return this.chunks.size;
   }
 
+  /** Jumlah chunk yang masih antre atau sedang dikerjakan worker. */
+  getPendingChunkCount(): number {
+    let n = this.queue.length;
+    for (const job of this.inflight.values()) if (job.epoch === this.epoch) n++;
+    return n;
+  }
+
   setSeed(seed: string): void {
     this.seed = seed;
     this.noise = createNoise2D(seed);
     this.clearAllChunks();
+    // Replan terjadi pada updateStreaming berikutnya (enterWorld memanggilnya langsung).
     this.lastCenterKey = '';
-    this.updateStreaming(gameState.playerPos.x, gameState.playerPos.z, true);
   }
 
   groundHeightAt(x: number, z: number): number {
@@ -76,86 +120,153 @@ export class TerrainSystem {
     return (Math.atan(grad) * 180) / Math.PI;
   }
 
+  /**
+   * Dipanggil tiap frame. Replan hanya saat pemain pindah chunk, ganti view distance,
+   * atau ada hasil usang. Sisanya hanya memompa antrean (murah bila kosong).
+   * `synchronousImmediate` (spawn/teleport): chunk terdekat dibangun langsung agar tidak ada
+   * lubang di depan pemain; sisanya tetap lewat worker.
+   */
   updateStreaming(px: number, pz: number, synchronousImmediate = false): void {
     const pcx = Math.round(px / CHUNK_SIZE);
     const pcz = Math.round(pz / CHUNK_SIZE);
     const centerKey = `${pcx},${pcz}`;
-    if (!synchronousImmediate && centerKey === this.lastCenterKey && this.pendingKeys.size === 0) {
+    const radius = radiusChunksForViewDistance(gameState.settings.graphics.viewDistance);
+
+    if (synchronousImmediate || this.dirty || centerKey !== this.lastCenterKey || radius !== this.lastRadius) {
+      this.lastCenterKey = centerKey;
+      this.lastRadius = radius;
+      this.dirty = false;
+      this.replan(pcx, pcz, radius);
+      if (synchronousImmediate) this.buildInnerRingNow();
+    }
+
+    this.pump();
+  }
+
+  private replan(pcx: number, pcz: number, radius: number): void {
+    const wanted = computeWantedChunks(pcx, pcz, radius);
+    this.wanted = new Map(wanted.map((w) => [w.key, w.segments]));
+
+    const loaded = new Map<string, number>();
+    for (const [key, ch] of this.chunks) loaded.set(key, ch.segments);
+    const inflightSeg = new Map<string, number>();
+    for (const job of this.inflight.values()) {
+      if (job.epoch === this.epoch) inflightSeg.set(job.spec.key, job.spec.segments);
+    }
+
+    const { unload, build } = diffChunks(wanted, loaded, inflightSeg);
+    for (const key of unload) this.removeChunk(key);
+    this.queue = build;
+  }
+
+  private buildInnerRingNow(): void {
+    const rest: ChunkSpec[] = [];
+    for (const spec of this.queue) {
+      if (spec.dist <= SYNC_RING_DISTANCE) this.buildNow(spec);
+      else rest.push(spec);
+    }
+    this.queue = rest;
+  }
+
+  private buildNow(spec: ChunkSpec): void {
+    const data = buildChunkGeometryData(this.seed, this.noise, spec.cx, spec.cz, CHUNK_SIZE, spec.segments);
+    this.applyChunkGeometry(spec.key, spec.cx, spec.cz, spec.segments, data);
+  }
+
+  private pump(): void {
+    if (this.queue.length === 0) return;
+
+    if (this.slots.length > 0) {
+      while (this.queue.length > 0) {
+        const slot = this.pickSlot();
+        if (!slot) break;
+        this.dispatch(slot, this.queue.shift()!);
+      }
       return;
     }
-    this.lastCenterKey = centerKey;
 
-    const viewDist = gameState.settings.graphics.viewDistance;
-    const radiusChunks = viewDist <= 95 ? 2 : viewDist <= 145 ? 3 : 4;
+    // Fallback tanpa Worker: bangun bertahap (minimal 1 chunk per frame, dibatasi waktu).
+    const t0 = performance.now();
+    do {
+      this.buildNow(this.queue.shift()!);
+    } while (this.queue.length > 0 && performance.now() - t0 < FALLBACK_BUDGET_MS);
+  }
 
-    const wanted = new Map<string, { cx: number; cz: number; segments: number }>();
-    for (let dz = -radiusChunks; dz <= radiusChunks; dz++) {
-      for (let dx = -radiusChunks; dx <= radiusChunks; dx++) {
-        const distChunks = Math.hypot(dx, dz);
-        if (distChunks > radiusChunks + 0.5) continue;
-        const cx = pcx + dx;
-        const cz = pcz + dz;
-        const segments = distChunks <= 1.5 ? 32 : distChunks <= 2.7 ? 16 : 8;
-        wanted.set(`${cx},${cz}`, { cx, cz, segments });
-      }
+  private pickSlot(): WorkerSlot | null {
+    let best: WorkerSlot | null = null;
+    for (const s of this.slots) {
+      if (s.busy < MAX_JOBS_PER_WORKER && (!best || s.busy < best.busy)) best = s;
     }
+    return best;
+  }
 
-    // Unload chunks out of range
-    for (const [key, ch] of this.chunks.entries()) {
-      if (!wanted.has(key)) {
-        this.group.remove(ch.mesh);
-        ch.mesh.geometry.dispose();
-        this.chunks.delete(key);
-      }
-    }
+  private dispatch(slot: WorkerSlot, spec: ChunkSpec): void {
+    const jobId = this.nextJobId++;
+    slot.busy++;
+    this.inflight.set(jobId, { spec, epoch: this.epoch, slot });
+    slot.worker.postMessage({
+      jobId,
+      seed: this.seed,
+      chunkX: spec.cx,
+      chunkZ: spec.cz,
+      chunkSize: CHUNK_SIZE,
+      segments: spec.segments,
+    });
+  }
 
-    // Build or upgrade LOD of wanted chunks
-    for (const [key, spec] of wanted.entries()) {
-      const existing = this.chunks.get(key);
-      if (existing && existing.segments === spec.segments) continue;
-
-      if (synchronousImmediate || !this.worker || Math.hypot(spec.cx - pcx, spec.cz - pcz) <= 1.5) {
-        const data = buildChunkGeometryData(this.seed, this.noise, spec.cx, spec.cz, CHUNK_SIZE, spec.segments);
-        this.applyChunkGeometry(key, spec.cx, spec.cz, spec.segments, data);
-      } else if (this.pendingKeys.get(key) !== spec.segments) {
-        this.pendingKeys.set(key, spec.segments);
-        this.worker.postMessage({
-          jobId: this.nextJobId++,
-          seed: this.seed,
-          chunkX: spec.cx,
-          chunkZ: spec.cz,
-          chunkSize: CHUNK_SIZE,
-          segments: spec.segments,
-        });
+  private createWorkers(): void {
+    if (typeof Worker === 'undefined') return;
+    const cores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 2;
+    const count = Math.max(1, Math.min(MAX_WORKERS, cores - 1));
+    for (let i = 0; i < count; i++) {
+      try {
+        const worker = new Worker(new URL('./terrainWorker.ts', import.meta.url), { type: 'module' });
+        const slot: WorkerSlot = { worker, busy: 0 };
+        worker.onmessage = (e: MessageEvent<WorkerResult>) => this.onWorkerMessage(slot, e.data);
+        worker.onerror = () => this.failWorkers();
+        this.slots.push(slot);
+      } catch {
+        break;
       }
     }
   }
 
-  private onWorkerMessage = (
-    e: MessageEvent<{
-      chunkX: number;
-      chunkZ: number;
-      segments: number;
-      positions: Float32Array;
-      colors: Float32Array;
-      normals: Float32Array;
-      indices: Uint32Array;
-    }>
-  ): void => {
-    const { chunkX, chunkZ, segments, positions, colors, normals, indices } = e.data;
-    const key = `${chunkX},${chunkZ}`;
-    if (!this.pendingKeys.has(key)) return;
-    this.pendingKeys.delete(key);
-    this.applyChunkGeometry(key, chunkX, chunkZ, segments, { positions, colors, normals, indices });
-  };
+  /** Worker bermasalah: matikan semua dan lanjut dengan fallback bertahap di thread utama. */
+  private failWorkers(): void {
+    if (this.slots.length === 0) return;
+    for (const s of this.slots) s.worker.terminate();
+    this.slots = [];
+    this.inflight.clear();
+    this.dirty = true;
+    console.warn('[Terrain] Worker gagal, pindah ke pembangunan chunk bertahap di thread utama.');
+  }
 
-  private applyChunkGeometry(
-    key: string,
-    cx: number,
-    cz: number,
-    segments: number,
-    data: { positions: Float32Array; colors: Float32Array; normals: Float32Array; indices: Uint32Array }
-  ): void {
+  private onWorkerMessage(slot: WorkerSlot, data: WorkerResult): void {
+    const job = this.inflight.get(data.jobId);
+    if (!job) return;
+    this.inflight.delete(data.jobId);
+    slot.busy = Math.max(0, slot.busy - 1);
+
+    if (data.error || !data.positions || !data.colors || !data.normals || !data.indices) {
+      this.failWorkers();
+      return;
+    }
+
+    const { spec } = job;
+    // Hasil usang (seed berganti atau LOD/area sudah berubah): buang dan jadwalkan ulang.
+    if (job.epoch !== this.epoch || this.wanted.get(spec.key) !== spec.segments) {
+      this.dirty = true;
+      return;
+    }
+    this.applyChunkGeometry(spec.key, spec.cx, spec.cz, spec.segments, {
+      positions: data.positions,
+      colors: data.colors,
+      normals: data.normals,
+      indices: data.indices,
+    });
+  }
+
+  private applyChunkGeometry(key: string, cx: number, cz: number, segments: number, data: ChunkGeometryData): void {
     const existing = this.chunks.get(key);
     if (existing) {
       this.group.remove(existing.mesh);
@@ -178,8 +289,18 @@ export class TerrainSystem {
     this.chunks.set(key, { key, cx, cz, segments, mesh });
   }
 
+  private removeChunk(key: string): void {
+    const ch = this.chunks.get(key);
+    if (!ch) return;
+    this.group.remove(ch.mesh);
+    ch.mesh.geometry.dispose();
+    this.chunks.delete(key);
+  }
+
   private clearAllChunks(): void {
-    this.pendingKeys.clear();
+    this.epoch++;
+    this.queue = [];
+    this.wanted.clear();
     for (const ch of this.chunks.values()) {
       this.group.remove(ch.mesh);
       ch.mesh.geometry.dispose();
@@ -188,8 +309,9 @@ export class TerrainSystem {
   }
 
   dispose(): void {
-    this.worker?.terminate();
-    this.worker = null;
+    for (const s of this.slots) s.worker.terminate();
+    this.slots = [];
+    this.inflight.clear();
     this.clearAllChunks();
     this.material.dispose();
   }

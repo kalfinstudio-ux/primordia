@@ -78,6 +78,7 @@ export interface CustomWaypoint {
 export interface DebugTelemetry {
   fps: number;
   activeChunks: number;
+  pendingChunks: number;
   drawCalls: number;
   playerX: number;
   playerY: number;
