@@ -1,0 +1,274 @@
+{
+  "app": {
+    "title": "PRIMORDIA",
+    "subtitle": "Survive Primordial Earth",
+    "version": "Version 0.4.2-Archean"
+  },
+  "tips": [
+    "Approach steaming shallow pools to refill water before dehydration sets in.",
+    "Volcanic ash storms cut visibility—build a basic shelter early.",
+    "Stay clear of red meteor impact rings; fresh impacts often leave Primordial Crystals.",
+    "Body temperature spikes near lava rivers. Equip a Heat Shield when crossing rifts.",
+    "Toxic volcanic gas gathers near active craters—watch your oxygen gauge closely."
+  ],
+  "splash": {
+    "loading": "Generating Primordial World...",
+    "ready": "Ready to Explore",
+    "tipLabel": "Explorer Log"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "prev": "Back",
+    "finish": "Enter Main Menu",
+    "slide1Title": "Early Earth: Hadean – Archean Eras",
+    "slide1Body": "No plants, no animals, no other humans exist yet. Only bare basalt plains, steaming shallow oceans, meteor showers, and active volcanoes.",
+    "slide2Title": "Explorer Controls",
+    "slide2Body": "Desktop: WASD move, Mouse orbit camera, Space jump, Shift sprint, E interact, I inventory, B build shelter. Mobile: touch joystick & action buttons.",
+    "slide3Title": "Survival Essentials",
+    "slide3Body": "Track 5 vital meters: Health, Stamina, Body Temperature, Oxygen, and Hydration. Gather basalt, minerals, crystals, and water to craft survival gear.",
+    "slide4Title": "Automatic Graphics Calibration",
+    "slide4Body": "PRIMORDIA detected your hardware and selected a balanced graphics preset for smooth 3D playback. You can adjust this anytime in Settings.",
+    "detectedPreset": "Detected Preset"
+  },
+  "menu": {
+    "continue": "Continue",
+    "newGame": "New Game",
+    "loadGame": "Load Game",
+    "settings": "Settings",
+    "credits": "Credits",
+    "account": "Account & Cloud",
+    "guestBadge": "Local Guest Mode",
+    "signedInAs": "Signed in as"
+  },
+  "auth": {
+    "title": "Account & Cloud Sync",
+    "subtitle": "Sign in with Supabase to sync saves across devices, or play fully offline as a guest.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signUp": "Create Account",
+    "magicLink": "Send Magic Link",
+    "continueGuest": "Continue as Guest (Offline)",
+    "signOut": "Sign Out",
+    "notConfigured": "Supabase is not configured in environment. Local Guest Mode is active.",
+    "magicSent": "Magic login link sent to your email.",
+    "authSuccess": "Signed in successfully.",
+    "back": "Back"
+  },
+  "newGame": {
+    "title": "Prepare New Expedition",
+    "explorerName": "Explorer Name",
+    "defaultName": "Arka-01",
+    "appearance": "Explorer Customization",
+    "height": "Height",
+    "skinTone": "Skin Tone",
+    "hairColor": "Hair Color",
+    "suitColor": "Thermal Suit Accent",
+    "worldSeed": "World Seed",
+    "randomizeSeed": "Randomize",
+    "difficulty": "Difficulty",
+    "diffExplorer": "Explorer (Relaxed)",
+    "diffSurvivor": "Survivor (Standard)",
+    "diffHadean": "Hadean (Extreme)",
+    "start": "Launch Expedition",
+    "cancel": "Cancel"
+  },
+  "loadGame": {
+    "title": "Load Saved Expedition",
+    "empty": "No local or cloud saves found yet.",
+    "slot": "Slot",
+    "local": "Local",
+    "cloud": "Cloud",
+    "playtime": "Playtime",
+    "seed": "Seed",
+    "load": "Load",
+    "delete": "Delete",
+    "confirmDeleteTitle": "Delete Save Slot?",
+    "confirmDeleteBody": "This save slot will be permanently removed.",
+    "back": "Back"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "graphics": "Graphics",
+      "audio": "Audio",
+      "controls": "Controls",
+      "gameplay": "Gameplay",
+      "language": "Language",
+      "account": "Account & Data"
+    },
+    "preset": "Quality Preset",
+    "presets": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "viewDistance": "View Distance",
+    "shadows": "Dynamic Shadows",
+    "particles": "Ash & Weather Particles",
+    "fpsLimit": "FPS Cap",
+    "masterVol": "Master Volume",
+    "musicVol": "Music & Drone",
+    "sfxVol": "Sound Effects",
+    "ambientVol": "World Ambience",
+    "sensitivity": "Camera Sensitivity",
+    "joystickSize": "Touch Joystick Size",
+    "keyBindings": "Key Bindings",
+    "pressKey": "Press a key...",
+    "difficulty": "Difficulty",
+    "showHud": "Show Full HUD",
+    "units": "Measurement Units",
+    "metric": "Metric (°C, m)",
+    "imperial": "Imperial (°F, ft)",
+    "languageLabel": "Interface Language",
+    "syncNow": "Sync Settings to Cloud",
+    "resetOnboarding": "Replay Intro Guide",
+    "clearLocalData": "Clear All Local Data",
+    "confirmClearTitle": "Clear Local Data?",
+    "confirmClearBody": "All local saves and settings will be erased from this browser.",
+    "saveClose": "Save & Close",
+    "reset": "Reset Defaults"
+  },
+  "hud": {
+    "health": "Health",
+    "stamina": "Stamina",
+    "temperature": "Body Temp",
+    "oxygen": "Oxygen",
+    "water": "Hydration",
+    "objective": "Active Mission",
+    "weather": {
+      "clear_haze": "Orange Haze",
+      "ash_storm": "Ash Storm",
+      "acid_rain": "Acid Rain",
+      "electrical_storm": "Lightning Storm",
+      "meteor_shower": "Meteor Shower"
+    },
+    "hazards": {
+      "safe": "Safe Zone",
+      "heat": "Extreme Heat",
+      "toxic": "Toxic Gas",
+      "meteor": "Meteor Danger",
+      "sheltered": "Sheltered"
+    },
+    "interact": "Press [E] to",
+    "actions": {
+      "gather_rock": "Gather Basalt Rock",
+      "gather_mineral": "Mine Volcanic Mineral",
+      "gather_crystal": "Extract Primordial Crystal",
+      "collect_water": "Collect Shallow Water",
+      "light_fire": "Ignite Ember from Lava",
+      "rest_shelter": "Rest & Recover in Shelter"
+    },
+    "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Inventory · B Shelter · Esc Pause",
+    "pauseBtn": "Pause",
+    "inventoryBtn": "Bag",
+    "buildBtn": "Build"
+  },
+  "pause": {
+    "title": "Expedition Paused",
+    "resume": "Resume",
+    "saveLocal": "Save to Slot 1",
+    "saveCloud": "Save to Cloud",
+    "settings": "Settings",
+    "mainMenu": "Return to Main Menu",
+    "savedToast": "Game progress saved."
+  },
+  "inventory": {
+    "title": "Inventory & Crafting",
+    "bagTab": "Explorer Bag",
+    "craftTab": "Craft Gear",
+    "close": "Close [I]",
+    "empty": "Your pack is empty. Gather basalt rocks, minerals, crystals, and water across the terrain.",
+    "use": "Use",
+    "equip": "Assign Hotbar",
+    "place": "Build Here",
+    "craft": "Craft",
+    "missingMaterials": "Missing Materials",
+    "craftedToast": "Crafted"
+  },
+  "items": {
+    "basalt_rock": {
+      "name": "Basalt Rock",
+      "desc": "Dense volcanic stone used for tools and shelter walls."
+    },
+    "sulfur_mineral": {
+      "name": "Volcanic Mineral",
+      "desc": "Primordial iron-sulfur ore chipped from fissure vents."
+    },
+    "primordial_crystal": {
+      "name": "Primordial Crystal",
+      "desc": "Luminescent high-energy crystal forged by meteor impacts."
+    },
+    "stone_axe": {
+      "name": "Stone Axe",
+      "desc": "Doubles stone and mineral extraction yield."
+    },
+    "water_vessel": {
+      "name": "Water Vessel",
+      "desc": "Stores shallow ocean water for emergency hydration."
+    },
+    "heat_shield": {
+      "name": "Heat Shield",
+      "desc": "Deflects intense radiant heat near active lava rivers."
+    },
+    "basic_shelter": {
+      "name": "Basalt Shelter",
+      "desc": "Portable shelter protecting against acid rain, ash storms, and heat."
+    },
+    "campfire_kit": {
+      "name": "Lava Hearth",
+      "desc": "Provides steady light and warmth during Archean nightfall."
+    }
+  },
+  "quests": {
+    "q1": {
+      "title": "First Water Source",
+      "desc": "Locate a shallow steaming pool and collect water (E)."
+    },
+    "q2": {
+      "title": "Basalt Foundations",
+      "desc": "Gather 4 Basalt Rocks and 2 Volcanic Minerals."
+    },
+    "q3": {
+      "title": "Survivor Gear",
+      "desc": "Craft a Stone Axe and a Water Vessel in Crafting [I]."
+    },
+    "q4": {
+      "title": "Raising Shelter",
+      "desc": "Craft and place a Basalt Shelter [B] to endure toxic storms."
+    },
+    "q5": {
+      "title": "Heart of the Crater",
+      "desc": "Find and extract a Primordial Crystal from the crater zone."
+    },
+    "completedAll": "All Starter Missions Complete — Keep Exploring Freeform!"
+  },
+  "gameOver": {
+    "title": "Explorer Incapacitated",
+    "reasonTemp": "Hyperthermia from extreme volcanic heat.",
+    "reasonOxygen": "Asphyxiation inside dense volcanic gas.",
+    "reasonDehydration": "Severe dehydration on the barren plains.",
+    "reasonMeteor": "Struck directly by a falling meteor.",
+    "reasonGeneric": "Explorer vitals reached critical zero.",
+    "statTime": "Time Survived",
+    "statQuests": "Missions Cleared",
+    "statDistance": "Distance Explored",
+    "respawn": "Respawn at Safe Ridge",
+    "mainMenu": "Main Menu"
+  },
+  "credits": {
+    "title": "Credits & Build Info",
+    "lead": "PRIMORDIA — Early Earth Survival Simulation (Hadean – Archean)",
+    "engine": "Powered by procedural Three.js WebGL, Web Audio API, React UI Shell, and optional Supabase Cloud Sync.",
+    "back": "Back"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "on": "On",
+    "off": "Off"
+  }
+}

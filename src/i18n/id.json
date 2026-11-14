@@ -1,0 +1,274 @@
+{
+  "app": {
+    "title": "PRIMORDIA",
+    "subtitle": "Bertahan Hidup di Bumi Purba",
+    "version": "Versi 0.4.2-Archean"
+  },
+  "tips": [
+    "Dekati genangan air hangat untuk mengisi wadah air sebelum oksigen menipis.",
+    "Angin abu vulkanik menurunkan jarak pandang—bangun tempat berlindung lebih awal.",
+    "Hindari zona merah jatuhan meteor; puing meteor sering membawa Kristal Primordial.",
+    "Suhu tubuh melonjak tajam di dekat sungai lava. Gunakan Perisai Panas saat melintas.",
+    "Gas beracun berkumpul di sekitar kawah aktif—perhatikan indikator oksigen di HUD."
+  ],
+  "splash": {
+    "loading": "Memuat Dunia Primordial...",
+    "ready": "Siap Menjelajah",
+    "tipLabel": "Catatan Penjelajah"
+  },
+  "onboarding": {
+    "skip": "Lewati",
+    "next": "Lanjut",
+    "prev": "Kembali",
+    "finish": "Masuk ke Menu Utama",
+    "slide1Title": "Bumi Awal: Era Hadean – Archean",
+    "slide1Body": "Belum ada tumbuhan, hewan, atau manusia lain. Hanya dataran basalt panas, samudra dangkal yang mengepul, hujan meteor, dan gunung api purba.",
+    "slide2Title": "Kendali Penjelajah",
+    "slide2Body": "Desktop: WASD bergerak, Mouse mengarahkan kamera, Spasi melompat, Shift berlari, E berinteraksi, I inventaris, B bangun tempat berlindung. Ponsel: gunakan joystick sentuh & tombol aksi.",
+    "slide3Title": "Aturan Bertahan Hidup",
+    "slide3Body": "Pantau 5 indikator utama: Kesehatan, Stamina, Suhu Tubuh, Oksigen, dan Hidrasi. Kumpulkan batu, mineral, kristal, serta air untuk merakit peralatan.",
+    "slide4Title": "Kalibrasi Grafis Otomatis",
+    "slide4Body": "Sistem mendeteksi perangkat Anda dan memilih preset grafis optimal agar simulasi 3D berjalan stabil. Anda dapat mengubahnya kapan saja di Pengaturan.",
+    "detectedPreset": "Preset Terdeteksi"
+  },
+  "menu": {
+    "continue": "Lanjutkan",
+    "newGame": "Permainan Baru",
+    "loadGame": "Muat Permainan",
+    "settings": "Pengaturan",
+    "credits": "Kredit",
+    "account": "Akun & Cloud",
+    "guestBadge": "Mode Tamu Lokal",
+    "signedInAs": "Masuk sebagai"
+  },
+  "auth": {
+    "title": "Akun & Sinkronisasi Cloud",
+    "subtitle": "Masuk dengan Supabase untuk menyimpan progres ke cloud, atau lanjutkan secara offline sebagai tamu.",
+    "email": "Email",
+    "password": "Kata Sandi",
+    "signIn": "Masuk",
+    "signUp": "Daftar Baru",
+    "magicLink": "Kirim Magic Link",
+    "continueGuest": "Lanjut sebagai Tamu (Offline)",
+    "signOut": "Keluar",
+    "notConfigured": "Supabase belum dikonfigurasi di environment. Mode Tamu Lokal aktif sepenuhnya.",
+    "magicSent": "Tautan masuk telah dikirim ke email Anda.",
+    "authSuccess": "Berhasil masuk ke akun.",
+    "back": "Kembali"
+  },
+  "newGame": {
+    "title": "Persiapan Ekspedisi Baru",
+    "explorerName": "Nama Penjelajah",
+    "defaultName": "Arka-01",
+    "appearance": "Kustomisasi Penjelajah",
+    "height": "Tinggi Tubuh",
+    "skinTone": "Warna Kulit",
+    "hairColor": "Warna Rambut",
+    "suitColor": "Warna Pelindung Suit",
+    "worldSeed": "Benih Dunia (Seed)",
+    "randomizeSeed": "Acak",
+    "difficulty": "Tingkat Kesulitan",
+    "diffExplorer": "Penjelajah (Santai)",
+    "diffSurvivor": "Penyintas (Standar)",
+    "diffHadean": "Hadean (Ekstrem)",
+    "start": "Mulai Ekspedisi",
+    "cancel": "Batal"
+  },
+  "loadGame": {
+    "title": "Muat Ekspedisi Tersimpan",
+    "empty": "Belum ada data simpanan lokal maupun cloud.",
+    "slot": "Slot",
+    "local": "Lokal",
+    "cloud": "Cloud",
+    "playtime": "Waktu Bermain",
+    "seed": "Seed",
+    "load": "Muat",
+    "delete": "Hapus",
+    "confirmDeleteTitle": "Hapus Simpanan?",
+    "confirmDeleteBody": "Data simpanan ini akan dihapus permanen.",
+    "back": "Kembali"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "tabs": {
+      "graphics": "Grafis",
+      "audio": "Audio",
+      "controls": "Kontrol",
+      "gameplay": "Gameplay",
+      "language": "Bahasa",
+      "account": "Akun & Data"
+    },
+    "preset": "Preset Kualitas",
+    "presets": {
+      "low": "Rendah",
+      "medium": "Sedang",
+      "high": "Tinggi"
+    },
+    "viewDistance": "Jarak Pandang",
+    "shadows": "Bayangan Dinamis",
+    "particles": "Partikel Abu & Cuaca",
+    "fpsLimit": "Batas FPS",
+    "masterVol": "Volume Utama",
+    "musicVol": "Musik & Drone",
+    "sfxVol": "Efek Suara",
+    "ambientVol": "Ambien Alam",
+    "sensitivity": "Sensitivitas Kamera",
+    "joystickSize": "Ukuran Joystick Sentuh",
+    "keyBindings": "Pemetaan Tombol",
+    "pressKey": "Tekan tombol...",
+    "difficulty": "Tingkat Kesulitan",
+    "showHud": "Tampilkan HUD Lengkap",
+    "units": "Satuan Pengukuran",
+    "metric": "Metrik (°C, m)",
+    "imperial": "Imperial (°F, ft)",
+    "languageLabel": "Bahasa Antarmuka",
+    "syncNow": "Sinkronkan Pengaturan ke Cloud",
+    "resetOnboarding": "Ulangi Panduan Awal",
+    "clearLocalData": "Hapus Semua Data Lokal",
+    "confirmClearTitle": "Hapus Semua Data Lokal?",
+    "confirmClearBody": "Semua simpanan lokal dan pengaturan akan dihapus dari browser ini.",
+    "saveClose": "Simpan & Tutup",
+    "reset": "Setel Ulang"
+  },
+  "hud": {
+    "health": "Kesehatan",
+    "stamina": "Stamina",
+    "temperature": "Suhu Tubuh",
+    "oxygen": "Oksigen",
+    "water": "Hidrasi",
+    "objective": "Misi Aktif",
+    "weather": {
+      "clear_haze": "Kabut Oranye",
+      "ash_storm": "Badai Abu",
+      "acid_rain": "Hujan Asam",
+      "electrical_storm": "Badai Petir",
+      "meteor_shower": "Hujan Meteor"
+    },
+    "hazards": {
+      "safe": "Zona Aman",
+      "heat": "Panas Ekstrem",
+      "toxic": "Gas Beracun",
+      "meteor": "Bahaya Meteor",
+      "sheltered": "Terlindung Shelter"
+    },
+    "interact": "Tekan [E] untuk",
+    "actions": {
+      "gather_rock": "Ambil Batu Basalt",
+      "gather_mineral": "Tambang Mineral",
+      "gather_crystal": "Ekstrak Kristal Primordial",
+      "collect_water": "Ambil Air Hangat",
+      "light_fire": "Nyalakan Api dari Lava",
+      "rest_shelter": "Berlindung & Pulihkan Kondisi"
+    },
+    "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas & Rakit · B Shelter · Esc Jeda",
+    "pauseBtn": "Jeda",
+    "inventoryBtn": "Tas",
+    "buildBtn": "Bangun"
+  },
+  "pause": {
+    "title": "Ekspedisi Dijeda",
+    "resume": "Lanjutkan",
+    "saveLocal": "Simpan ke Slot 1",
+    "saveCloud": "Simpan ke Cloud",
+    "settings": "Pengaturan",
+    "mainMenu": "Kembali ke Menu Utama",
+    "savedToast": "Progres permainan tersimpan."
+  },
+  "inventory": {
+    "title": "Inventaris & Perakitan",
+    "bagTab": "Tas Penjelajah",
+    "craftTab": "Rakit Peralatan",
+    "close": "Tutup [I]",
+    "empty": "Tas masih kosong. Kumpulkan batu, mineral, kristal, dan air di permukaan.",
+    "use": "Gunakan",
+    "equip": "Pasang ke Hotbar",
+    "place": "Bangun di Lokasi",
+    "craft": "Rakit",
+    "missingMaterials": "Bahan Kurang",
+    "craftedToast": "Berhasil merakit"
+  },
+  "items": {
+    "basalt_rock": {
+      "name": "Batu Basalt",
+      "desc": "Batuan vulkanik padat untuk peralatan dan dinding shelter."
+    },
+    "sulfur_mineral": {
+      "name": "Mineral Vulkanik",
+      "desc": "Bijih logam dan sulfur purba dari celah batuan."
+    },
+    "primordial_crystal": {
+      "name": "Kristal Primordial",
+      "desc": "Kristal bercahaya berenergi tinggi dari kawah meteor."
+    },
+    "stone_axe": {
+      "name": "Kapak Batu",
+      "desc": "Mempercepat pengumpulan batu dan mineral di lapangan."
+    },
+    "water_vessel": {
+      "name": "Wadah Air",
+      "desc": "Menampung air dari kolam dangkal untuk diminum saat haus."
+    },
+    "heat_shield": {
+      "name": "Perisai Panas",
+      "desc": "Mengurangi panas ekstrem di dekat sungai lava."
+    },
+    "basic_shelter": {
+      "name": "Shelter Basalt",
+      "desc": "Tempat berlindung portabel dari hujan asam, badai abu, dan panas."
+    },
+    "campfire_kit": {
+      "name": "Perapian Lava",
+      "desc": "Sumber cahaya dan penghangat stabil di malam Archean."
+    }
+  },
+  "quests": {
+    "q1": {
+      "title": "Jejak Air Pertama",
+      "desc": "Temukan kolam air dangkal dan isi persediaan air (E)."
+    },
+    "q2": {
+      "title": "Fondasi Basalt",
+      "desc": "Kumpulkan 4 Batu Basalt dan 2 Mineral Vulkanik."
+    },
+    "q3": {
+      "title": "Peralatan Penyintas",
+      "desc": "Rakit Kapak Batu dan Wadah Air di menu Perakitan [I]."
+    },
+    "q4": {
+      "title": "Tempat Berlindung",
+      "desc": "Rakit dan dirikan Shelter Basalt [B] untuk menahan cuaca ekstrem."
+    },
+    "q5": {
+      "title": "Jantung Kawah",
+      "desc": "Temukan dan ekstrak Kristal Primordial dari zona kawah meteor."
+    },
+    "completedAll": "Semua Misi Pemula Selesai — Teruskan Eksplorasi Bebas!"
+  },
+  "gameOver": {
+    "title": "Penjelajah Tumbang",
+    "reasonTemp": "Hipertermia akibat panas ekstrem lava.",
+    "reasonOxygen": "Kehabisan oksigen di zona gas beracun.",
+    "reasonDehydration": "Dehidrasi berat di dataran kering.",
+    "reasonMeteor": "Terkena hantaman langsung meteor.",
+    "reasonGeneric": "Kondisi vital penjelajah mencapai nol.",
+    "statTime": "Waktu Bertahan",
+    "statQuests": "Misi Selesai",
+    "statDistance": "Jarak Jelajah",
+    "respawn": "Bangkit di Titik Aman",
+    "mainMenu": "Menu Utama"
+  },
+  "credits": {
+    "title": "Kredit & Informasi",
+    "lead": "PRIMORDIA — Simulasi Survival Bumi Purba (Hadean – Archean)",
+    "engine": "Dibangun dengan Three.js WebGL Prosedural, Web Audio API, React Shell, dan dukungan Cloud Supabase.",
+    "back": "Kembali"
+  },
+  "common": {
+    "confirm": "Konfirmasi",
+    "cancel": "Batal",
+    "yes": "Ya",
+    "no": "Tidak",
+    "on": "Aktif",
+    "off": "Mati"
+  }
+}
