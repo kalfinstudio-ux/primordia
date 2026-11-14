@@ -85,6 +85,14 @@ export function MainMenuScreen() {
             {t('menu.settings')}
           </button>
 
+          <button
+            type="button"
+            onClick={() => setScreen('assets')}
+            className="min-h-[40px] w-full rounded-lg border border-stone-800 bg-stone-900/90 px-5 py-2 text-left text-sm font-medium text-stone-100 transition-colors hover:border-stone-700 hover:bg-stone-800"
+          >
+            {t('menu.assets')}
+          </button>
+
           {canInstall && (
             <button
               type="button"

@@ -27,7 +27,7 @@ up() { curl -fsS -m 4 -o /dev/null "http://127.0.0.1:$PORT/" 2>/dev/null; }
 while true; do
   echo "[$(date '+%F %T')] start server :$PORT"
   pkill -f "vite --port=$PORT" 2>/dev/null; sleep 1
-  npm run dev &
+  sleep infinity | npm run dev &
   SRV=$!
   fails=0; sleep 15
   while kill -0 "$SRV" 2>/dev/null; do

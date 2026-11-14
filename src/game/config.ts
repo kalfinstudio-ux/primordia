@@ -25,7 +25,8 @@ export type ScreenName =
   | 'storage'
   | 'victory'
   | 'gameOver'
-  | 'credits';
+  | 'credits'
+  | 'assets';
 
 export interface KeyBindings {
   forward: string;

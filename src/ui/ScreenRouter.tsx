@@ -19,6 +19,7 @@ const JournalModal = lazy(() => import('./JournalModal').then((m) => ({ default:
 const StorageModal = lazy(() => import('./StorageModal').then((m) => ({ default: m.StorageModal })));
 const VictoryModal = lazy(() => import('./VictoryModal').then((m) => ({ default: m.VictoryModal })));
 const GameOverModal = lazy(() => import('./GameOverModal').then((m) => ({ default: m.GameOverModal })));
+const AssetGalleryScreen = lazy(() => import('./AssetGalleryScreen').then((m) => ({ default: m.AssetGalleryScreen })));
 const CreditsScreen = lazy(() => import('./CreditsScreen').then((m) => ({ default: m.CreditsScreen })));
 
 const HUD_OVERLAY_SCREENS: ScreenName[] = [
@@ -68,6 +69,7 @@ export function ScreenRouter() {
         {screen === 'victory' && <VictoryModal />}
         {screen === 'gameOver' && <GameOverModal />}
         {screen === 'credits' && <CreditsScreen />}
+        {screen === 'assets' && <AssetGalleryScreen />}
       </Suspense>
       <ToastContainer />
     </>

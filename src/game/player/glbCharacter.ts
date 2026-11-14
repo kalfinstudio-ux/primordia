@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { CLIP_ALIASES } from '../data/assets';
 
 export type GlbAnimState = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'swim' | 'mine' | 'craft' | 'hurt' | 'death';
 
@@ -12,18 +13,23 @@ export interface GlbExplorerHandle {
   update: (dt: number) => void;
 }
 
-const CLIP_ALIASES: Record<GlbAnimState, string[]> = {
-  idle: ['idle', 'stand', 'breath'],
-  walk: ['walk', 'locomotion'],
-  run: ['run', 'sprint', 'jog'],
-  jump: ['jump', 'leap'],
-  fall: ['fall', 'air'],
-  swim: ['swim', 'tread'],
-  mine: ['mine', 'gather', 'chop', 'attack', 'swing'],
-  craft: ['craft', 'work'],
-  hurt: ['hurt', 'hit', 'damage'],
-  death: ['death', 'die'],
-};
+/** Tinggi karakter yang diharapkan game (meter). Model di luar 1,5–2,2 m diskalakan otomatis. */
+export const TARGET_HEIGHT_M = 1.8;
+
+/** Skalakan model ke tinggi wajar dan letakkan kakinya di y=0. Mengembalikan wrapper baru. */
+export function fitModelToHeight(model: THREE.Object3D, target = TARGET_HEIGHT_M): THREE.Group {
+  const wrapper = new THREE.Group();
+  wrapper.add(model);
+  wrapper.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(wrapper);
+  const h = box.max.y - box.min.y;
+  if (Number.isFinite(h) && h > 0.001) {
+    const k = h >= 1.5 && h <= 2.2 ? 1 : target / h;
+    wrapper.scale.setScalar(k);
+    wrapper.position.y = -box.min.y * k;
+  }
+  return wrapper;
+}
 
 export async function tryLoadExplorerGlb(url = './models/explorer.glb'): Promise<GlbExplorerHandle | null> {
   if (typeof window === 'undefined' || typeof fetch === 'undefined') return null;
@@ -37,15 +43,18 @@ export async function tryLoadExplorerGlb(url = './models/explorer.glb'): Promise
   try {
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync(url);
-    const root = gltf.scene;
-    root.traverse((obj) => {
+    const model = gltf.scene;
+    model.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         obj.castShadow = true;
         obj.receiveShadow = true;
+        // Mesh berkerangka sering salah dihitung kotak pembatasnya → hilang saat kamera bergerak
+        if ((obj as THREE.SkinnedMesh).isSkinnedMesh) obj.frustumCulled = false;
       }
     });
+    const root = fitModelToHeight(model);
 
-    const mixer = new THREE.AnimationMixer(root);
+    const mixer = new THREE.AnimationMixer(model);
     const actions: Partial<Record<GlbAnimState, THREE.AnimationAction>> = {};
     for (const clip of gltf.animations) {
       const lower = clip.name.toLowerCase();

@@ -42,7 +42,8 @@
     "guestBadge": "Mode Tamu Lokal",
     "signedInAs": "Masuk sebagai",
     "installApp": "Pasang Aplikasi (PWA)",
-    "offlineReady": "Siap Offline"
+    "offlineReady": "Siap Offline",
+    "assets": "Galeri Aset 3D"
   },
   "auth": {
     "title": "Akun & Sinkronisasi Cloud",
@@ -762,5 +763,31 @@
     "no": "Tidak",
     "on": "Aktif",
     "off": "Mati"
+  },
+  "assets": {
+    "title": "Galeri Aset 3D",
+    "close": "Tutup",
+    "hint": "Putar dengan geser, zoom dengan cubit/scroll. Pilih model lalu tetapkan perannya.",
+    "loading": "Memuat model…",
+    "loadFail": "Gagal memuat model ini.",
+    "size": "Ukuran",
+    "tris": "Segitiga",
+    "meshes": "Mesh",
+    "textures": "Tekstur",
+    "height": "Tinggi asli",
+    "clips": "Animasi",
+    "none": "tidak ada",
+    "warnings": "Perhatian",
+    "allGood": "Tidak ada masalah terdeteksi.",
+    "roles": "Pakai sebagai",
+    "wired": "aktif di game",
+    "notWired": "disimpan, belum dipakai game",
+    "current": "Terpasang",
+    "reset": "Kembali ke bawaan",
+    "appliesNext": "Berlaku saat dunia dimuat berikutnya (muat ulang permainan).",
+    "addFile": "Coba file lain di public/models/",
+    "add": "Tambah",
+    "invalidName": "Nama file tidak valid (harus .glb/.gltf/.usdz/…, tanpa folder).",
+    "convert": "Perlu konversi"
   }
 }

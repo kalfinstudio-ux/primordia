@@ -22,6 +22,7 @@ import type { AnimState } from '../net/multiplayerProtocol';
 import { VOLCANO_MAIN, getBiomeAt } from '../world/biomes';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
 import { tryLoadExplorerGlb, type GlbExplorerHandle } from '../player/glbCharacter';
+import { currentPlayerModelUrl } from '../utils/assetPrefs';
 import { CharacterAnimator } from '../player/animator';
 import { PlayerController } from '../player/controller';
 import { ThirdPersonCamera } from '../player/camera';
@@ -168,7 +169,7 @@ export class SceneManager {
     this.character.root.visible = false;
     this.engine.scene.add(this.character.root);
 
-    void tryLoadExplorerGlb('./models/explorer.glb').then((glb) => {
+    void tryLoadExplorerGlb(currentPlayerModelUrl()).then((glb) => {
       if (!glb || !this.character) return;
       this.glbHandle = glb;
       this.character.bodyPivot.visible = false;

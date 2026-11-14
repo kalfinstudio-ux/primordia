@@ -42,7 +42,8 @@
     "guestBadge": "Local Guest Mode",
     "signedInAs": "Signed in as",
     "installApp": "Install App (PWA)",
-    "offlineReady": "Offline Ready"
+    "offlineReady": "Offline Ready",
+    "assets": "3D Asset Gallery"
   },
   "auth": {
     "title": "Account & Cloud Sync",
@@ -762,5 +763,31 @@
     "no": "No",
     "on": "On",
     "off": "Off"
+  },
+  "assets": {
+    "title": "3D Asset Gallery",
+    "close": "Close",
+    "hint": "Drag to rotate, pinch/scroll to zoom. Pick a model, then assign its role.",
+    "loading": "Loading model…",
+    "loadFail": "Could not load this model.",
+    "size": "Size",
+    "tris": "Triangles",
+    "meshes": "Meshes",
+    "textures": "Textures",
+    "height": "Original height",
+    "clips": "Animations",
+    "none": "none",
+    "warnings": "Heads-up",
+    "allGood": "No problems detected.",
+    "roles": "Use as",
+    "wired": "active in game",
+    "notWired": "saved, not used by the game yet",
+    "current": "Assigned",
+    "reset": "Back to default",
+    "appliesNext": "Applies the next time a world is loaded (reload the game).",
+    "addFile": "Try another file in public/models/",
+    "add": "Add",
+    "invalidName": "Invalid file name (must be .glb/.gltf/.usdz/…, no folders).",
+    "convert": "Needs conversion"
   }
 }

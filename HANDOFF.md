@@ -1,7 +1,7 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 14 November 2026 (v9: Backlog #1–#5 selesai kecuali #1 aset 3D).
+Terakhir diperbarui: 14 November 2026 (v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal: 3 model + galeri).
 
 ## 1. Ringkasan
 PRIMORDIA = game survival 3D di browser (React 19 + Three.js + Vite + Supabase opsional).
@@ -48,11 +48,16 @@ Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang bole
 | HUD | Jam/tanggal/umur ringkas di panel kiri; tombol ikon punya teks; tombol sentuh: LARI/BANGUN/AKSI/LOMPAT; notifikasi maks 2, kecil, 2,2 dtk. | `ui/HudScreen.tsx`, `EdenClock.tsx`, `ToastContainer.tsx` |
 
 ## 5. Aset 3D
-Sudah di `public/models/` (teksturnya dikompres, **belum dihubungkan ke game**):
-`naked_dude.glb` (0,23 MB), `party_starter_-_layered_t-shirts.glb` (0,93 MB), `daren_-_lod_man_character.glb` (3,0 MB — geometri berat).
-**Belum diproses:** `Cave.usdz`, `Female_character.usdz`, `Haiwan_zaman_purba_…usdz`, `Zombie_Walk_Zealot.usdz`.
-- `tools/compress_glb.py` — kecilkan tekstur GLB (Pillow saja). `tools/optimize-assets.sh` — konversi USDZ→GLB (Blender) + meshopt/WebP (gltf-transform), butuh internet.
-- Loader karakter: `src/game/player/glbCharacter.ts` memuat `./models/explorer.glb` (klip: Idle, Walk, Run, Jump, Swim, Mine). Belum ada pemetaan Adam/Hawa/gua/hewan/zombie → **tanya pemilik: aset mana untuk apa.**
+Tiga model sudah di `public/models/` (tekstur dikompres): `naked_dude.glb` (0,23 MB), `party_starter_-_layered_t-shirts.glb` (0,93 MB), `daren_-_lod_man_character.glb` (3,0 MB — geometri berat). Empat aset lain (gua, karakter perempuan, hewan purba, zombie) **belum ada di repo** — format aslinya USDZ; boleh sudah diganti format, taruh hasilnya (.glb/.gltf) di `public/models/`.
+
+**Sistem aset (v10, belum diuji di browser — sandbox tanpa three/vite):**
+- `src/game/data/assets.ts` (murni, dites `assets.test.ts`): daftar peran (`ASSET_ROLES`: player, adam, hawa, cave, animal, enemy), daftar file (`ASSET_FILES` — **edit di sini bila nama/format file berubah**), pembersih nama file, peringatan (berat >2 MB, >60 ribu segitiga, tanpa klip Idle/Walk/Run, format .usdz perlu konversi).
+- `src/game/utils/assetPrefs.ts`: pilihan peran tersimpan di localStorage (`primordia_asset_assignments`).
+- **Galeri Aset 3D** (`ui/AssetGalleryScreen.tsx`, tombol di menu utama): pratinjau putar/zoom, statistik (ukuran, segitiga, mesh, tekstur, tinggi, klip animasi — bisa diputar), peringatan, tombol "pakai sebagai …" per peran, kolom untuk mencoba file lain di `public/models/`.
+- **Hanya peran `player` yang terhubung ke game**: `SceneManager` memuat model pilihan (atau `explorer.glb` bawaan bila ada, atau karakter buatan kode bila tidak ada). Berlaku saat dunia dimuat berikutnya. Peran lain hanya disimpan.
+- `player/glbCharacter.ts`: model otomatis diskalakan ke ±1,8 m (bila di luar 1,5–2,2 m) dan kakinya diletakkan di y=0 (`fitModelToHeight`). Klip dicocokkan lewat alias nama (`CLIP_ALIASES`). Model tanpa animasi akan kaku.
+- Risiko: arah hadap model (game mengharapkan +Z), pose T/A, dan rig tanpa klip belum dicek; `daren_-_lod…` kemungkinan terlalu berat untuk HP.
+- Konversi USDZ→GLB: `tools/optimize-assets.sh` (Blender + gltf-transform, butuh internet); `tools/compress_glb.py` untuk mengecilkan tekstur.
 
 ## 6. Belum diverifikasi / risiko (BACA)
 1. Perubahan Era Adam & Hawa **belum dijalankan di browser** oleh penulisnya (sandbox tanpa internet); hanya tes logika yang lulus. Cek manual di §8.
@@ -62,6 +67,7 @@ Sudah di `public/models/` (teksturnya dikompres, **belum dihubungkan ke game**):
 5. ~~Cuaca saat bermain masih acak~~ → **selesai (Backlog #2)**: `world/weather.ts` kini mengikuti `weatherAtTime()` (blok 6 jam kalender nyata). Belum dicoba di browser.
 7. Musim mengubah peluang cuaca kronik → cuaca/laporan untuk tanggal lampau berbeda dari versi sebelum v9 (tidak ada data tersimpan yang terdampak).
 8. Struktur baru (Kebun Lumut, Bor Otomatis): mesh, resep, dan angka belum diuji di browser; keseimbangan (hasil panen: 3 tanah liat + 15 HP; bor: batu) hanyalah tebakan awal.
+10. `npm run lint` punya 1 error tipe lama di `player/stats.ts` baris 58 (`number` ke tipe literal `37`), ada sejak zip awal.
 9. Jaringan sandbox mati: `tsc` penuh & build Vite belum dijalankan. Tes `tsx` (73) lulus; tipe diperiksa terbatas (tanpa tipe three/react).
 6. Teks Era Adam & Hawa (eden.ts, EdenClock, WisdomPanel, AwayReportModal) masih di-hardcode Bahasa Indonesia, belum lewat `src/i18n`.
 
@@ -81,12 +87,13 @@ Sudah di `public/models/` (teksturnya dikompres, **belum dihubungkan ke game**):
 - [ ] Stasiun riset → resep Jangkar Medan; pasang jangkar; save/load, struktur tetap ada.
 - [ ] Simpan, tutup tab >5 menit, muat lagi → panel "Saat kamu pergi" muncul.
 - [ ] Cuaca: ubah jam perangkat melewati 00/06/12/18 → cuaca berganti sesuai kronik, dan sama dengan laporan "Saat kamu pergi".
+- [ ] Menu utama → Galeri Aset 3D: 3 model muncul, bisa diputar/zoom, statistik & peringatan tampil; "Karakter pemain" lalu muat permainan → model tampil di dunia (ukuran & arah benar).
 - [ ] Kebun Lumut & Bor Otomatis muncul di menu bangun/resep, bisa dipasang, dipanen/diambil; tersimpan setelah save/load.
 - [ ] Musim tampil di panel jam (🍂); suhu terasa berbeda antar musim.
 - [ ] Login Supabase → `profiles.born_at` terisi; umur tidak reset setelah mati.
 
 ## 9. Backlog (urutan saran)
-1. Hubungkan aset: tanya pemilik pembagian peran; konversi USDZ; ganti karakter Adam/Hawa.
+1. 🔶 SEBAGIAN — Galeri Aset + registri + karakter pemain bisa diganti (lihat §5). Sisa: tentukan peran tiap model, Adam/Hawa terpisah, gua/hewan/zombie (butuh file & konversi), animasi untuk model tanpa klip, uji di HP.
 2. ✅ SELESAI — Cuaca saat bermain mengikuti kronik (`weatherAtTime` di `eden.ts`, dipakai `WeatherSystem`). Masa aman awal tetap cerah + jeda 40 dtk; transisi cuaca mengikuti blok 6 jam. Tes: `eden3.test.ts`. Cek manual: ubah jam perangkat lintas batas blok (00/06/12/18) → cuaca & kabut berganti dalam ≤1 dtk.
 3. ✅ SELESAI — Anti-curang offline lewat `presence_ping()` server. Cek manual: login, simpan, ubah `updatedAt` save lokal ke 20 hari lalu, muat ulang → laporan tetap hanya menghitung waktu sebenarnya.
 4. ✅ SELESAI — Kebun Lumut, Bor Otomatis, kerusakan badai (lihat tabel §4). Cek manual: buat keduanya di Meja Kerja, pasang, simpan, tinggal >1 jam, muat → panen/ambil hasil; bangunan jauh dari shelter berkurang HP-nya. Belum ada cara **memperbaiki** HP bangunan (HP saat ini hanya informasi) → kandidat berikutnya.
