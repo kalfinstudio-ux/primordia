@@ -35,11 +35,8 @@ jobs:
       - name: Build production bundle
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_BASE44_APP_ID: ${{ secrets.VITE_BASE44_APP_ID }}
-          VITE_CONTACT_EMAIL: ${{ secrets.VITE_CONTACT_EMAIL }}
-          VITE_OWNER_NAME: ${{ secrets.VITE_OWNER_NAME }}
+          VITE_SUPABASE_URL: https://pnagpmfhlxoiodnmhlvm.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_7Rjph4NMWtwZ0Xas1JdVRw_c4Z4y14x
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
