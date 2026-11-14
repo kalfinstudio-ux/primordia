@@ -19,6 +19,8 @@ export interface SurvivalEnvironment {
   inLava: boolean;
   inMeteorDanger: boolean;
   difficulty: DifficultyLevel;
+  /** Pengali tekanan tambahan untuk pemain baru (default 1). */
+  easeMult?: number;
 }
 
 export function getDifficultyMultiplier(diff: DifficultyLevel): number {
@@ -40,12 +42,12 @@ export function stepVitals(
   dt: number
 ): { vitals: PlayerVitals; deathReason: string | null } {
   const B = BALANCE;
-  const mult = getDifficultyMultiplier(env.difficulty);
+  const mult = getDifficultyMultiplier(env.difficulty) * (env.easeMult ?? 1);
   const next: PlayerVitals = { ...current };
   if (typeof next.suffocationTimer !== 'number') next.suffocationTimer = 0;
 
   // 1. Body temperature with thermal cloak & heat shield insulation
-  let targetBodyTemp = B.temperature.base;
+  let targetBodyTemp: number = B.temperature.base;
   if (env.inShelter) {
     targetBodyTemp = B.temperature.base;
   } else {

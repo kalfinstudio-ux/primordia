@@ -81,20 +81,13 @@ export function sampleWorldHeight(noise: Noise2D, x: number, z: number): number 
   return h;
 }
 
-export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: number): [number, number, number] {
-  const lavaDist = getDistanceToLava(x, z);
-  const biome = getBiomeAt(x, z, y);
-  const n = noise.fbm(x * 0.08, z * 0.08, 2) * 0.5 + 0.5;
+/** Pengali gelap umum palet medan: dulu terlalu terang (tampak keabu-abuan/lavender di bawah cahaya + kabut). */
+const TERRAIN_DARKEN = 0.62;
 
-  if (y < WATER_LEVEL + 0.35) {
-    return [0.15 + n * 0.04, 0.14 + n * 0.03, 0.12 + n * 0.02];
-  }
-  if (lavaDist < 3.6) {
-    const glow = clamp(1 - lavaDist / 3.6, 0, 1);
-    return [lerp(0.14, 0.72, glow * 0.7), lerp(0.09, 0.11, glow), 0.07];
-  }
+type RGB = [number, number, number];
 
-  switch (biome.id) {
+function biomePalette(id: string, n: number): RGB {
+  switch (id) {
     case 'sulfur_flats':
       return [lerp(0.24, 0.56, n), lerp(0.22, 0.44, n), lerp(0.11, 0.12, n)];
     case 'obsidian_fields':
@@ -112,6 +105,70 @@ export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: numb
     default:
       return [lerp(0.16, 0.27, n), lerp(0.14, 0.2, n), lerp(0.13, 0.17, n)];
   }
+}
+
+/**
+ * Warna medan per titik. `slope` = 1 − normal.y (0 = datar, ≈0.5 = curam ~60°); default 0 agar pemanggil lama tetap valid.
+ * Lapisan: palet bioma → bercak besar (hangat/dingin) → tebing curam jadi batu gelap → ketinggian teroksidasi →
+ * debu abu di dataran → urat bara di sekitar gunung api & sungai lava.
+ */
+export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: number, slope = 0): RGB {
+  const lavaDist = getDistanceToLava(x, z);
+  const biome = getBiomeAt(x, z, y);
+  const n = noise.fbm(x * 0.08, z * 0.08, 2) * 0.5 + 0.5;
+
+  if (y < WATER_LEVEL + 0.35) {
+    // Dasar kolam/laut: lumpur vulkanik basah, sedikit kehijauan
+    return [0.1 + n * 0.03, 0.105 + n * 0.03, 0.095 + n * 0.02];
+  }
+  if (lavaDist < 3.6) {
+    const glow = clamp(1 - lavaDist / 3.6, 0, 1);
+    return [lerp(0.14, 0.78, glow * 0.75), lerp(0.09, 0.13, glow), 0.07];
+  }
+
+  let [r, g, b] = biomePalette(biome.id, n);
+
+  // Bercak besar: area hangat (oksidasi besi) vs dingin (abu)
+  const patch = noise.fbm(x * 0.02 + 31.7, z * 0.02 - 12.4, 2) * 0.5 + 0.5;
+  const warm = (patch - 0.5) * 0.14;
+  r += warm * 0.7;
+  g += warm * 0.15;
+  b -= warm * 0.55;
+
+  // Tebing curam → batu basal gelap kebiruan
+  const steep = smoothstep(0.16, 0.5, slope);
+  r = lerp(r, 0.07, steep * 0.7);
+  g = lerp(g, 0.065, steep * 0.7);
+  b = lerp(b, 0.08, steep * 0.7);
+
+  // Ketinggian: makin tinggi makin gelap dan kemerahan
+  const high = smoothstep(4, 15, y);
+  r *= 1 - high * 0.18;
+  g *= 1 - high * 0.32;
+  b *= 1 - high * 0.34;
+
+  // Debu abu menumpuk di dataran landai
+  const dust = (1 - steep) * smoothstep(0.4, 0.8, patch) * 0.045;
+  r += dust;
+  g += dust * 0.92;
+  b += dust * 0.85;
+
+  r *= TERRAIN_DARKEN;
+  g *= TERRAIN_DARKEN;
+  b *= TERRAIN_DARKEN;
+
+  // Urat bara: retakan menyala di kaki gunung api dan tepi sungai lava
+  const volcanoDist = distance2D(x, z, VOLCANO_MAIN.x, VOLCANO_MAIN.z);
+  const emberZone = 1 - smoothstep(8, 46, Math.min(volcanoDist, lavaDist + 8));
+  if (emberZone > 0.01) {
+    const vein = smoothstep(0.66, 0.84, noise.ridged(x * 0.05 + 9.1, z * 0.05 - 4.3, 2));
+    const glow = emberZone * vein;
+    r += glow * 0.6;
+    g += glow * 0.17;
+    b += glow * 0.02;
+  }
+
+  return [clamp(r, 0, 1), clamp(g, 0, 1), clamp(b, 0, 1)];
 }
 
 export interface ResolvedAnchor {
@@ -175,11 +232,6 @@ export function buildChunkGeometryData(
       positions[idx * 3 + 1] = wy;
       positions[idx * 3 + 2] = wz - chunkZ * chunkSize;
 
-      const [r, g, b] = sampleTerrainColor(pickColorNoise(noise, anchors, wx, wz), wx, wz, wy);
-      colors[idx * 3] = r;
-      colors[idx * 3 + 1] = g;
-      colors[idx * 3 + 2] = b;
-
       // Finite-difference normal so chunk edges match seamlessly
       const eps = 0.85;
       const hL = sampleHeightAnchored(noise, anchors, wx - eps, wz);
@@ -193,6 +245,12 @@ export function buildChunkGeometryData(
       normals[idx * 3] = nx * invLen;
       normals[idx * 3 + 1] = ny * invLen;
       normals[idx * 3 + 2] = nz * invLen;
+
+      // Warna dihitung setelah normal supaya kemiringan (1 − normal.y) ikut mewarnai tebing.
+      const [r, g, b] = sampleTerrainColor(pickColorNoise(noise, anchors, wx, wz), wx, wz, wy, 1 - ny * invLen);
+      colors[idx * 3] = r;
+      colors[idx * 3 + 1] = g;
+      colors[idx * 3 + 2] = b;
     }
   }
 

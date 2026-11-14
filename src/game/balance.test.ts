@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BALANCE, capToxicLevelForSafeStart, getDifficultyMultiplier, isSafeStartActive } from './data/balance';
+import {
+  BALANCE,
+  capToxicLevelForSafeStart,
+  earlyEaseMultiplier,
+  getDifficultyMultiplier,
+  isSafeStartActive,
+  shouldAutoEquipFilter,
+} from './data/balance';
 import { createInitialVitals, type DeathBag } from './core/state';
 import { computeHazardState, isSuffocating, stepVitals, type SurvivalEnvironment } from './player/stats';
 import { findNearestCleanAir, isCleanAirAt, pickRespawnPoint, relativeBearingDeg } from './systems/cleanAir';
@@ -99,20 +106,52 @@ test('hazard toxic tetap memakai ambang dari balance', () => {
   assert.equal(computeHazardState(toxicEnv({ toxicLevel: BALANCE.hazard.toxicLevelThreshold - 0.01 })), 'safe');
 });
 
-test('masa aman awal: 3 menit, radius 150 m, Hadean dikecualikan', () => {
-  assert.equal(BALANCE.safeStart.durationSec, 180);
-  assert.equal(BALANCE.safeStart.radiusM, 150);
-  assert.ok(isSafeStartActive('explorer', 179));
+test('masa aman awal: 10 menit, radius 260 m, udara bersih penuh, Hadean dikecualikan', () => {
+  assert.equal(BALANCE.safeStart.durationSec, 600);
+  assert.equal(BALANCE.safeStart.radiusM, 260);
+  assert.ok(isSafeStartActive('explorer', 599));
   assert.ok(isSafeStartActive('survivor', 0));
-  assert.ok(!isSafeStartActive('survivor', 180));
+  assert.ok(!isSafeStartActive('survivor', 600));
   assert.ok(!isSafeStartActive('hadean', 10));
 
   const { spawn } = BALANCE.safeStart;
   const capped = capToxicLevelForSafeStart(0.62, spawn.x + 100, spawn.z, 'survivor', 30);
   assert.ok(capped < BALANCE.hazard.toxicLevelThreshold, 'gas pekat tidak boleh ada di radius');
-  assert.equal(capToxicLevelForSafeStart(0.62, spawn.x + 151, spawn.z, 'survivor', 30), 0.62);
-  assert.equal(capToxicLevelForSafeStart(0.62, spawn.x + 100, spawn.z, 'survivor', 181), 0.62);
+  assert.equal(capped, 0, 'zona awal bebas gas sehingga oksigen pulih');
+  assert.equal(capToxicLevelForSafeStart(0.62, spawn.x + 261, spawn.z, 'survivor', 30), 0.62);
+  assert.equal(capToxicLevelForSafeStart(0.62, spawn.x + 100, spawn.z, 'survivor', 601), 0.62);
   assert.equal(capToxicLevelForSafeStart(0.62, spawn.x + 100, spawn.z, 'hadean', 30), 0.62);
+});
+
+test('masa aman: oksigen pemain pulih penuh di zona awal walau sebelumnya habis', () => {
+  const start = { ...createInitialVitals(), oxygen: 0 };
+  const env = toxicEnv({ toxicLevel: capToxicLevelForSafeStart(0.62, 0, 18, 'survivor', 30) });
+  const r = simulate(env, (v) => v.oxygen >= 100, start);
+  assert.ok(r.sec < 10, `oksigen harus pulih cepat, dapat ${r.sec}s`);
+});
+
+test('kemudahan awal: x0,6 sampai menit ke-25, bukan di masa aman/Hadean/sesudahnya', () => {
+  assert.equal(earlyEaseMultiplier('survivor', 100), 1, 'masa aman: gas sudah dihapus, pengali tidak perlu');
+  assert.equal(earlyEaseMultiplier('survivor', 601), BALANCE.earlyEase.multiplier);
+  assert.equal(earlyEaseMultiplier('explorer', 1499), BALANCE.earlyEase.multiplier);
+  assert.equal(earlyEaseMultiplier('survivor', 1500), 1);
+  assert.equal(earlyEaseMultiplier('hadean', 700), 1);
+});
+
+test('kemudahan awal: oksigen bertahan lebih lama dari pengali normal', () => {
+  const normal = simulate(toxicEnv(), (v) => v.oxygen <= 1).sec;
+  const eased = simulate(toxicEnv({ easeMult: BALANCE.earlyEase.multiplier }), (v) => v.oxygen <= 1).sec;
+  assert.ok(eased > normal * 1.5, `eased ${eased}s vs normal ${normal}s`);
+});
+
+test('filter gas otomatis: hanya bila terpapar, punya filter, oksigen rendah, bukan Hadean', () => {
+  const base = { oxygen: 20, filterDurability: 0, exposed: true, hasFilter: true, diff: 'survivor' as const };
+  assert.equal(shouldAutoEquipFilter(base), true);
+  assert.equal(shouldAutoEquipFilter({ ...base, oxygen: 60 }), false);
+  assert.equal(shouldAutoEquipFilter({ ...base, filterDurability: 40 }), false);
+  assert.equal(shouldAutoEquipFilter({ ...base, exposed: false }), false);
+  assert.equal(shouldAutoEquipFilter({ ...base, hasFilter: false }), false);
+  assert.equal(shouldAutoEquipFilter({ ...base, diff: 'hadean' }), false);
 });
 
 test('pemain baru: gas_filter dasar untuk Explorer/Survivor, Explorer jadi default', () => {

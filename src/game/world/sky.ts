@@ -1,7 +1,25 @@
 import { realTimeOfDay } from '../data/eden';
+import { VOLCANO_MAIN, WORLD_POIS } from './biomes';
+import { distance2D } from '../utils/math';
 import * as THREE from 'three';
 import type { WeatherType } from '../config';
 import { gameState } from '../core/state';
+
+/** Warna langit & pengali kabut per cuaca (hari: horizon/tengah; glow = pengali semburat gunung api). */
+const WEATHER_SKY: Record<WeatherType, { horizon: string; mid: string; glow: number }> = {
+  clear_haze: { horizon: '#c94c16', mid: '#5c1f10', glow: 1.0 },
+  ash_storm: { horizon: '#7c3a1d', mid: '#3d2a22', glow: 1.3 },
+  acid_rain: { horizon: '#8a7424', mid: '#3f3a18', glow: 0.7 },
+  electrical_storm: { horizon: '#4d3f63', mid: '#2a2236', glow: 0.5 },
+  meteor_shower: { horizon: '#b23a12', mid: '#4a1810', glow: 1.15 },
+};
+const FOG_MULT: Record<WeatherType, number> = {
+  clear_haze: 1.0,
+  ash_storm: 1.85,
+  acid_rain: 1.35,
+  electrical_storm: 1.5,
+  meteor_shower: 1.1,
+};
 
 export class SkySystem {
   readonly group = new THREE.Group();
@@ -13,6 +31,7 @@ export class SkySystem {
   private skyMat: THREE.ShaderMaterial;
   private timeOfDay = 0.28; // Start in dramatic fiery primordial morning
   private flashIntensity = 0;
+  private glowTime = 0;
 
   constructor(scene: THREE.Scene, isSoftwareGl: boolean) {
     // Hadean-Archean hazy orange-red atmospheric sky shader
@@ -24,23 +43,31 @@ export class SkySystem {
         uMidColor: { value: new THREE.Color('#6b2210') },
         uHorizonColor: { value: new THREE.Color('#d9581a') },
         uFlash: { value: 0 },
+        uGlowDir: { value: new THREE.Vector3(0, 0, -1) },
+        uGlowColor: { value: new THREE.Color('#ff5a1f') },
+        uGlowStrength: { value: 0 },
       },
+      // Arah langit dihitung dari posisi LOKAL kubah (kubah selalu mengikuti pemain), bukan posisi dunia —
+      // kalau tidak, makin jauh dari titik (0,0) langit makin "menempel" ke warna horizon.
       vertexShader: `
-        varying vec3 vWorldPos;
+        varying vec3 vDir;
         void main() {
+          vDir = position;
           vec4 wp = modelMatrix * vec4(position, 1.0);
-          vWorldPos = wp.xyz;
           gl_Position = projectionMatrix * viewMatrix * wp;
         }
       `,
       fragmentShader: `
-        varying vec3 vWorldPos;
+        varying vec3 vDir;
         uniform vec3 uTopColor;
         uniform vec3 uMidColor;
         uniform vec3 uHorizonColor;
         uniform float uFlash;
+        uniform vec3 uGlowDir;
+        uniform vec3 uGlowColor;
+        uniform float uGlowStrength;
         void main() {
-          vec3 dir = normalize(vWorldPos);
+          vec3 dir = normalize(vDir);
           float h = dir.y;
           float t1 = smoothstep(-0.08, 0.25, h);
           float t2 = smoothstep(0.18, 0.85, h);
@@ -48,6 +75,12 @@ export class SkySystem {
           col = mix(col, uTopColor, t2);
           float band = sin(dir.x * 5.0 + dir.z * 3.0 + h * 18.0) * 0.5 + 0.5;
           col += uHorizonColor * band * (1.0 - smoothstep(0.05, 0.55, h)) * 0.14;
+          // Cahaya gunung api di kejauhan: semburat jingga di horizon searah gunung terdekat
+          vec3 flatDir = vec3(dir.x, 0.0, dir.z);
+          float fl = length(flatDir);
+          float glow = fl > 0.001 ? pow(max(dot(flatDir / fl, uGlowDir), 0.0), 5.0) : 0.0;
+          glow *= (1.0 - smoothstep(0.0, 0.45, h)) * smoothstep(-0.14, 0.02, h);
+          col += uGlowColor * glow * uGlowStrength;
           col += vec3(0.85, 0.88, 1.0) * uFlash;
           gl_FragColor = vec4(col, 1.0);
         }
@@ -116,7 +149,7 @@ export class SkySystem {
   applyFog(scene: THREE.Scene, weather: WeatherType): void {
     const viewDist = gameState.settings.graphics.viewDistance;
     const baseDensity = THREE.MathUtils.mapLinear(viewDist, 70, 180, 0.017, 0.0065);
-    const weatherMult = weather === 'ash_storm' ? 1.85 : weather === 'acid_rain' ? 1.3 : 1.0;
+    const weatherMult = FOG_MULT[weather] ?? 1.0;
     const fog = scene.fog as THREE.FogExp2 | null;
     if (fog) {
       fog.density = baseDensity * weatherMult;
@@ -159,17 +192,39 @@ export class SkySystem {
     this.sunLight.intensity = 0.85 + dayFactor * 1.65 + this.flashIntensity * 2.2;
     this.hemiLight.intensity = 0.65 + dayFactor * 0.45 + this.flashIntensity * 0.8;
 
-    const horizonDay = new THREE.Color(weather === 'ash_storm' ? '#7c3a1d' : '#c94c16');
+    const tint = WEATHER_SKY[weather] ?? WEATHER_SKY.clear_haze;
+    const horizonDay = new THREE.Color(tint.horizon);
     const horizonNight = new THREE.Color('#2b110b');
     const horizon = horizonNight.clone().lerp(horizonDay, dayFactor);
 
-    const midDay = new THREE.Color('#5c1f10');
+    const midDay = new THREE.Color(tint.mid);
     const midNight = new THREE.Color('#180a0b');
     const mid = midNight.clone().lerp(midDay, dayFactor);
 
     const topDay = new THREE.Color('#1c0d0c');
     const topNight = new THREE.Color('#090507');
     const top = topNight.clone().lerp(topDay, dayFactor);
+
+    // Semburat gunung api terdekat (utama + POI): lebih kuat malam hari & saat badai abu, berkedip pelan.
+    this.glowTime += dt;
+    let nearest = Infinity;
+    let gx = 0;
+    let gz = -1;
+    const volcanoes = [VOLCANO_MAIN, ...WORLD_POIS.filter((q) => q.kind === 'volcano')];
+    for (const v of volcanoes) {
+      const d = distance2D(centerPos.x, centerPos.z, v.x, v.z);
+      if (d < nearest) {
+        nearest = d;
+        gx = v.x - centerPos.x;
+        gz = v.z - centerPos.z;
+      }
+    }
+    const gl = Math.hypot(gx, gz);
+    if (gl > 1) this.skyMat.uniforms.uGlowDir.value.set(gx / gl, 0, gz / gl);
+    const distFade = 1 - THREE.MathUtils.smoothstep(nearest, 120, 1400);
+    const flicker = 0.92 + Math.sin(this.glowTime * 1.7) * 0.05 + Math.sin(this.glowTime * 4.3) * 0.03;
+    const nightBoost = 1.15 - dayFactor * 0.6;
+    this.skyMat.uniforms.uGlowStrength.value = 0.95 * distFade * flicker * nightBoost * tint.glow;
 
     this.skyMat.uniforms.uHorizonColor.value.copy(horizon);
     this.skyMat.uniforms.uMidColor.value.copy(mid);

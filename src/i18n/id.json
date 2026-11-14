@@ -184,7 +184,9 @@
     "suffocating": "Kamu sesak napas — nyawa akan turun sebentar lagi!",
     "bagRecovered": "Kantong barang diambil kembali.",
     "bagPartial": "Inventaris penuh — sebagian barang masih tertinggal di kantong.",
-    "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning."
+    "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning.",
+    "autoFilter": "Filter Gas dipasang otomatis — oksigen hampir habis.",
+    "noRefuge": "Udara beracun & tak ada tempat berlindung! Pakai Filter Gas atau bangun Shelter [B]."
   },
   "events": {
     "super_eruption": "ERUPSI SUPER SEGERA TERJADI — CARI PERLINDUNGAN",
@@ -268,7 +270,19 @@
     "dropOne": "Buang 1",
     "placeConfirm": "Pasang [E]",
     "cancelBuild": "Batal",
-    "tapFullscreen": "Ketuk layar untuk mode layar penuh"
+    "tapFullscreen": "Ketuk layar untuk mode layar penuh",
+    "hudToggle": "Tampilan",
+    "hudModeFull": "HUD: Penuh",
+    "hudModeCompact": "HUD: Ringkas",
+    "hudModeClean": "HUD: Bersih",
+    "questGuide": {
+      "water": "Kolam air",
+      "crystal": "Kristal",
+      "geyser": "Kolam gejser",
+      "obsidian": "Ladang obsidian",
+      "meteor": "Kawah meteor"
+    },
+    "questGuideLabel": "Misi"
   },
   "map": {
     "title": "Peta Survei Primordial (4 km × 4 km)",

@@ -184,7 +184,9 @@
     "suffocating": "You are gasping — health will start dropping soon!",
     "bagRecovered": "Item bag recovered.",
     "bagPartial": "Inventory full — some items are still left in the bag.",
-    "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar."
+    "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar.",
+    "autoFilter": "Gas Filter equipped automatically — oxygen almost gone.",
+    "noRefuge": "Toxic air and no shelter nearby! Use a Gas Filter or build a Shelter [B]."
   },
   "events": {
     "super_eruption": "SUPER-ERUPTION IMMINENT — SEEK SHELTER",
@@ -268,7 +270,19 @@
     "dropOne": "Drop 1",
     "placeConfirm": "Place [E]",
     "cancelBuild": "Cancel",
-    "tapFullscreen": "Tap the screen for fullscreen"
+    "tapFullscreen": "Tap the screen for fullscreen",
+    "hudToggle": "View",
+    "hudModeFull": "HUD: Full",
+    "hudModeCompact": "HUD: Compact",
+    "hudModeClean": "HUD: Clean",
+    "questGuide": {
+      "water": "Water pool",
+      "crystal": "Crystal",
+      "geyser": "Geyser pool",
+      "obsidian": "Obsidian field",
+      "meteor": "Meteor crater"
+    },
+    "questGuideLabel": "Mission"
   },
   "map": {
     "title": "Primordial Survey Map (4 km × 4 km)",

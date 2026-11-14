@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { eventBus } from '../game/core/eventBus';
+import { gameState } from '../game/core/state';
+import { getHudMode, hudVisibility, subscribeHudMode } from '../game/utils/hudMode';
 
 interface ToastMessage {
   id: number;
@@ -9,6 +11,9 @@ interface ToastMessage {
 
 export function ToastContainer() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const hudMode = useSyncExternalStore(subscribeHudMode, getHudMode, getHudMode);
+  // Mode HUD hanya menyaring notifikasi saat bermain; di menu semua notifikasi tetap tampil.
+  const filter = gameState.screen === 'hud' ? hudVisibility(hudMode).toasts : 'all';
 
   useEffect(() => {
     let nextId = 1;
@@ -28,14 +33,15 @@ export function ToastContainer() {
     return unsub;
   }, []);
 
-  if (toasts.length === 0) return null;
+  const shown = filter === 'all' ? toasts : filter === 'warn' ? toasts.filter((x) => x.type === 'warn') : [];
+  if (shown.length === 0) return null;
 
   return (
     <div
       className="pointer-events-none fixed left-1/2 top-[22%] z-50 flex w-max max-w-[60vw] sm:max-w-sm -translate-x-1/2 flex-col items-center gap-1.5"
       aria-live="polite"
     >
-      {toasts.map((toast) => {
+      {shown.map((toast) => {
         const borderClass =
           toast.type === 'success'
             ? 'border-amber-500/70 text-amber-100'

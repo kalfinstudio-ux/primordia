@@ -44,6 +44,7 @@ import { saveGameToSlot } from '../systems/saveLoad';
 import { DeathBagView } from '../world/deathBagView';
 import { findBagInRange, pickUpBag } from '../systems/deathBag';
 import { pickRespawnPoint, relativeBearingDeg } from '../systems/cleanAir';
+import { pickQuestGuide } from '../systems/questGuide';
 import { BALANCE } from '../data/balance';
 import { distance2D } from '../utils/math';
 import { audioSystem } from '../systems/audio';
@@ -596,6 +597,7 @@ export class SceneManager {
       }
     }
     const ca = this.survival.cleanAir;
+    const guide = pickQuestGuide(quest.activeQuestId, p.x, p.z, minimapNodes);
 
     const snap: HudSnapshot = {
       vitals: { ...gameState.vitals },
@@ -636,6 +638,9 @@ export class SceneManager {
           }
         : null,
       deathBag: nearestBag,
+      questGuide: guide
+        ? { kind: guide.kind, dist: Math.round(guide.dist), relDeg: relativeBearingDeg(p.x, p.z, guide.x, guide.z, headingRad) }
+        : null,
       debug: {
         fps: this.currentFps,
         activeChunks: this.terrain.getActiveChunkCount(),

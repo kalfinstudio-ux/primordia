@@ -1,6 +1,6 @@
 import { AwayReportModal } from './AwayReportModal';
 import { EdenClock } from './EdenClock';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Volume2,
   VolumeX,
@@ -15,6 +15,9 @@ import {
   X,
   MessageCircle,
   ArrowUp,
+  Eye,
+  EyeOff,
+  Flag,
 } from 'lucide-react';
 import { ITEMS, WORLD_RADIUS } from '../game/config';
 import { BALANCE } from '../game/data/balance';
@@ -24,6 +27,14 @@ import { gameState, saveSettingsToLocal, setScreen, type HudSnapshot } from '../
 import { dismissTutorial } from '../game/systems/events';
 import { removeItem, useHotbarSlot } from '../game/systems/inventory';
 import { isTouchDevice } from '../game/utils/device';
+import {
+  cycleHudMode,
+  getHudMode,
+  hudVisibility,
+  isCriticalState,
+  subscribeHudMode,
+  type HudMode,
+} from '../game/utils/hudMode';
 import { t } from '../game/utils/i18n';
 import { ItemIcon } from './ItemIcon';
 import { DebugOverlay } from './DebugOverlay';
@@ -46,6 +57,9 @@ export function HudScreen() {
   const [inspectIdx, setInspectIdx] = useState<number | null>(null);
   const [joyKnob, setJoyKnob] = useState({ x: 0, y: 0 });
   const [emoteOpen, setEmoteOpen] = useState(false);
+  const hudMode = useSyncExternalStore(subscribeHudMode, getHudMode, getHudMode);
+  const [modeFlash, setModeFlash] = useState<string | null>(null);
+  const modeFlashTimer = useRef<number | null>(null);
 
   const minimapRef = useRef<HTMLCanvasElement | null>(null);
   const joyRef = useRef<{ x: number; y: number; touchId: number | null }>({ x: 0, y: 0, touchId: null });
@@ -71,6 +85,30 @@ export function HudScreen() {
       unsub();
       window.removeEventListener('resize', onResize);
     };
+  }, []);
+
+  const flashMode = (m: HudMode) => {
+    const label = m === 'full' ? t('hud.hudModeFull') : m === 'compact' ? t('hud.hudModeCompact') : t('hud.hudModeClean');
+    setModeFlash(label);
+    if (modeFlashTimer.current) window.clearTimeout(modeFlashTimer.current);
+    modeFlashTimer.current = window.setTimeout(() => setModeFlash(null), 1600);
+  };
+
+  // Tombol H (desktop) mengganti mode HUD: Penuh → Ringkas → Bersih.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key !== 'h' && e.key !== 'H') return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      flashMode(cycleHudMode());
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      if (modeFlashTimer.current) window.clearTimeout(modeFlashTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -293,9 +331,23 @@ export function HudScreen() {
     </div>
   );
 
+  const vis = hudVisibility(hudMode);
+  const showFullBars = vis.vitalsFull && showFull;
+  const compact = isShortLandscape; // layar landscape pendek: panel dipadatkan
+  const showHazardPill = vis.hazardPills && (hudMode === 'full' || (snap.hazard !== 'safe' && snap.hazard !== 'sheltered'));
+  const critical = vis.criticalVignette && isCriticalState(snap.vitals, suffocating);
+  const toggleHudMode = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur();
+    flashMode(cycleHudMode());
+  };
+  const bar = (label: string, pct: number, text: string, barColor: string, blink = false) => (
+    <VitalBar label={label} pct={pct} text={text} barColor={barColor} blink={blink} compact={compact} />
+  );
+
   return (
-    <div className="safe-hud-pad pointer-events-none fixed inset-0 z-20 flex flex-col justify-between">
+    <div className="hud-root safe-hud-pad pointer-events-none fixed inset-0 z-20">
       <AwayReportModal />
+      {critical && <div className="hud-critical-vignette animate-pulse" aria-hidden="true" />}
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (
         <div
           className="pointer-events-auto fixed inset-x-4 top-16 z-40 flex items-center justify-between gap-2 rounded-lg border border-amber-700 px-3 py-2 text-xs text-amber-200 shadow-lg"
@@ -311,63 +363,70 @@ export function HudScreen() {
         </div>
       )}
 
-      {/* Top Row: Vitals + Compass/Alerts + Map/Buttons */}
-      <div className="flex items-start justify-between gap-2">
+      {/* Baris atas: vitals + kompas/peringatan + tombol. Tingginya dibatasi (hud-top) sehingga tidak pernah mendorong kontrol bawah keluar layar. */}
+      <div className="hud-top">
         <div
-          className="pointer-events-auto flex w-36 sm:w-56 flex-col gap-1.5 origin-top-left"
+          className={`pointer-events-auto flex flex-col gap-1 origin-top-left ${compact ? 'w-40' : 'w-36 sm:w-56'}`}
           style={{ transform: `scale(${hudScale})` }}
         >
-          <EdenClock />
-          <div className="rounded-lg border border-stone-800 p-2 shadow-lg" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
-            <VitalBar label={t('hud.health')} pct={snap.vitals.health} text={`${Math.round(snap.vitals.health)}`} barColor="bg-red-600" />
-            {!showFull && lowOxygen && (
-              <VitalBar label={t('hud.oxygen')} pct={snap.vitals.oxygen} text={`${Math.round(snap.vitals.oxygen)}%`} barColor="bg-red-500" blink />
-            )}
-            {showFull && (
-              <>
-                <VitalBar label={t('hud.stamina')} pct={snap.vitals.stamina} text={`${Math.round(snap.vitals.stamina)}`} barColor="bg-amber-500" />
-                <VitalBar label={t('hud.temperature')} pct={tempPct} text={tempDisplay} barColor="bg-orange-500" />
-                <VitalBar label={t('hud.oxygen')} pct={snap.vitals.oxygen} text={`${Math.round(snap.vitals.oxygen)}%`} barColor={lowOxygen ? 'bg-red-500' : 'bg-emerald-500'} blink={lowOxygen} />
-                <VitalBar label={t('hud.water')} pct={snap.vitals.water} text={`${Math.round(snap.vitals.water)}%`} barColor="bg-sky-500" />
-                {(snap.vitals.radiation > 1 || snap.vitals.filterDurability > 0 || snap.vitals.fatigue < 80) && (
-                  <div className="mt-1 flex flex-wrap gap-1.5 border-t border-stone-800 pt-1 text-[10px] font-mono-tabular">
-                    {snap.vitals.radiation > 1 && <span className="text-purple-300">RAD {Math.round(snap.vitals.radiation)}%</span>}
-                    {snap.vitals.filterDurability > 0 && <span className="text-emerald-300">FLT {Math.round(snap.vitals.filterDurability)}%</span>}
-                    <span className="text-stone-400">REST {Math.round(snap.vitals.fatigue)}%</span>
-                  </div>
+          {vis.clock && <EdenClock compact={compact} />}
+          {vis.vitalsBasic && (
+            <div className="rounded-lg border border-stone-800 p-1.5 shadow-lg sm:p-2" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
+              <div className={compact && showFullBars ? 'grid grid-cols-2 gap-x-2' : ''}>
+                {bar(t('hud.health'), snap.vitals.health, `${Math.round(snap.vitals.health)}`, 'bg-red-600')}
+                {!showFullBars && lowOxygen &&
+                  bar(t('hud.oxygen'), snap.vitals.oxygen, `${Math.round(snap.vitals.oxygen)}%`, 'bg-red-500', true)}
+                {showFullBars && (
+                  <>
+                    {bar(t('hud.stamina'), snap.vitals.stamina, `${Math.round(snap.vitals.stamina)}`, 'bg-amber-500')}
+                    {bar(t('hud.temperature'), tempPct, tempDisplay, 'bg-orange-500')}
+                    {bar(t('hud.oxygen'), snap.vitals.oxygen, `${Math.round(snap.vitals.oxygen)}%`, lowOxygen ? 'bg-red-500' : 'bg-emerald-500', lowOxygen)}
+                    {bar(t('hud.water'), snap.vitals.water, `${Math.round(snap.vitals.water)}%`, 'bg-sky-500')}
+                  </>
                 )}
-                {(snap.vitals.burnTimer > 0 || snap.vitals.woundTimer > 0) && (
-                  <div className="mt-1 flex gap-1.5 text-[10px] font-bold">
-                    {snap.vitals.burnTimer > 0 && <span className="rounded bg-red-900/70 px-1.5 py-0.5 text-red-200">{t('hud.burnStatus')}</span>}
-                    {snap.vitals.woundTimer > 0 && <span className="rounded bg-amber-900/70 px-1.5 py-0.5 text-amber-200">{t('hud.woundStatus')}</span>}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              </div>
+              {showFullBars && (snap.vitals.radiation > 1 || snap.vitals.filterDurability > 0 || snap.vitals.fatigue < 80) && (
+                <div className="mt-1 flex flex-wrap gap-1.5 border-t border-stone-800 pt-1 text-[10px] font-mono-tabular">
+                  {snap.vitals.radiation > 1 && <span className="text-purple-300">RAD {Math.round(snap.vitals.radiation)}%</span>}
+                  {snap.vitals.filterDurability > 0 && <span className="text-emerald-300">FLT {Math.round(snap.vitals.filterDurability)}%</span>}
+                  <span className="text-stone-400">REST {Math.round(snap.vitals.fatigue)}%</span>
+                </div>
+              )}
+              {(snap.vitals.burnTimer > 0 || snap.vitals.woundTimer > 0) && (
+                <div className="mt-1 flex gap-1.5 text-[10px] font-bold">
+                  {snap.vitals.burnTimer > 0 && <span className="rounded bg-red-900/70 px-1.5 py-0.5 text-red-200">{t('hud.burnStatus')}</span>}
+                  {snap.vitals.woundTimer > 0 && <span className="rounded bg-amber-900/70 px-1.5 py-0.5 text-amber-200">{t('hud.woundStatus')}</span>}
+                </div>
+              )}
+            </div>
+          )}
 
-          {showFull && (
-            <div className="rounded-lg border border-stone-800 px-2.5 py-1.5 shadow-lg" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
+          {vis.quest && showFull && (
+            <div className="rounded-lg border border-stone-800 px-2 py-1 shadow-lg" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
               <button
                 type="button"
                 onClick={() => setQuestCollapsed((c) => !c)}
-                className="flex w-full items-center justify-between text-[11px] font-medium text-orange-400"
+                className="flex w-full items-center justify-between gap-1 text-[11px] font-medium text-orange-400"
               >
-                <span>{t('hud.objective')} ({snap.questsCompletedCount}/22)</span>
-                <span className="flex items-center gap-1 font-mono-tabular">
+                <span className="truncate">
+                  {t('hud.objective')} <span className="text-stone-500">{snap.questsCompletedCount}/22</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-0.5 font-mono-tabular">
                   {snap.questProgressText}
                   {questCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
                 </span>
               </button>
               {!questCollapsed && (
-                snap.activeQuestId ? (
-                  <>
-                    <div className="mt-0.5 text-xs font-semibold text-stone-100">{t(`quests.${snap.activeQuestId}.title`)}</div>
-                    <div className="mt-0.5 text-[11px] leading-snug text-stone-400">{t(`quests.${snap.activeQuestId}.desc`)}</div>
-                  </>
-                ) : (
-                  <div className="mt-0.5 text-xs text-emerald-300">{t('quests.completedAll')}</div>
-                )
+                <div className={compact ? 'max-h-[26vh] overflow-y-auto' : ''}>
+                  {snap.activeQuestId ? (
+                    <>
+                      <div className="mt-0.5 text-xs font-semibold text-stone-100">{t(`quests.${snap.activeQuestId}.title`)}</div>
+                      <div className="mt-0.5 text-[11px] leading-snug text-stone-400">{t(`quests.${snap.activeQuestId}.desc`)}</div>
+                    </>
+                  ) : (
+                    <div className="mt-0.5 text-xs text-emerald-300">{t('quests.completedAll')}</div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -375,34 +434,38 @@ export function HudScreen() {
           {gameState.debugOpen && <DebugOverlay debug={snap.debug} />}
         </div>
 
-        {/* Center: Compass, Biome, Hazard, World Events & Contextual Tutorial */}
-        <div className="pointer-events-auto flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={handleCompassTap}
-            className="hidden sm:flex items-center gap-2 whitespace-nowrap rounded-lg border border-stone-800 px-3 py-1 text-[11px] sm:text-xs shadow-lg"
-            style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}
-          >
-            <span className="font-mono-tabular font-semibold text-orange-400">
-              {getCardinal(snap.headingDeg)} · {snap.headingDeg}°
-            </span>
-            <span className="text-stone-600">|</span>
-            <span className="text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
-            <span className="text-stone-600">|</span>
-            <span className="text-stone-300">{t(`hud.weather.${snap.weather}`)}</span>
-          </button>
+        {/* Tengah: kompas, bahaya, peringatan dunia, tutorial */}
+        <div className="pointer-events-auto flex min-w-0 flex-col items-center gap-1">
+          {vis.compass && (
+            <button
+              type="button"
+              onClick={handleCompassTap}
+              className="hidden sm:flex items-center gap-2 whitespace-nowrap rounded-lg border border-stone-800 px-3 py-1 text-[11px] sm:text-xs shadow-lg"
+              style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}
+            >
+              <span className="font-mono-tabular font-semibold text-orange-400">
+                {getCardinal(snap.headingDeg)} · {snap.headingDeg}°
+              </span>
+              <span className="text-stone-600">|</span>
+              <span className="text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
+              <span className="text-stone-600">|</span>
+              <span className="text-stone-300">{t(`hud.weather.${snap.weather}`)}</span>
+            </button>
+          )}
 
-          <div className={`rounded-md border px-2.5 py-0.5 text-[11px] font-medium ${hazardClass}`} style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
-            {t(`hud.hazards.${snap.hazard}`)}
-          </div>
+          {showHazardPill && (
+            <div className={`rounded-md border px-2.5 py-0.5 text-[11px] font-medium ${hazardClass}`} style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
+              {t(`hud.hazards.${snap.hazard}`)}
+            </div>
+          )}
 
-          {suffocating && (
+          {vis.hazardPills && suffocating && (
             <div className="animate-pulse rounded-md border border-red-500 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-red-300" style={{ backgroundColor: 'rgba(40, 8, 8, 0.92)' }} role="alert">
               {t('hud.suffocating')}
             </div>
           )}
 
-          {snap.cleanAir && snap.cleanAir.dist > 0 && (
+          {vis.hazardPills && snap.cleanAir && snap.cleanAir.dist > 0 && (
             <div className="flex animate-pulse items-center gap-1.5 rounded-md border border-emerald-500/70 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300" style={{ backgroundColor: 'rgba(8, 28, 20, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.cleanAir.relDeg}deg)` }} aria-hidden="true" />
               <span>
@@ -411,7 +474,17 @@ export function HudScreen() {
             </div>
           )}
 
-          {snap.deathBag && (
+          {vis.hazardPills && snap.questGuide && snap.questGuide.dist > 6 && (
+            <div className="flex items-center gap-1.5 rounded-md border border-sky-500/70 px-2.5 py-0.5 text-[11px] font-medium text-sky-200" style={{ backgroundColor: 'rgba(10, 22, 34, 0.92)' }}>
+              <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.questGuide.relDeg}deg)` }} aria-hidden="true" />
+              <Flag className="h-3 w-3 opacity-70" aria-hidden="true" />
+              <span>
+                {t(`hud.questGuide.${snap.questGuide.kind}`)} · {snap.questGuide.dist} m
+              </span>
+            </div>
+          )}
+
+          {vis.hazardPills && snap.deathBag && (
             <div className="flex items-center gap-1.5 rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-300" style={{ backgroundColor: 'rgba(36, 24, 6, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.deathBag.relDeg}deg)` }} aria-hidden="true" />
               <span>
@@ -420,7 +493,7 @@ export function HudScreen() {
             </div>
           )}
 
-          {snap.online.status !== 'off' && (
+          {hudMode === 'full' && snap.online.status !== 'off' && (
             <div className="rounded-md border border-stone-800 px-2.5 py-0.5 text-[11px] font-medium text-yellow-200" style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
               {snap.online.status === 'online'
                 ? `${t('mp.online')} · ${snap.online.players} ${t('mp.players')}`
@@ -430,13 +503,13 @@ export function HudScreen() {
             </div>
           )}
 
-          {snap.activeEvent.type !== 'none' && (
+          {vis.hazardPills && snap.activeEvent.type !== 'none' && (
             <div className="rounded-md border border-red-600/80 px-3 py-1 text-[11px] font-bold text-red-200 shadow-lg" style={{ backgroundColor: 'rgba(69, 10, 10, 0.9)' }}>
               {t(`events.${snap.activeEvent.type}`)} · {snap.activeEvent.remainingSec}s
             </div>
           )}
 
-          {snap.tutorialHintKey && (
+          {vis.tutorial && snap.tutorialHintKey && (
             <div className="flex max-w-xs items-center gap-2 rounded-lg border border-sky-700/80 px-3 py-1.5 text-[11px] text-sky-100 shadow-lg" style={{ backgroundColor: 'rgba(12, 24, 36, 0.92)' }}>
               <span>{t(`tutorials.${snap.tutorialHintKey}`)}</span>
               <button
@@ -450,40 +523,52 @@ export function HudScreen() {
           )}
         </div>
 
-        {/* Top-Right: Utility Buttons + Minimap */}
+        {/* Kanan atas: tombol menu + minimap. Tombol mata (tampilan HUD) selalu ada. */}
         <div
-          className="pointer-events-auto flex flex-col items-end gap-1.5 origin-top-right"
+          className="pointer-events-auto flex shrink-0 flex-col items-end gap-1.5 origin-top-right"
           style={{ transform: `scale(${hudScale})` }}
         >
-          <div className="grid grid-cols-3 sm:flex items-center gap-1">
-            <HudIconBtn label={t('hud.mapBtn')} onClick={() => setScreen('map')}>
-              <MapIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </HudIconBtn>
-            <HudIconBtn label={t('hud.journalBtn')} onClick={() => setScreen('journal')}>
-              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
-            </HudIconBtn>
-            <HudIconBtn label={t('hud.inventoryBtn')} onClick={() => setScreen('inventory')}>
-              <Backpack className="h-4 w-4 sm:h-5 sm:w-5" />
-            </HudIconBtn>
-            {touchMode && (
-              <HudIconBtn label={t('hud.fullscreenBtn')} onClick={handleFullscreenLandscape}>
-                <Maximize2 className="h-4 w-4" />
-              </HudIconBtn>
+          <div className="flex flex-wrap items-center justify-end gap-1">
+            {modeFlash && (
+              <span className="rounded-md border border-stone-700 px-2 py-1 text-[11px] font-semibold text-orange-200" style={{ backgroundColor: 'rgba(15, 12, 11, 0.94)' }} role="status">
+                {modeFlash}
+              </span>
             )}
-            <HudIconBtn label={muted ? t('hud.soundOff') : t('hud.soundOn')} onClick={toggleMute}>
-              {muted ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+            <HudIconBtn label={t('hud.hudToggle')} onClick={toggleHudMode} dim={hudMode === 'clean'}>
+              {hudMode === 'full' ? <Eye className="h-4 w-4 sm:h-5 sm:w-5" /> : <EyeOff className={`h-4 w-4 sm:h-5 sm:w-5 ${hudMode === 'clean' ? 'text-orange-300' : ''}`} />}
             </HudIconBtn>
-            {snap.online.status === 'online' && (
-              <HudIconBtn label={t('mp.emoteBtn')} onClick={() => setEmoteOpen((o) => !o)}>
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" />
-              </HudIconBtn>
+            {vis.menuButtons && (
+              <>
+                <HudIconBtn label={t('hud.mapBtn')} onClick={() => setScreen('map')}>
+                  <MapIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                </HudIconBtn>
+                <HudIconBtn label={t('hud.journalBtn')} onClick={() => setScreen('journal')}>
+                  <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+                </HudIconBtn>
+                <HudIconBtn label={t('hud.inventoryBtn')} onClick={() => setScreen('inventory')}>
+                  <Backpack className="h-4 w-4 sm:h-5 sm:w-5" />
+                </HudIconBtn>
+                {touchMode && (
+                  <HudIconBtn label={t('hud.fullscreenBtn')} onClick={handleFullscreenLandscape}>
+                    <Maximize2 className="h-4 w-4" />
+                  </HudIconBtn>
+                )}
+                <HudIconBtn label={muted ? t('hud.soundOff') : t('hud.soundOn')} onClick={toggleMute}>
+                  {muted ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+                </HudIconBtn>
+                {snap.online.status === 'online' && (
+                  <HudIconBtn label={t('mp.emoteBtn')} onClick={() => setEmoteOpen((o) => !o)}>
+                    <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" />
+                  </HudIconBtn>
+                )}
+              </>
             )}
-            <HudIconBtn label={t('hud.pauseBtn')} onClick={() => setScreen('pause')}>
+            <HudIconBtn label={t('hud.pauseBtn')} onClick={() => setScreen('pause')} dim={hudMode === 'clean'}>
               <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
             </HudIconBtn>
           </div>
 
-          {emoteOpen && snap.online.status === 'online' && (
+          {vis.menuButtons && emoteOpen && snap.online.status === 'online' && (
             <div className="flex max-w-[210px] flex-wrap justify-end gap-1">
               {MP_EMOTES.map((id) => (
                 <button
@@ -502,7 +587,7 @@ export function HudScreen() {
             </div>
           )}
 
-          {showFull && !isShortLandscape && (
+          {vis.minimap && showFull && !isShortLandscape && (
             <button
               type="button"
               onClick={() => setScreen('map')}
@@ -516,8 +601,8 @@ export function HudScreen() {
         </div>
       </div>
 
-      {/* Bottom Row: Build Mode Bar / Interact Prompt / Touch Controls / Hotbar */}
-      <div className="flex flex-col items-center gap-1.5">
+      {/* Baris bawah: SELALU menempel di dasar layar (baris grid kedua), apa pun tinggi baris atas. */}
+      <div className="hud-bottom">
         {snap.buildModeItem && (
           <div
             className="pointer-events-auto flex items-center gap-2 rounded-lg border border-orange-500/80 px-3 py-1.5 text-xs shadow-lg"
@@ -660,7 +745,7 @@ export function HudScreen() {
           );
         })()}
 
-        {!isShortLandscape && (
+        {vis.controlsHint && !isShortLandscape && (
           <div
             className="hidden md:block rounded-md border border-stone-800/80 px-2.5 py-0.5 text-[11px] text-stone-200 shadow-sm"
             style={{ backgroundColor: 'rgba(15, 12, 11, 0.78)' }}
@@ -677,10 +762,12 @@ function HudIconBtn({
   label,
   onClick,
   children,
+  dim = false,
 }: {
   label: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
+  dim?: boolean;
 }) {
   return (
     <button
@@ -693,7 +780,7 @@ function HudIconBtn({
         onClick(e);
       }}
       className="flex h-11 w-11 sm:h-12 sm:w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-stone-800 text-stone-200 hover:border-orange-500 hover:text-white"
-      style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}
+      style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)', opacity: dim ? 0.55 : 1 }}
     >
       {children}
       <span className="max-w-full truncate px-0.5 text-[8px] sm:text-[9px] font-medium leading-none text-stone-300">{label}</span>
@@ -701,15 +788,29 @@ function HudIconBtn({
   );
 }
 
-function VitalBar({ label, pct, text, barColor, blink = false }: { label: string; pct: number; text: string; barColor: string; blink?: boolean }) {
+function VitalBar({
+  label,
+  pct,
+  text,
+  barColor,
+  blink = false,
+  compact = false,
+}: {
+  label: string;
+  pct: number;
+  text: string;
+  barColor: string;
+  blink?: boolean;
+  compact?: boolean;
+}) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className={`mb-1 last:mb-0 ${blink ? 'animate-pulse' : ''}`}>
-      <div className="flex items-center justify-between text-[10px] sm:text-[11px]">
-        <span className="text-stone-300">{label}</span>
+    <div className={`${compact ? 'mb-0.5' : 'mb-1'} last:mb-0 ${blink ? 'animate-pulse' : ''}`}>
+      <div className={`flex items-center justify-between gap-1 ${compact ? 'text-[9px] leading-tight' : 'text-[10px] sm:text-[11px]'}`}>
+        <span className="truncate text-stone-300">{label}</span>
         <span className="font-mono-tabular font-semibold text-stone-100">{text}</span>
       </div>
-      <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-stone-900">
+      <div className={`${compact ? 'mt-px h-1' : 'mt-0.5 h-1.5'} w-full overflow-hidden rounded-full bg-stone-900`}>
         <div className={`h-full transition-all duration-150 ${barColor}`} style={{ width: `${clamped}%` }} />
       </div>
     </div>

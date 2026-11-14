@@ -1,7 +1,7 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 14 November 2026 (v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal: 3 model + galeri).
+Terakhir diperbarui: 14 November 2026 (v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 ## 1. Ringkasan
 PRIMORDIA = game survival 3D di browser (React 19 + Three.js + Vite + Supabase opsional).
@@ -11,7 +11,7 @@ Rancangan: pemilik proyek (kalfinstudio-ux) bersama Claude AI.
 ## 2. Cara menjalankan
 ```bash
 npm install --legacy-peer-deps
-npm test                                   # semua tes (tsx --test src/game/*.test.ts)
+npm test                                   # semua tes (tsx --test src/game/*.test.ts), v11: 92 tes
 nohup ./tools/keepalive.sh > server.log 2>&1 &   # server dev anti-mati, port 3000
 ./tools/keepalive.sh stop                  # hentikan
 tail -f server.log                         # lihat log
@@ -47,6 +47,39 @@ Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang bole
 | Nama karakter | Acak (Adar, Hawa, Liora, …) + tombol 🎲; pemain bebas mengganti. | `ui/NewGameScreen.tsx` |
 | HUD | Jam/tanggal/umur ringkas di panel kiri; tombol ikon punya teks; tombol sentuh: LARI/BANGUN/AKSI/LOMPAT; notifikasi maks 2, kecil, 2,2 dtk. | `ui/HudScreen.tsx`, `EdenClock.tsx`, `ToastContainer.tsx` |
 
+## 4b. Perubahan v11 (14 Nov 2026) — BELUM diuji visual di browser
+Ditulis di sandbox tanpa vite/three (tanpa internet): hanya tes logika (`npm test`: 92 lulus) dan simulasi tata letak struktural yang dijalankan.
+
+**HUD**
+- **Joystick tidak lagi turun di landscape.** Penyebab: baris atas HUD (panel kiri setinggi ±385 px karena `transform: scale` tidak mengecilkan kotak layout) lebih tinggi dari layar 432 px, sehingga baris bawah terdorong keluar. Kini `.hud-root` (src/index.css) = grid dua baris `minmax(0,1fr) auto`: baris atas boleh menyusut/terpotong, baris bawah (joystick, tombol aksi, hotbar) selalu menempel di dasar layar. Landscape pendek (<440 px) memakai panel kiri ringkas (bar 2 kolom, jam 2 baris, misi satu baris).
+- **Mode HUD (tombol mata di kanan atas, atau tombol H di desktop):** Penuh → Ringkas → Bersih, tersimpan di localStorage `primordia_hud_mode`. Logika murni di `utils/hudMode.ts` (`hudVisibility`), dipakai `HudScreen` dan `ToastContainer`.
+  - Ringkas: nyawa (+oksigen bila rendah), peringatan bahaya/event/panah; tanpa jam, misi, minimap, kompas, tutorial. Toast hanya peringatan.
+  - Bersih: tanpa info apa pun (tanpa toast); hanya joystick/tombol aksi, hotbar, tombol mata & jeda (transparan). Saat kritis (sesak, nyawa ≤30, air habis) tepi layar berkedip merah.
+  - Di menu semua toast tetap tampil.
+
+**10 menit pertama (balance.ts)**
+- `safeStart`: 180→**600 dtk**, radius 150→**260 m**, `maxToxicLevel` 0.3→**0** (udara bersih penuh; oksigen pulih). Sebelumnya zona "aman" masih menguras oksigen (toxic 0.3×2×mode).
+- `earlyEase`: setelah masa aman sampai menit ke-25 tekanan survival ×0,6 (`easeMult` di `stepVitals`). Hadean dikecualikan dari semuanya.
+- `autoFilter`: Filter Gas dipasang otomatis bila oksigen <30%, terpapar gas, punya filter, bukan Hadean.
+- Peringatan oksigen saat badai tanpa shelter memberi teks khusus (`survival.noRefuge`) — sebelumnya tidak ada panah/petunjuk sama sekali.
+- **Panah tujuan misi** (`systems/questGuide.ts`): q1→kolam air, q5→kristal, q7→obsidian, q16→meteor; memakai node yang termuat + titik tetap (kolam awal 16,22; POI) sebagai cadangan. Tampil sebagai pill biru di tengah atas (`HudSnapshot.questGuide`).
+
+**Visual (tahap 1)**
+- `terrainHeight.ts › sampleTerrainColor`: palet ×0,62 (dulu tampak pucat/lavender), bercak hangat/dingin, tebing curam jadi batu gelap (param `slope` = 1−normal.y, dihitung setelah normal), makin tinggi makin gelap-kemerahan, debu abu di dataran, **urat bara** menyala di kaki gunung api & sungai lava.
+- `sky.ts`: **semburat jingga gunung api terdekat** di horizon (lebih kuat malam & badai abu, berkedip pelan); warna langit & kepadatan kabut per cuaca (abu coklat, asam kuning-hijau, petir ungu-abu, meteor merah). Arah langit kini dari posisi lokal kubah (dulu posisi dunia → makin jauh dari (0,0) langit makin menempel ke warna horizon).
+- `weather.ts`: cerah kini punya **bara kecil melayang naik** (44 partikel); meteor shower punya warna sendiri; partikel mengikuti pengaturan `graphics.particles`.
+- `stats.ts`: error tipe lama baris 58 (literal `37`) diperbaiki.
+
+**Cek manual v11 (HP landscape + desktop)**
+- [ ] Landscape 360–440 px: joystick, hotbar, tombol LARI/Bangun/AKSI/LOMPAT terlihat penuh di dasar, termasuk saat panel misi dibuka.
+- [ ] Tombol mata: Penuh→Ringkas→Bersih→Penuh; label mode muncul 1,6 dtk; setelah reload mode tetap. Tombol H di desktop sama.
+- [ ] Mode Bersih: tak ada teks info; nyawa ≤30 → tepi merah berkedip; tombol jeda tetap bisa dipakai.
+- [ ] Game baru: 10 menit pertama oksigen tidak turun di sekitar spawn (radius 260 m) & tidak ada badai; pill biru "Kolam air · N m" menunjuk kolam; setelah q1 selesai pill berganti sesuai misi.
+- [ ] Setelah menit ke-10 di luar zona: Filter Gas terpasang otomatis saat oksigen <30%.
+- [ ] Medan: tidak lagi pucat; ada urat bara di dekat gunung; horizon menyala jingga ke arah gunung (terutama malam). Bandingkan FPS dengan versi sebelumnya (warna medan kini 2 noise ekstra per titik di worker).
+- [ ] Bara melayang saat cerah; matikan di Pengaturan → Partikel bila FPS turun.
+- Jika medan terlalu gelap/terang: ubah `TERRAIN_DARKEN` di `terrainHeight.ts`. Ambang urat bara: `smoothstep(0.66, 0.84, …)` di fungsi yang sama.
+
 ## 5. Aset 3D
 Tiga model sudah di `public/models/` (tekstur dikompres): `naked_dude.glb` (0,23 MB), `party_starter_-_layered_t-shirts.glb` (0,93 MB), `daren_-_lod_man_character.glb` (3,0 MB — geometri berat). Empat aset lain (gua, karakter perempuan, hewan purba, zombie) **belum ada di repo** — format aslinya USDZ; boleh sudah diganti format, taruh hasilnya (.glb/.gltf) di `public/models/`.
 
@@ -67,7 +100,7 @@ Tiga model sudah di `public/models/` (tekstur dikompres): `naked_dude.glb` (0,23
 5. ~~Cuaca saat bermain masih acak~~ → **selesai (Backlog #2)**: `world/weather.ts` kini mengikuti `weatherAtTime()` (blok 6 jam kalender nyata). Belum dicoba di browser.
 7. Musim mengubah peluang cuaca kronik → cuaca/laporan untuk tanggal lampau berbeda dari versi sebelum v9 (tidak ada data tersimpan yang terdampak).
 8. Struktur baru (Kebun Lumut, Bor Otomatis): mesh, resep, dan angka belum diuji di browser; keseimbangan (hasil panen: 3 tanah liat + 15 HP; bor: batu) hanyalah tebakan awal.
-10. `npm run lint` punya 1 error tipe lama di `player/stats.ts` baris 58 (`number` ke tipe literal `37`), ada sejak zip awal.
+10. ~~`npm run lint` error tipe di `player/stats.ts` baris 58~~ → diperbaiki di v11. Catatan: TypeScript 7 memakai mode `strict` secara bawaan, jadi `npm run lint` bisa menampilkan error lain di file tes lama (mis. `eden3.test.ts`, `multiplayerProtocol.test.ts`: 'possibly undefined/null') — tidak memengaruhi `npm run build`.
 9. Jaringan sandbox mati: `tsc` penuh & build Vite belum dijalankan. Tes `tsx` (73) lulus; tipe diperiksa terbatas (tanpa tipe three/react).
 6. Teks Era Adam & Hawa (eden.ts, EdenClock, WisdomPanel, AwayReportModal) masih di-hardcode Bahasa Indonesia, belum lewat `src/i18n`.
 

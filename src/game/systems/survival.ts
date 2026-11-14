@@ -3,11 +3,11 @@ import type { HazardType, WeatherType, WorldEventType } from '../config';
 import { gameState } from '../core/state';
 import { getBiomeAt, type BiomeId } from '../world/biomes';
 import { computeHazardState, isSuffocating, stepVitals } from '../player/stats';
-import { hasItem } from './inventory';
+import { hasItem, removeItem } from './inventory';
 import { distance2D } from '../utils/math';
 import { eventBus } from '../core/eventBus';
 import { t } from '../utils/i18n';
-import { BALANCE, capToxicLevelForSafeStart } from '../data/balance';
+import { BALANCE, capToxicLevelForSafeStart, earlyEaseMultiplier, shouldAutoEquipFilter } from '../data/balance';
 import { handlePlayerDeath } from './deathBag';
 import { findNearestCleanAir, type CleanAirTarget, type HeightSampler } from './cleanAir';
 
@@ -73,6 +73,7 @@ export class SurvivalSystem {
       inLava,
       inMeteorDanger,
       difficulty,
+      easeMult: earlyEaseMultiplier(difficulty, gameState.playtimeSec),
     };
 
     // Progressive ash/soot grime during ash storms or volcanic zones (washed clean in water)
@@ -84,10 +85,26 @@ export class SurvivalSystem {
 
     this.currentHazard = computeHazardState(env);
 
+    // Pemain baru: pasang Filter Gas otomatis sebelum oksigen habis (bila punya filter).
+    if (
+      shouldAutoEquipFilter({
+        oxygen: gameState.vitals.oxygen,
+        filterDurability: gameState.vitals.filterDurability,
+        exposed: !inShelter && (env.toxicLevel > 0 || weather === 'ash_storm'),
+        hasFilter: hasItem('gas_filter'),
+        diff: difficulty,
+      })
+    ) {
+      removeItem('gas_filter', 1);
+      gameState.vitals.filterDurability = BALANCE.filter.maxDurability;
+      eventBus.emit('audio:sfx', 'craft');
+      eventBus.emit('toast:show', { text: t('survival.autoFilter'), type: 'success' });
+    }
+
     const result = stepVitals(gameState.vitals, env, dt);
     gameState.vitals = result.vitals;
 
-    this.emitBreathingWarnings();
+    this.emitBreathingWarnings(weather);
 
     if (result.deathReason) {
       handlePlayerDeath(result.deathReason);
@@ -95,11 +112,14 @@ export class SurvivalSystem {
   }
 
   /** Toast bertahap: oksigen rendah, lalu sesak. Direset saat oksigen pulih. */
-  private emitBreathingWarnings(): void {
+  private emitBreathingWarnings(weather: WeatherType): void {
     const v = gameState.vitals;
     if (!this.lowOxygenWarned && v.oxygen < BALANCE.oxygen.lowWarnPct) {
       this.lowOxygenWarned = true;
-      eventBus.emit('toast:show', { text: t('survival.lowOxygen'), type: 'warn' });
+      const stormNoShelter =
+        (weather === 'ash_storm' || weather === 'acid_rain') &&
+        !gameState.placedStructures.some((s) => s.type === 'basic_shelter' || s.type === 'roof_panel');
+      eventBus.emit('toast:show', { text: t(stormNoShelter ? 'survival.noRefuge' : 'survival.lowOxygen'), type: 'warn' });
     } else if (this.lowOxygenWarned && v.oxygen > BALANCE.oxygen.lowWarnResetPct) {
       this.lowOxygenWarned = false;
     }

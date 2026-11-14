@@ -136,6 +136,8 @@ export interface HudSnapshot {
   online: { status: 'off' | 'connecting' | 'online' | 'error'; players: number };
   cleanAir: { dist: number; relDeg: number; kind: 'shelter' | 'terrain' } | null;
   deathBag: { dist: number; relDeg: number } | null;
+  /** Panah tujuan misi aktif (kolam air, kristal, …); null bila misi tidak butuh panah. */
+  questGuide: { kind: 'water' | 'crystal' | 'geyser' | 'obsidian' | 'meteor'; dist: number; relDeg: number } | null;
   debug: DebugTelemetry;
 }
 

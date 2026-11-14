@@ -69,6 +69,12 @@ export class WeatherSystem {
     if (weather === 'acid_rain' || weather === 'electrical_storm') {
       this.particleMat.color.set('#bef264');
       this.particleMat.opacity = 0.55;
+    } else if (weather === 'meteor_shower') {
+      this.particleMat.color.set('#ff8a3c');
+      this.particleMat.opacity = 0.62;
+    } else if (weather === 'clear_haze') {
+      this.particleMat.color.set('#ff9a52'); // bara kecil yang melayang naik
+      this.particleMat.opacity = 0.5;
     } else {
       this.particleMat.color.set('#d97745');
       this.particleMat.opacity = 0.48;
@@ -131,20 +137,25 @@ export class WeatherSystem {
       }
     }
 
-    const enabled = gameState.settings.graphics.particles && this.currentWeather !== 'clear_haze';
+    const enabled = gameState.settings.graphics.particles;
     this.particleMesh.visible = enabled;
     if (!enabled) return;
 
+    // Cerah: sedikit bara kecil naik pelan. Badai abu/meteor: serpih jatuh rapat. Hujan: garis cepat.
+    const isEmber = this.currentWeather === 'clear_haze';
     const isRain = this.currentWeather === 'acid_rain' || this.currentWeather === 'electrical_storm';
-    const fallSpeed = isRain ? 22 : 5.5;
-    const windX = isRain ? 2.5 : 8.5;
+    const isMeteor = this.currentWeather === 'meteor_shower';
+    const fallSpeed = isEmber ? -1.6 : isRain ? 22 : isMeteor ? 9 : 5.5;
+    const windX = isEmber ? 1.8 : isRain ? 2.5 : 8.5;
+    const live = isEmber ? 44 : PARTICLE_COUNT;
+    this.particleMesh.count = live;
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    for (let i = 0; i < live; i++) {
       const ix = i * 3;
       this.offsets[ix] += windX * dt;
       this.offsets[ix + 1] -= fallSpeed * dt;
-      if (this.offsets[ix + 1] < 0) {
-        this.offsets[ix + 1] = 22 + Math.random() * 4;
+      if (this.offsets[ix + 1] < 0 || this.offsets[ix + 1] > 28) {
+        this.offsets[ix + 1] = isEmber ? Math.random() * 4 : 22 + Math.random() * 4;
         this.offsets[ix] = (Math.random() - 0.5) * 48;
         this.offsets[ix + 2] = (Math.random() - 0.5) * 48;
       }
@@ -155,8 +166,9 @@ export class WeatherSystem {
         centerPos.y + this.offsets[ix + 1],
         centerPos.z + this.offsets[ix + 2]
       );
-      _dummy.scale.set(isRain ? 0.6 : 2.1, isRain ? 1.4 : 0.25, isRain ? 0.6 : 2.1);
-      _dummy.rotation.z = isRain ? -0.15 : 0.4;
+      if (isEmber) _dummy.scale.set(0.9, 0.9, 0.9);
+      else _dummy.scale.set(isRain ? 0.6 : 2.1, isRain ? 1.4 : 0.25, isRain ? 0.6 : 2.1);
+      _dummy.rotation.z = isEmber ? 0 : isRain ? -0.15 : 0.4;
       _dummy.updateMatrix();
       this.particleMesh.setMatrixAt(i, _dummy.matrix);
     }

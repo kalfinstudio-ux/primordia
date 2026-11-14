@@ -100,13 +100,27 @@ export const BALANCE = {
   },
 
   safeStart: {
-    // Masa aman awal (tanpa event dunia & tanpa cuaca berbahaya) + zona bebas gas pekat di sekitar spawn.
-    durationSec: 180,
-    radiusM: 150,
-    maxToxicLevel: 0.3, // di bawah hazard.toxicLevelThreshold
+    // Masa aman awal (tanpa event dunia & tanpa cuaca berbahaya) + zona BEBAS gas di sekitar spawn.
+    // 10 menit pertama: pemain baru belajar tanpa mati kehabisan oksigen (v11; dulu 180 dtk / radius 150 m).
+    durationSec: 600,
+    radiusM: 260, // mencakup kolam awal, kawah kristal, dan kolam gejser terdekat
+    maxToxicLevel: 0, // udara bersih penuh: oksigen malah pulih di zona ini
     spawn: { x: 0, z: 18 },
     weatherClearAfterSec: 40, // jeda cerah setelah masa aman sebelum cuaca pertama berganti
     // Hadean tidak mendapat perlindungan ini.
+    disabledOn: ['hadean'] as DifficultyLevel[],
+  },
+
+  earlyEase: {
+    // Setelah masa aman: tekanan survival dikurangi bertahap sampai menit ke-25 (bukan langsung 100%).
+    untilSec: 1500,
+    multiplier: 0.6,
+    disabledOn: ['hadean'] as DifficultyLevel[],
+  },
+
+  autoFilter: {
+    // Filter Gas dipasang otomatis saat oksigen menipis (bila punya & sedang terpapar gas).
+    belowOxygenPct: 30,
     disabledOn: ['hadean'] as DifficultyLevel[],
   },
 
@@ -149,6 +163,25 @@ export function getDifficultyMultiplier(diff: DifficultyLevel): number {
 export function isSafeStartActive(diff: DifficultyLevel, playtimeSec: number): boolean {
   if ((BALANCE.safeStart.disabledOn as readonly DifficultyLevel[]).includes(diff)) return false;
   return playtimeSec < BALANCE.safeStart.durationSec;
+}
+
+/** Pengali tekanan survival tambahan untuk pemain baru (1 = normal). */
+export function earlyEaseMultiplier(diff: DifficultyLevel, playtimeSec: number): number {
+  if ((BALANCE.earlyEase.disabledOn as readonly DifficultyLevel[]).includes(diff)) return 1;
+  if (isSafeStartActive(diff, playtimeSec)) return 1; // masa aman sudah menghapus gas sepenuhnya
+  return playtimeSec < BALANCE.earlyEase.untilSec ? BALANCE.earlyEase.multiplier : 1;
+}
+
+/** Perlukah Filter Gas dipasang otomatis sekarang? */
+export function shouldAutoEquipFilter(p: {
+  oxygen: number;
+  filterDurability: number;
+  exposed: boolean;
+  hasFilter: boolean;
+  diff: DifficultyLevel;
+}): boolean {
+  if ((BALANCE.autoFilter.disabledOn as readonly DifficultyLevel[]).includes(p.diff)) return false;
+  return p.exposed && p.hasFilter && p.filterDurability <= 0 && p.oxygen < BALANCE.autoFilter.belowOxygenPct;
 }
 
 /** Batasi kadar gas di sekitar spawn selama masa aman awal. */
