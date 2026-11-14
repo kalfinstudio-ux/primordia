@@ -1,0 +1,10 @@
+{
+  "name": "PRIMORDIA",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "PRIMORDIA", "onAutoForward": "silent", "visibility": "public" }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps",
+  "postStartCommand": "nohup ./tools/keepalive.sh > server.log 2>&1 &"
+}

@@ -14,11 +14,16 @@ export function ToastContainer() {
     let nextId = 1;
     const unsub = eventBus.on<{ text?: string; type?: 'info' | 'success' | 'warn' }>('toast:show', (payload) => {
       if (!payload?.text) return;
+      const text = payload.text.length > 90 ? `${payload.text.slice(0, 87)}…` : payload.text;
       const id = nextId++;
-      setToasts((prev) => [...prev.slice(-3), { id, text: payload.text!, type: payload.type || 'info' }]);
+      setToasts((prev) => {
+        // Pesan sama tidak ditumpuk; maksimal 2 notifikasi tampil sekaligus
+        const rest = prev.filter((item) => item.text !== text);
+        return [...rest.slice(-1), { id, text, type: payload.type || 'info' }];
+      });
       setTimeout(() => {
         setToasts((prev) => prev.filter((item) => item.id !== id));
-      }, 3200);
+      }, 2200);
     });
     return unsub;
   }, []);
@@ -27,7 +32,7 @@ export function ToastContainer() {
 
   return (
     <div
-      className="pointer-events-none fixed bottom-24 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-2"
+      className="pointer-events-none fixed left-1/2 top-[22%] z-50 flex w-max max-w-[60vw] sm:max-w-sm -translate-x-1/2 flex-col items-center gap-1.5"
       aria-live="polite"
     >
       {toasts.map((toast) => {
@@ -40,7 +45,7 @@ export function ToastContainer() {
         return (
           <div
             key={toast.id}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium shadow-lg ${borderClass}`}
+            className={`rounded-lg border px-2.5 py-1 text-center text-[11px] sm:text-xs font-medium leading-snug opacity-90 shadow-md ${borderClass}`}
             style={{ backgroundColor: 'rgba(18, 14, 12, 0.94)' }}
           >
             {toast.text}

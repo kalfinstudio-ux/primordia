@@ -261,15 +261,15 @@ export function HudScreen() {
         type="button"
         onTouchStart={() => input.setVirtualHold(ctrl.keys.sprint, true)}
         onTouchEnd={() => input.setVirtualHold(ctrl.keys.sprint, false)}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-700 text-[10px] font-bold text-stone-100"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
         style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
       >
-        RUN
+        {t('hud.runBtn')}
       </button>
       <button
         type="button"
         onClick={() => input.triggerVirtualKey(ctrl.keys.build)}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-700 text-[11px] font-bold text-stone-100"
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
         style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
       >
         {t('hud.buildBtn')}
@@ -277,25 +277,23 @@ export function HudScreen() {
       <button
         type="button"
         onClick={() => input.triggerVirtualKey(ctrl.keys.interact)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-orange-500 bg-orange-600 text-sm font-bold text-white"
+        className="flex h-14 w-14 items-center justify-center rounded-full border border-orange-500 bg-orange-600 text-[11px] font-bold text-white"
       >
-        E
+        {t('hud.actionBtn')}
       </button>
       <button
         type="button"
         onClick={() => input.triggerVirtualKey(ctrl.keys.jump)}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-700 text-[11px] font-bold text-stone-100"
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
         style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
       >
-        JMP
+        {t('hud.jumpBtn')}
       </button>
     </div>
   );
 
   return (
     <div className="safe-hud-pad pointer-events-none fixed inset-0 z-20 flex flex-col justify-between">
-      <EdenClock />
-
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (
         <div
           className="pointer-events-auto fixed inset-x-4 top-16 z-40 flex items-center justify-between gap-2 rounded-lg border border-amber-700 px-3 py-2 text-xs text-amber-200 shadow-lg"
@@ -317,6 +315,7 @@ export function HudScreen() {
           className="pointer-events-auto flex w-36 sm:w-56 flex-col gap-1.5 origin-top-left"
           style={{ transform: `scale(${hudScale})` }}
         >
+          <EdenClock />
           <div className="rounded-lg border border-stone-800 p-2 shadow-lg" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
             <VitalBar label={t('hud.health')} pct={snap.vitals.health} text={`${Math.round(snap.vitals.health)}`} barColor="bg-red-600" />
             {!showFull && lowOxygen && (
@@ -469,7 +468,7 @@ export function HudScreen() {
                 <Maximize2 className="h-4 w-4" />
               </HudIconBtn>
             )}
-            <HudIconBtn label="Mute" onClick={toggleMute}>
+            <HudIconBtn label={muted ? t('hud.soundOff') : t('hud.soundOn')} onClick={toggleMute}>
               {muted ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" /> : <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />}
             </HudIconBtn>
             {snap.online.status === 'online' && (
@@ -530,7 +529,7 @@ export function HudScreen() {
               onClick={() => eventBus.emit('world:rotateBuild')}
               className="min-h-[34px] rounded border border-stone-700 bg-stone-900 px-2.5 text-stone-200"
             >
-              ↻ [R]
+              ↻ {t('hud.rotateBuild')} [R]
             </button>
             <button
               type="button"
@@ -686,14 +685,16 @@ function HudIconBtn({
       type="button"
       tabIndex={-1}
       aria-label={label}
+      title={label}
       onClick={(e) => {
         e.currentTarget.blur();
         onClick(e);
       }}
-      className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-stone-800 text-stone-200 hover:border-orange-500 hover:text-white"
+      className="flex h-11 w-11 sm:h-12 sm:w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-stone-800 text-stone-200 hover:border-orange-500 hover:text-white"
       style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}
     >
       {children}
+      <span className="max-w-full truncate px-0.5 text-[8px] sm:text-[9px] font-medium leading-none text-stone-300">{label}</span>
     </button>
   );
 }
