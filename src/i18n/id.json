@@ -59,7 +59,9 @@
     "notConfigured": "Supabase belum dikonfigurasi. Mode Tamu Lokal aktif sepenuhnya.",
     "magicSent": "Tautan masuk telah dikirim ke email Anda.",
     "authSuccess": "Berhasil masuk ke akun.",
-    "back": "Kembali"
+    "back": "Kembali",
+    "base44": "Masuk dengan Base44 (Google)",
+    "base44NoCloud": "Masuk lewat Base44 aktif sebagai identitas. Simpan cloud, teman, dan pesan memakai akun Supabase."
   },
   "newGame": {
     "title": "Persiapan Ekspedisi Baru",
@@ -134,7 +136,8 @@
       "controls": "Kontrol",
       "gameplay": "Gameplay",
       "language": "Bahasa",
-      "account": "Akun & Data"
+      "account": "Akun & Data",
+      "info": "Info Game"
     },
     "preset": "Preset Kualitas",
     "presets": {
@@ -862,5 +865,369 @@
     "errMigration": "Fitur sosial belum aktif di server (jalankan migration-social.sql).",
     "errTooMany": "Terlalu banyak permintaan tertunda.",
     "errGeneric": "Terjadi masalah. Coba lagi."
+  },
+  "info": {
+    "title": "Info Game",
+    "subtitle": "Deskripsi, skema, misi, panduan, ketentuan, dan kebijakan PRIMORDIA.",
+    "nav": {
+      "about": "Deskripsi",
+      "scheme": "Skema Game",
+      "missions": "Misi",
+      "guide": "Panduan",
+      "terms": "Ketentuan",
+      "privacy": "Kebijakan Privasi"
+    },
+    "about": {
+      "heading": "Tentang PRIMORDIA",
+      "blocks": [
+        {
+          "title": "Deskripsi",
+          "body": "PRIMORDIA adalah game survival 3D dunia terbuka yang dimainkan di browser. Kamu menjadi penjelajah di Bumi purba (Era Hadean–Archean): belum ada tumbuhan, hewan, atau manusia lain — hanya dataran basalt hitam, samudra dangkal yang mengepul, gunung api aktif, sungai lava, dataran sulfur, ladang obsidian, dan hujan meteor di dunia seluas {worldKm} × {worldKm} km."
+        },
+        {
+          "title": "Tujuan",
+          "body": "Bertahan hidup, naikkan teknologi dari kapak batu sampai laboratorium riset, lalu sintesis Benih Kehidupan dan tanam di Cekungan Geyser. Itu menamatkan kampanye {quests} misi — setelahnya dunia tetap terbuka untuk survival bebas atau New Game+."
+        },
+        {
+          "title": "{era}",
+          "body": "Kamu salah satu manusia pertama: tanpa tua dan tanpa akhir. Umur terus bertambah mengikuti waktu dunia nyata, langit mengikuti jam perangkatmu, dan peta berubah mengikuti kalender nyata. Cerita dan sains dalam game disederhanakan untuk hiburan."
+        },
+        {
+          "title": "Sekilas isi game",
+          "items": [
+            "Dunia {worldKm} × {worldKm} km dimuat bertahap per potongan {chunk} m, berisi {biomes} bioma.",
+            "{items} item dan {recipes} resep dalam {tiers} tingkat teknologi.",
+            "{quests} misi kampanye dalam {chapters} bab, {journal} entri jurnal temuan, dan {achievements} pencapaian.",
+            "3 tingkat kesulitan: Penjelajah, Penyintas, dan Hadean.",
+            "Main offline sebagai tamu, atau masuk akun untuk fitur online. Bisa dipasang sebagai aplikasi (PWA).",
+            "Versi game: {version}."
+          ]
+        }
+      ]
+    },
+    "scheme": {
+      "heading": "Skema Game",
+      "blocks": [
+        {
+          "title": "Siklus inti",
+          "items": [
+            "Jelajahi dunia dan temukan sumber daya: batu, mineral, obsidian, kristal, besi meteorit, dan air.",
+            "Kumpulkan dengan tombol Aksi [E]. Alat yang lebih baik menggandakan hasil.",
+            "Rakit alat, bahan, dan bangunan lewat Tas [I] atau di stasiun terdekat.",
+            "Bangun shelter dan pos modular [B] untuk berlindung dan menyimpan barang.",
+            "Selesaikan misi, naik tingkat teknologi, lalu jelajahi tempat yang lebih jauh dan lebih berbahaya."
+          ]
+        },
+        {
+          "title": "Bertahan hidup",
+          "body": "Tujuh status vital dipantau terus: Kesehatan, Stamina, Suhu Tubuh, Oksigen, Hidrasi, Radiasi, dan Istirahat. Ada juga batas Beban bawaan (dasar {carry} kg; Ransel Ekspedisi menambah kapasitas)."
+        },
+        {
+          "title": "Bahaya dunia",
+          "items": [
+            "Panas ekstrem di dekat sungai lava dan kaldera.",
+            "Gas sulfur beracun di dataran fumarol.",
+            "Radiasi di zona tumbukan meteorit.",
+            "Cuaca: kabut oranye, badai abu, hujan asam, badai petir, dan hujan meteor.",
+            "Peristiwa dunia: erupsi super, gelombang gas sulfur, dan badai meteor orbital.",
+            "Retakan gempa dan sambaran petir ditandai peringatan di tanah."
+          ]
+        },
+        {
+          "title": "Tingkat teknologi",
+          "body": "Ada {tiers} tingkat; jumlah item per tingkat: {tierCounts}. Tingkat 1 bisa dirakit di mana saja. Resep tingkat berikutnya butuh stasiun di dekatmu: Meja Kerja, Tungku Peleburan, atau Lab Riset. Ada {recipes} resep, dan sebagian terbuka setelah kamu mendapat bahan tertentu."
+        },
+        {
+          "title": "Tingkat kesulitan",
+          "items": [
+            "Penjelajah (santai): tekanan survival ×{multExplorer}.",
+            "Penyintas (standar): ×{multSurvivor}.",
+            "Hadean (ekstrem): ×{multHadean}, tanpa keringanan pemula.",
+            "Keringanan pemula (tidak berlaku di Hadean): {safeMin} menit pertama adalah masa aman — udara bersih penuh dalam radius {safeRadius} m dari titik awal dan tanpa badai. Sampai menit ke-{easeMin}, tekanan survival dikurangi {easePct}%.",
+            "Filter Gas dipasang otomatis bila oksigen di bawah {autoFilterPct}% dan kamu punya filter (tidak berlaku di Hadean)."
+          ]
+        },
+        {
+          "title": "{era}",
+          "items": [
+            "Umur abadi: tidak ada kematian karena usia. Mati karena bahaya hanya menambah hitungan kematian; umur tidak direset.",
+            "Waktu nyata: langit mengikuti jam perangkat, dan HUD menampilkan jam, tanggal, umur, serta musim.",
+            "Peta berubah: medan berganti tiap bulan, sumber daya tumbuh ulang tiap hari. Peringatan Pergeseran Besar muncul menjelang tanggal 1.",
+            "Jangkar Medan: bangunan yang mengunci medan radius {anchorR} m di sekitar basemu agar tidak berubah.",
+            "Musim ({seasons}) memengaruhi cuaca, isi penampung air, kebun, dan suhu lingkungan.",
+            "Dunia tetap berjalan saat kamu offline (maksimal {offlineMaxH} jam; jeda kurang dari {offlineMinMin} menit diabaikan). Panel \"Saat kamu pergi\" merangkum cuaca, air, dan kerusakan badai.",
+            "Kebun Lumut siap panen setelah sekitar {gardenHours} jam (tergantung cuaca dan musim). Bor Otomatis menghasilkan {drillPerH} batu per jam, maksimal {drillCap}.",
+            "Kebijaksanaan: poin dari umur ({wisdom}) yang ditukar jadi perk permanen — {perks}. Dibeli lewat menu Jeda."
+          ]
+        },
+        {
+          "title": "Progres, simpan, dan skor",
+          "items": [
+            "Menamatkan {quests} misi membuka Layar Kemenangan dengan skor ekspedisi. Setelah itu lanjut survival bebas atau New Game+ (membawa resep dan jurnal).",
+            "Jurnal [J] berisi temuan lapangan, kampanye, pencapaian, dan Kontrak Survei yang bisa diulang untuk menambah skor.",
+            "Game menyimpan otomatis tiap {autosaveSec} detik, ditambah {saveSlots} slot simpan manual di perangkat. Akun Supabase juga bisa menyimpan ke cloud.",
+            "Skor ekspedisi masuk papan peringkat hanya bila kamu masuk dengan akun Supabase (divalidasi server)."
+          ]
+        },
+        {
+          "title": "Online dan sosial (opsional)",
+          "items": [
+            "Mode Online (menu Jeda): lihat pemain lain di dunia yang sama — nama, penampilan, dan posisi — serta kirim isyarat cepat.",
+            "Akun Supabase: profil, teman, pesan antar teman, simpan cloud, dan umur abadi yang dihitung server.",
+            "Login Base44 (Google): identitas akun di game. Simpan cloud, teman, dan pesan tetap memakai akun Supabase."
+          ]
+        }
+      ]
+    },
+    "missions": {
+      "heading": "Misi dan Tujuan",
+      "intro": "Kampanye berisi {quests} misi dalam {chapters} bab. Misi aktif tampil di HUD; sebagian misi juga ditunjukkan panah biru ke lokasinya.",
+      "done": "Selesai",
+      "active": "Sedang berjalan",
+      "chapters": {
+        "1": {
+          "title": "Bab 1 — Bertahan di Dataran Basalt",
+          "desc": "Air, bahan dasar, alat pertama, shelter, dan kristal pertama."
+        },
+        "2": {
+          "title": "Bab 2 — Bengkel dan Kaca Vulkanik",
+          "desc": "Meja Kerja, obsidian, beliung, filter gas, dan peti penyimpanan."
+        },
+        "3": {
+          "title": "Bab 3 — Zaman Besi",
+          "desc": "Tungku, peleburan besi, bangunan modular, dan perlindungan termal."
+        },
+        "4": {
+          "title": "Bab 4 — Laboratorium dan Bintang Jatuh",
+          "desc": "Lab Riset, besi meteorit, inti energi kristal, dan jaringan suar."
+        },
+        "5": {
+          "title": "Bab 5 — Benih Kehidupan",
+          "desc": "Sintesis amino, membran protosel, benih, lalu tanam di Cekungan Geyser."
+        }
+      },
+      "achievementsTitle": "Pencapaian",
+      "blocks": [
+        {
+          "title": "Kontrak Survei (berulang)",
+          "body": "Ekstrak 1 Kristal Primordial atau 2 Besi Meteorit dan jelajahi 250 m, lalu klaim di Jurnal [J] untuk tambahan skor. Bisa diulang kapan saja."
+        },
+        {
+          "title": "Tujuan jangka panjang",
+          "items": [
+            "Isi Jurnal: {journal} entri temuan lapangan (bioma, mineral, fenomena).",
+            "Jelajahi peta {worldKm} × {worldKm} km, pasang Suar Teleportasi, dan beri penanda pribadi.",
+            "Bangun pos dengan Jangkar Medan agar basemu aman dari pergeseran peta bulanan.",
+            "Kumpulkan poin Kebijaksanaan dari umur abadi dan beli perk permanen."
+          ]
+        }
+      ]
+    },
+    "guide": {
+      "heading": "Panduan Bermain",
+      "controlsTitle": "Kontrol",
+      "controlsDesktop": "Desktop (bisa diubah di tab Kontrol)",
+      "controlsMobile": "Ponsel: joystick di satu sisi, geser layar untuk melihat sekitar, tombol LARI, BANGUN, AKSI, dan LOMPAT. Putar ke mode lanskap untuk jarak pandang lebih luas.",
+      "keys": {
+        "forward": "Maju",
+        "backward": "Mundur",
+        "left": "Kiri",
+        "right": "Kanan",
+        "jump": "Lompat",
+        "sprint": "Lari",
+        "interact": "Aksi",
+        "inventory": "Tas",
+        "build": "Bangun",
+        "map": "Peta",
+        "journal": "Jurnal"
+      },
+      "blocks": [
+        {
+          "title": "Mulai cepat (10 menit pertama)",
+          "items": [
+            "Ikuti panah biru di atas layar — misi pertama menunjuk ke kolam air terdekat.",
+            "Isi air di kolam dangkal dengan [E], kumpulkan batu basalt dan mineral vulkanik, lalu rakit Kapak Batu dan Wadah Air.",
+            "Rakit dan pasang Shelter Basalt sebelum masa aman {safeMin} menit habis.",
+            "Simpan lewat menu Jeda sesekali. Simpan otomatis jalan tiap {autosaveSec} detik, tetapi slot manual menjaga progresmu."
+          ]
+        },
+        {
+          "title": "Status vital dan cara memulihkannya",
+          "items": [
+            "Kesehatan: Perban Mineral (+30) dan Salep Luka Bakar (+18).",
+            "Hidrasi: isi air di kolam, minum dari Wadah Air (+35%) atau Air Murni (+45%).",
+            "Oksigen: menjauh dari gas ke udara bersih (ikuti panah hijau) atau pakai Filter Gas.",
+            "Suhu: Perapian Lava, Perisai Panas, Jubah Termal, atau berlindung di shelter.",
+            "Istirahat: tidur di dalam shelter.",
+            "Radiasi: jauhi zona meteorit; pakai Penyerap Radiasi atau Lapisan Hazmat."
+          ]
+        },
+        {
+          "title": "Tanda bahaya",
+          "items": [
+            "Bar vital berkedip saat kritis; teks SESAK, TERBAKAR, atau LUKA muncul.",
+            "Panah hijau menunjuk udara bersih atau shelter terdekat.",
+            "Bila tumbang, barangmu tertinggal di Kantong Barang — cari pilar cahaya kuning di lokasi tumbang.",
+            "Peringatan peristiwa dunia (erupsi super, gelombang gas, hujan meteor) muncul di layar: segera berlindung."
+          ]
+        },
+        {
+          "title": "Bangun dan kerajinan",
+          "items": [
+            "Tekan [B] untuk mode bangun, [R] untuk memutar modul, [E] atau tombol Pasang untuk menempel, [Esc] untuk batal.",
+            "Modul bangunan menempel ke kisi 3 m: lantai, dinding, atap.",
+            "Peti Penyimpanan menampung bijih berat. Meja Kerja, Tungku Peleburan, dan Lab Riset membuka resep tingkat lebih tinggi."
+          ]
+        },
+        {
+          "title": "Peta dan perjalanan",
+          "items": [
+            "[M] membuka Peta Survei; sektor yang sudah dijelajahi terbuka dari kabut.",
+            "Klik atau sentuh peta untuk menaruh penanda pribadi.",
+            "Suar Teleportasi membuka perjalanan cepat antar suar."
+          ]
+        },
+        {
+          "title": "Tampilan HUD",
+          "body": "Tombol mata di kanan atas (atau tombol H di desktop) bergantian antara HUD Penuh, Ringkas, dan Bersih. Pilihanmu diingat. Bila kondisi kritis, tepi layar berkedip merah."
+        },
+        {
+          "title": "Simpan, muat, dan cloud",
+          "items": [
+            "Menu Jeda: simpan ke Slot 1–3 di perangkat. Muat lewat Muat Permainan.",
+            "Akun Supabase: tersedia Simpan ke Cloud. Bila simpanan lokal dan cloud berbeda, kamu memilih Simpan Lokal, Simpan Cloud, atau Simpan Keduanya.",
+            "Menghapus data browser menghapus simpanan lokal. Simpan ke cloud bila ingin cadangan."
+          ]
+        },
+        {
+          "title": "Bermain dengan nyaman",
+          "items": [
+            "Bila patah-patah: Pengaturan → Grafis, turunkan preset atau jarak pandang, dan matikan Partikel.",
+            "Pasang game sebagai aplikasi (PWA) agar bisa dibuka offline.",
+            "Efek kilat petir dan tepi layar yang berkedip bisa mengganggu pemain yang peka cahaya. Matikan Partikel dan berhentilah bila merasa pusing atau tidak nyaman. Istirahatlah secara berkala."
+          ]
+        }
+      ]
+    },
+    "legal": {
+      "updated": "Terakhir diperbarui: {updatedAt}",
+      "owner": "Pengelola: {owner}",
+      "contact": "Kontak pengelola: {contact}"
+    },
+    "terms": {
+      "heading": "Ketentuan Penggunaan",
+      "blocks": [
+        {
+          "title": "1. Persetujuan",
+          "body": "Dengan memainkan PRIMORDIA kamu menyetujui ketentuan ini. Bila tidak setuju, berhentilah memakai game. Ketentuan ini berlaku untuk game, situs, dan aplikasi (PWA) PRIMORDIA."
+        },
+        {
+          "title": "2. Layanan",
+          "body": "PRIMORDIA (versi {version}) adalah game hiburan yang masih dikembangkan. Fitur, keseimbangan, dan isi dunia dapat berubah, dan kesalahan (bug) mungkin terjadi. Fitur online, akun, dan cloud bersifat opsional serta bergantung pada layanan pihak ketiga, jadi bisa tidak tersedia sewaktu-waktu."
+        },
+        {
+          "title": "3. Akun dan Mode Tamu",
+          "items": [
+            "Kamu bisa bermain penuh tanpa akun (Mode Tamu); progres disimpan di perangkatmu.",
+            "Akun dibuat lewat Supabase (email dan kata sandi, magic link, atau Google) atau lewat Base44 (Google). Jaga kerahasiaan akunmu; kamu bertanggung jawab atas aktivitas di akunmu.",
+            "Fitur akun dan online ditujukan bagi pemain berusia 13 tahun ke atas. Pemain yang lebih muda sebaiknya memakai Mode Tamu dengan pendampingan orang tua atau wali."
+          ]
+        },
+        {
+          "title": "4. Perilaku Pemain",
+          "items": [
+            "Dilarang curang: memanipulasi simpanan, jam perangkat, skor, atau memakai celah (eksploit) untuk keuntungan tidak wajar. Server dapat mengabaikan atau menolak data yang tidak wajar.",
+            "Dilarang melecehkan, mengancam, atau menyebar ujaran kebencian, spam, atau konten ilegal lewat nama karakter, isyarat, maupun pesan.",
+            "Dilarang mencoba menembus, membebani, atau merusak layanan, termasuk server dan akun pemain lain."
+          ]
+        },
+        {
+          "title": "5. Konten Buatanmu",
+          "body": "Nama karakter, penampilan, dan pesan yang kamu kirim adalah tanggung jawabmu. Nama karakter dapat terlihat oleh pemain lain di Mode Online. Pengelola dapat menghapus konten atau membatasi akun yang melanggar ketentuan ini."
+        },
+        {
+          "title": "6. Progres dan Data Game",
+          "body": "Progres di Mode Tamu tersimpan di penyimpanan browser dan dapat hilang bila data browser dihapus, perangkat berganti, atau terjadi kerusakan. Simpanan cloud membantu, tetapi tidak dijamin selamanya tersedia. Hitungan umur abadi untuk akun Supabase dihitung server; untuk tamu bergantung pada simpanan di perangkat."
+        },
+        {
+          "title": "7. Hak Cipta dan Aset",
+          "body": "Kode, desain, teks, dan cerita PRIMORDIA dimiliki pengelola. Model 3D dan aset pihak ketiga tetap milik pembuatnya masing-masing dan dipakai sesuai lisensinya. Dilarang menyalin, menjual ulang, atau mendistribusikan ulang game atau asetnya tanpa izin."
+        },
+        {
+          "title": "8. Tanpa Jaminan dan Batas Tanggung Jawab",
+          "body": "Game disediakan apa adanya tanpa jaminan tertentu. Sejauh diizinkan hukum, pengelola tidak bertanggung jawab atas kehilangan progres, gangguan layanan, atau kerugian tidak langsung akibat penggunaan game."
+        },
+        {
+          "title": "9. Penghentian",
+          "body": "Kamu dapat berhenti bermain kapan saja dan menghapus data lokal lewat Pengaturan → Akun dan Data. Pengelola dapat membatasi atau menutup akses bila terjadi pelanggaran ketentuan."
+        },
+        {
+          "title": "10. Perubahan Ketentuan",
+          "body": "Ketentuan dapat diperbarui. Tanggal pembaruan terakhir tertera di atas. Bila kamu terus bermain setelah pembaruan, kamu dianggap menyetujui versi terbaru."
+        }
+      ]
+    },
+    "privacy": {
+      "heading": "Kebijakan Privasi",
+      "blocks": [
+        {
+          "title": "Ringkasan",
+          "body": "Tanpa akun, PRIMORDIA menyimpan data hanya di perangkatmu. Data baru dikirim ke server bila kamu masuk dengan akun atau menyalakan Mode Online."
+        },
+        {
+          "title": "Data di perangkatmu",
+          "items": [
+            "Pengaturan (grafis, audio, kontrol, bahasa), status panduan awal, dan pilihan tampilan HUD.",
+            "Simpanan permainan (slot lokal), termasuk penampilan karakter, inventaris, bangunan, misi, dan jurnal.",
+            "Pilihan model 3D karakter dan berkas cache aplikasi (PWA) agar bisa dibuka offline.",
+            "Semua ini bisa dihapus lewat Pengaturan → Akun dan Data → Hapus Semua Data Lokal."
+          ]
+        },
+        {
+          "title": "Bila kamu masuk dengan akun Supabase",
+          "items": [
+            "Akun: email dan ID akun.",
+            "Profil: nama pengguna, konfigurasi penampilan, nama karakter publik, tanggal lahir karakter (untuk umur abadi), jumlah kematian, dan waktu terakhir terlihat (untuk menghitung lama offline secara adil).",
+            "Pengaturan dan simpanan cloud (slot 1–5).",
+            "Skor papan peringkat, daftar teman, dan pesan antar teman.",
+            "Data ini disimpan di database Supabase milik pengelola dan dilindungi aturan akses per pengguna."
+          ]
+        },
+        {
+          "title": "Bila kamu masuk lewat Base44 (Google)",
+          "body": "Login diproses oleh Base44 dan Google sesuai kebijakan privasi mereka. PRIMORDIA hanya membaca nama dan email akunmu untuk menampilkan identitas di game, dan tidak menyalinnya ke database Supabase kami."
+        },
+        {
+          "title": "Mode Online",
+          "body": "Pemain lain di dunia yang sama dapat melihat nama karakter, penampilan, posisi, dan isyaratmu. Bila kamu masuk dengan akun, ID akunmu ikut disertakan agar profil dan pertemanan bisa terhubung. Inventaris dan simpananmu tidak dikirim. Email dan nama pengguna akunmu tidak dibagikan ke pemain lain."
+        },
+        {
+          "title": "Layanan pihak ketiga",
+          "items": [
+            "Supabase: akun, database, dan koneksi online.",
+            "Base44 dan Google: login Base44 (bila diaktifkan).",
+            "Google Fonts: huruf game dimuat dari Google, sehingga alamat IP-mu terlihat oleh Google.",
+            "Penyedia hosting situs dapat mencatat log akses standar (misalnya alamat IP).",
+            "PRIMORDIA sendiri tidak memasang iklan atau alat analitik pelacak."
+          ]
+        },
+        {
+          "title": "Hak dan pilihanmu",
+          "items": [
+            "Kamu bisa bermain sebagai tamu tanpa mengirim data akun.",
+            "Hapus data lokal kapan saja lewat Pengaturan, atau keluar dari akun lewat layar Akun.",
+            "Belum ada tombol hapus akun di dalam game. Untuk meminta penghapusan atau salinan data akun cloud, hubungi pengelola lewat kontak di bawah."
+          ]
+        },
+        {
+          "title": "Keamanan dan anak-anak",
+          "body": "Koneksi ke layanan memakai HTTPS dan data cloud dilindungi aturan akses per pengguna, tetapi tidak ada sistem yang 100% aman. Fitur akun dan online ditujukan bagi pemain 13 tahun ke atas; pemain yang lebih muda sebaiknya memakai Mode Tamu dengan pendampingan orang tua atau wali."
+        },
+        {
+          "title": "Perubahan kebijakan",
+          "body": "Kebijakan ini dapat diperbarui seiring fitur baru. Tanggal pembaruan terakhir tertera di atas."
+        }
+      ]
+    }
   }
 }

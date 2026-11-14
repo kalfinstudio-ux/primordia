@@ -54,3 +54,19 @@ export function getTipList(): string[] {
   const list = (dictionaries[currentLanguage] as { tips?: string[] }).tips;
   return Array.isArray(list) ? list : [];
 }
+
+/** Ambil simpul mentah (objek/array) dari kamus bahasa aktif; jatuh ke Inggris bila tak ada. */
+export function tRaw(key: string): unknown {
+  const walk = (root: unknown): unknown => {
+    let node: unknown = root;
+    for (const part of key.split('.')) {
+      if (node && typeof node === 'object' && part in (node as Record<string, unknown>)) {
+        node = (node as Record<string, unknown>)[part];
+      } else {
+        return undefined;
+      }
+    }
+    return node;
+  };
+  return walk(dictionaries[currentLanguage]) ?? walk(dictionaries.en);
+}

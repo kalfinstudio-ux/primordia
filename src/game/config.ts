@@ -105,6 +105,24 @@ export const SUPABASE_CONFIG = {
   anonKey: (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SUPABASE_ANON_KEY || '',
 };
 
+type ViteEnv = Record<string, string> | undefined;
+const viteEnv = (): ViteEnv => (import.meta as unknown as { env?: Record<string, string> }).env;
+
+/** Login Base44 (opsional). Kosongkan VITE_BASE44_APP_ID untuk mematikan tombolnya. */
+export const BASE44_CONFIG = {
+  appId: viteEnv()?.VITE_BASE44_APP_ID || '',
+};
+
+/** Info hukum yang tampil di Pengaturan → Info Game. Isi lewat .env agar tidak perlu ubah kode. */
+export const LEGAL_CONFIG = {
+  /** Tanggal terakhir teks Ketentuan & Kebijakan diperbarui (YYYY-MM-DD). */
+  updatedAt: '2026-11-14',
+  /** Email kontak pemilik game (VITE_CONTACT_EMAIL). Kosong = baris kontak disembunyikan. */
+  contactEmail: viteEnv()?.VITE_CONTACT_EMAIL || '',
+  /** Nama pemilik/pengelola game (VITE_OWNER_NAME). Kosong = memakai teks "pengelola PRIMORDIA". */
+  ownerName: viteEnv()?.VITE_OWNER_NAME || '',
+};
+
 export const DEFAULT_AVATAR: AvatarConfig = {
   name: 'Arka-01',
   gender: 'male',

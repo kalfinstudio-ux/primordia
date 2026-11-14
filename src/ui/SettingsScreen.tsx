@@ -14,9 +14,10 @@ import { clearAllGameStorage, writeStorage } from '../game/utils/storage';
 import { eventBus } from '../game/core/eventBus';
 import { t } from '../game/utils/i18n';
 import { ConfirmDialog } from './ConfirmDialog';
+import { GameInfoPanel } from './GameInfoPanel';
 import { usePWAInstall } from './pwaInstall';
 
-type TabId = 'graphics' | 'audio' | 'controls' | 'gameplay' | 'language' | 'account';
+type TabId = 'graphics' | 'audio' | 'controls' | 'gameplay' | 'language' | 'account' | 'info';
 
 export function SettingsScreen() {
   const [tab, setTab] = useState<TabId>('graphics');
@@ -59,7 +60,7 @@ export function SettingsScreen() {
     window.addEventListener('keydown', listener, { once: true });
   };
 
-  const tabs: TabId[] = ['graphics', 'audio', 'controls', 'gameplay', 'language', 'account'];
+  const tabs: TabId[] = ['graphics', 'audio', 'controls', 'gameplay', 'language', 'account', 'info'];
 
   return (
     <main className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.88)' }}>
@@ -379,6 +380,8 @@ export function SettingsScreen() {
               </div>
             </div>
           )}
+
+          {tab === 'info' && <GameInfoPanel showProgress={gameState.previousScreen === 'pause'} />}
 
           {tab === 'account' && (
             <div className="space-y-3">

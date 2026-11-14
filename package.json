@@ -12,6 +12,7 @@
     "test": "tsx --test src/game/*.test.ts"
   },
   "dependencies": {
+    "@base44/sdk": "latest",
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/three": "^0.187.0",

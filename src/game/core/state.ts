@@ -142,9 +142,22 @@ export interface HudSnapshot {
 }
 
 export interface UserSession {
+  /**
+   * 'authenticated' = punya sesi Supabase (fitur cloud/sosial/umur server aktif).
+   * 'guest' = tanpa sesi Supabase; bisa tetap punya identitas Base44 (lihat `provider`).
+   */
   mode: 'guest' | 'authenticated';
   userId: string | null;
   email: string | null;
+  /** Penyedia identitas yang sedang dipakai; kosong = tamu murni. */
+  provider?: 'supabase' | 'base44';
+  /** Nama tampilan dari penyedia identitas (mis. nama akun Google lewat Base44). */
+  displayName?: string | null;
+}
+
+/** True bila pemain masuk lewat akun apa pun (Supabase atau Base44). */
+export function isSignedIn(user: UserSession): boolean {
+  return user.mode === 'authenticated' || user.provider === 'base44';
 }
 
 export interface RuntimeGameState {

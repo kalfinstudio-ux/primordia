@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { gameState, setScreen } from '../game/core/state';
+import { gameState, isSignedIn as isUserSignedIn, setScreen } from '../game/core/state';
 import { isSupabaseConfigured } from '../game/net/supabaseClient';
-import { sendMagicLink, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
+import { isBase44Configured } from '../game/net/base44Client';
+import { sendMagicLink, signInWithBase44, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
 import { t } from '../game/utils/i18n';
 
 export function AuthScreen() {
@@ -11,7 +12,9 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false);
 
   const configured = isSupabaseConfigured();
-  const isSignedIn = gameState.user.mode === 'authenticated';
+  const base44On = isBase44Configured();
+  const isSignedIn = isUserSignedIn(gameState.user);
+  const isBase44User = gameState.user.provider === 'base44';
 
   const handleAction = async (mode: 'signin' | 'signup' | 'magic') => {
     setStatus(null);
@@ -43,6 +46,16 @@ export function AuthScreen() {
     }
   };
 
+  const handleBase44 = async () => {
+    setStatus(null);
+    setBusy(true);
+    const res = await signInWithBase44('google');
+    if (!res.ok) {
+      setStatus(res.error || 'Error');
+      setBusy(false);
+    }
+  };
+
   return (
     <main className="fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
       <section className="primordia-scroll max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-5 sm:p-7 shadow-2xl">
@@ -59,7 +72,7 @@ export function AuthScreen() {
 
         <p className="mt-2 text-sm text-stone-400">{t('auth.subtitle')}</p>
 
-        {!configured && (
+        {!configured && !base44On && (
           <div className="mt-4 rounded-lg border border-amber-800/60 bg-amber-950/40 p-3 text-xs text-amber-200">
             {t('auth.notConfigured')}
           </div>
@@ -68,8 +81,17 @@ export function AuthScreen() {
         {isSignedIn ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-lg border border-stone-800 bg-stone-900/90 p-4 text-sm text-stone-200">
-              {t('menu.signedInAs')}: <span className="font-semibold text-orange-400">{gameState.user.email}</span>
+              {t('menu.signedInAs')}:{' '}
+              <span className="font-semibold text-orange-400">{gameState.user.displayName || gameState.user.email}</span>
+              {isBase44User && gameState.user.displayName && gameState.user.email && (
+                <div className="mt-1 text-xs text-stone-400">{gameState.user.email}</div>
+              )}
             </div>
+            {isBase44User && (
+              <div className="rounded-lg border border-amber-800/60 bg-amber-950/40 p-3 text-xs text-amber-200">
+                {t('auth.base44NoCloud')}
+              </div>
+            )}
             <button
               type="button"
               onClick={async () => {
@@ -89,6 +111,17 @@ export function AuthScreen() {
               void handleAction('signin');
             }}
           >
+            {base44On && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleBase44()}
+                className="min-h-[44px] w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
+              >
+                {t('auth.base44')}
+              </button>
+            )}
+
             <button
               type="button"
               disabled={!configured || busy}

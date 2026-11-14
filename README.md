@@ -23,6 +23,10 @@ Lapisan cerita dan sistem baru: awal era manusia pertama, tanpa tua dan tanpa ak
 - **v10:** Galeri Aset 3D di menu utama (pratinjau, statistik, peringatan) dan pilihan model karakter pemain tanpa edit kode. Daftar file: `src/game/data/assets.ts`.
 - Semua rincian, risiko, dan backlog ada di [`HANDOFF.md`](./HANDOFF.md). Migrasi database: `supabase/migration-eden.sql`.
 
+## Info Game & Login Base44 (v12)
+- **Pengaturan → Info Game**: deskripsi, skema game, misi, panduan, ketentuan, dan kebijakan privasi (ID/EN) yang mengikuti data game.
+- **Login Base44 (Google)**: isi `VITE_BASE44_APP_ID` di `.env` / GitHub Secrets. Detail & batasnya ada di [`HANDOFF.md`](./HANDOFF.md) §11.
+
 ## Running Locally & Testing
 ```bash
 npm install --legacy-peer-deps

@@ -1,7 +1,7 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 14 November 2026 (v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 14 November 2026 (v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 ## 1. Ringkasan
 PRIMORDIA = game survival 3D di browser (React 19 + Three.js + Vite + Supabase opsional).
@@ -137,3 +137,31 @@ Tiga model sudah di `public/models/` (tekstur dikompres): `naked_dude.glb` (0,23
 
 ## 10. Prompt awal untuk melanjutkan bersama Claude
 > Baca `HANDOFF.md` dan `README.md` di repo PRIMORDIA. Lanjutkan dari bagian Backlog nomor …, ikuti Konvensi kode, tulis tes untuk logika murni, lalu perbarui HANDOFF.md.
+
+## 11. v12 — Info Game & login Base44 (14 Nov 2026) — BELUM diuji di browser
+Ditulis di sandbox tanpa vite/three/react: hanya `gameInfo.test.ts` (9 tes, lulus) yang dijalankan. `npm run build` dan tampilan belum dicoba.
+
+**Info Game** (Pengaturan → tab "Info Game", `ui/GameInfoPanel.tsx`)
+- Enam bagian: Deskripsi, Skema Game, Misi, Panduan, Ketentuan, Kebijakan Privasi.
+- Teks ada di `src/i18n/id.json` & `en.json` → kunci `info.*` (struktur harus identik; dijaga tes). Placeholder `{nama}` diisi dari data game asli lewat `data/gameInfo.ts › buildInfoVars` (jumlah item/resep/misi, angka balance, konstanta Eden). Ubah angka di `balance.ts`/`eden.ts` → teks ikut berubah.
+- Bagian Misi membaca `CAMPAIGN_QUESTS` + `quests.*` + `ACHIEVEMENTS`; status Selesai/Berjalan hanya tampil bila Pengaturan dibuka dari menu Jeda (data game sedang dimuat).
+- Bagian Panduan menampilkan tombol keyboard dari pengaturan pemain (`controls.keys`).
+- **Menambah fitur/misi baru → perbarui teks `info.scheme`, `info.guide`, dan Kebijakan bila ada data baru yang dikirim ke server.**
+- Kontak & nama pengelola: `VITE_CONTACT_EMAIL`, `VITE_OWNER_NAME` (`config.ts › LEGAL_CONFIG`). Tanggal pembaruan: `LEGAL_CONFIG.updatedAt` — ubah tiap teks hukum diedit. Teks hukum adalah titik awal, bukan nasihat hukum; sebaiknya ditinjau pemilik/ahli hukum.
+
+**Login Base44** (`net/base44Client.ts`, `net/auth.ts`, `ui/AuthScreen.tsx`)
+- Aktif bila `VITE_BASE44_APP_ID` diisi (appId ada di URL editor Base44). Tanpa itu tombol tidak muncul dan game berjalan seperti sebelumnya.
+- Alur: tombol → `base44.auth.loginWithProvider('google', <url game>)` → kembali ke game → `initAuthSession` memanggil `isAuthenticated()` + `me()` → `gameState.user = { mode:'guest', provider:'base44', email, displayName }`.
+- **Batas penting:** sesi Base44 TIDAK membuat sesi Supabase. Karena itu `mode` tetap `'guest'` supaya semua fitur Supabase (simpan cloud, teman/pesan, papan peringkat, umur server, presence) tetap tertutup dan tidak error. Menu/Akun menampilkan identitas Base44 lewat `isSignedIn(user)` (`core/state.ts`).
+- Supaya Base44 juga membuka fitur cloud, perlu jembatan: fungsi backend Base44 yang menukar identitas Base44 jadi JWT Supabase (butuh JWT secret Supabase, hanya di server), atau memindahkan simpanan cloud ke entitas Base44. Belum dikerjakan.
+- Di aplikasi Base44: aktifkan Google di pengaturan autentikasi dan pastikan alamat game (mis. `https://<user>.github.io/primordia/`) diizinkan sebagai asal/pengalihan bila pengaturannya ada.
+- Token yang kembali lewat `?access_token=` disimpan lewat `auth.setToken` sebagai cadangan, lalu dihapus dari URL.
+
+**Cek manual v12**
+- [ ] `npm install --legacy-peer-deps` (memasang `@base44/sdk`), `npm test`, `npm run build` lolos.
+- [ ] Pengaturan → Info Game: enam bagian tampil, bisa digulir di HP; ganti bahasa ID↔EN mengganti isi.
+- [ ] Misi: dari menu Jeda → Pengaturan, misi selesai bertanda dan misi aktif disorot.
+- [ ] Panduan: tombol sesuai Kontrol; ubah tombol di tab Kontrol → Info Game ikut berubah.
+- [ ] Dengan `VITE_BASE44_APP_ID`: tombol "Masuk dengan Base44 (Google)" → Google → kembali ke game, menu menampilkan nama/email, refresh tetap masuk, Keluar menghapus sesi.
+- [ ] Tanpa `VITE_BASE44_APP_ID`: tombol tidak ada, login Supabase tidak berubah.
+

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { GAME_VERSION } from '../game/config';
-import { gameState, setScreen } from '../game/core/state';
+import { gameState, isSignedIn, setScreen } from '../game/core/state';
 import { continueLatestExpedition } from '../game/main';
 import { t } from '../game/utils/i18n';
 import { PrimordiaEmblem } from './ItemIcon';
@@ -20,10 +20,9 @@ export function MainMenuScreen() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const userLabel =
-    gameState.user.mode === 'authenticated'
-      ? `${t('menu.signedInAs')}: ${gameState.user.email}`
-      : t('menu.guestBadge');
+  const userLabel = isSignedIn(gameState.user)
+    ? `${t('menu.signedInAs')}: ${gameState.user.displayName || gameState.user.email || ''}`
+    : t('menu.guestBadge');
 
   return (
     <main className="safe-hud-pad pointer-events-none fixed inset-0 z-20 flex flex-col justify-between p-4 sm:p-8">
