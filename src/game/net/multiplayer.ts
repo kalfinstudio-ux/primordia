@@ -84,12 +84,12 @@ class MultiplayerClient {
     return isSupabaseConfigured();
   }
 
-  /** Preferensi pemain; bawaan: aktif bila sudah login, nonaktif untuk tamu. */
+  /** Preferensi pemain; bawaan: aktif untuk semua (tamu maupun login) selama Supabase terkonfigurasi. */
   isEnabled(): boolean {
     if (!isSupabaseConfigured()) return false;
     const stored = readStorage<boolean | null>('mp_enabled', null);
     if (typeof stored === 'boolean') return stored;
-    return gameState.user.mode === 'authenticated';
+    return true;
   }
 
   setEnabled(value: boolean): void {
