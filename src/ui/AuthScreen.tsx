@@ -3,6 +3,7 @@ import { gameState, setScreen } from '../game/core/state';
 import { isSupabaseConfigured } from '../game/net/supabaseClient';
 import { sendMagicLink, signInWithPassword, signInWithProvider, signOutAccount, signUpWithPassword, type OAuthProviderId } from '../game/net/auth';
 import { t } from '../game/utils/i18n';
+import { friendlyAuthError } from '../game/net/authErrors';
 import { LOGO_DISCORD, LOGO_GITHUB, LOGO_GOOGLE } from './brandLogos';
 
 const OAUTH_BTN =
@@ -11,28 +12,34 @@ const OAUTH_BTN =
 export function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const configured = isSupabaseConfigured();
   const isSignedIn = gameState.user.mode === 'authenticated';
+  const fail = (raw?: string) => setStatus({ text: friendlyAuthError(raw), ok: false });
+  const done = (text: string) => setStatus({ text, ok: true });
 
   const handleAction = async (mode: 'signin' | 'signup' | 'magic') => {
     setStatus(null);
     if (!email.trim()) {
-      setStatus('Email required.');
+      setStatus({ text: t('auth.errors.emailRequired'), ok: false });
+      return;
+    }
+    if (mode !== 'magic' && !password) {
+      setStatus({ text: t('auth.errors.passwordRequired'), ok: false });
       return;
     }
     setBusy(true);
     if (mode === 'magic') {
       const res = await sendMagicLink(email.trim());
-      setStatus(res.ok ? t('auth.magicSent') : res.error || 'Error');
+      if (res.ok) done(t('auth.magicSent')); else fail(res.error);
     } else if (mode === 'signup') {
       const res = await signUpWithPassword(email.trim(), password);
-      setStatus(res.ok ? t('auth.authSuccess') : res.error || 'Error');
+      if (res.ok) done(res.needsConfirm ? t('auth.signUpConfirm') : t('auth.authSuccess')); else fail(res.error);
     } else {
       const res = await signInWithPassword(email.trim(), password);
-      setStatus(res.ok ? t('auth.authSuccess') : res.error || 'Error');
+      if (res.ok) done(t('auth.authSuccess')); else fail(res.error);
     }
     setBusy(false);
   };
@@ -42,7 +49,7 @@ export function AuthScreen() {
     setBusy(true);
     const res = await signInWithProvider(provider);
     if (!res.ok) {
-      setStatus(res.error || 'Error');
+      fail(res.error);
       setBusy(false);
     }
   };
@@ -113,7 +120,7 @@ export function AuthScreen() {
 
             <div className="flex items-center gap-3 text-[11px] text-stone-500">
               <span className="h-px flex-1 bg-stone-800" />
-              <span>atau / or</span>
+              <span>{t('auth.or')}</span>
               <span className="h-px flex-1 bg-stone-800" />
             </div>
 
@@ -124,6 +131,9 @@ export function AuthScreen() {
               <input
                 id="auth-email"
                 type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!configured || busy}
@@ -139,6 +149,8 @@ export function AuthScreen() {
               <input
                 id="auth-password"
                 type="password"
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={!configured || busy}
@@ -147,8 +159,11 @@ export function AuthScreen() {
             </div>
 
             {status && (
-              <div className="rounded-lg border border-stone-700 bg-stone-900 px-3 py-2 text-xs text-amber-300">
-                {status}
+              <div
+                role="status"
+                className={`rounded-lg border px-3 py-2 text-xs ${status.ok ? 'border-emerald-800/60 bg-emerald-950/40 text-emerald-300' : 'border-stone-700 bg-stone-900 text-amber-300'}`}
+              >
+                {status.text}
               </div>
             )}
 
@@ -158,7 +173,7 @@ export function AuthScreen() {
                 disabled={!configured || busy}
                 className="min-h-[44px] rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-500 disabled:opacity-40"
               >
-                {t('auth.signIn')}
+                {busy ? t('auth.busy') : t('auth.signIn')}
               </button>
               <button
                 type="button"

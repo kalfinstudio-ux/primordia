@@ -47,20 +47,21 @@ export async function signInWithPassword(email: string, password: string): Promi
   return { ok: true };
 }
 
-export async function signUpWithPassword(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+export async function signUpWithPassword(email: string, password: string): Promise<{ ok: boolean; needsConfirm?: boolean; error?: string }> {
   if (!isSupabaseConfigured()) return { ok: false, error: 'Supabase not configured' };
   const sb = getSupabaseClient();
   if (!sb) return { ok: false, error: 'Supabase unavailable' };
   const { error, data } = await sb.auth.signUp({ email, password });
   if (error) return { ok: false, error: error.message };
-  if (data.user) {
+  // Tanpa sesi = Supabase meminta konfirmasi email dulu; profil dibuat otomatis oleh trigger.
+  if (data.user && data.session) {
     await sb.from('profiles').upsert({
       id: data.user.id,
       username: email.split('@')[0],
       avatar_config: gameState.avatar,
     });
   }
-  return { ok: true };
+  return { ok: true, needsConfirm: !data.session };
 }
 
 export async function sendMagicLink(email: string): Promise<{ ok: boolean; error?: string }> {
