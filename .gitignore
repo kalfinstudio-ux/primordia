@@ -13,3 +13,4 @@ dist/
 node_modules/
 nohup.out
 server.log
+*.zip
