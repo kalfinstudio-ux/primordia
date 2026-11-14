@@ -595,6 +595,10 @@
       "name": "Archean Research Lab",
       "desc": "Tier 4/5 station enabling prebiotic chemical synthesis."
     },
+    "terrain_anchor": {
+      "name": "Terrain Anchor",
+      "desc": "Locks terrain within 60 m so it will not change at the monthly shift. Protects your base."
+    },
     "fast_beacon": {
       "name": "Fast-Travel Beacon",
       "desc": "Warp point allowing instant travel from the Survey Map [M]."

@@ -1,3 +1,4 @@
+import { collectAnchors, effectiveTerrainSeed } from '../data/eden';
 import * as THREE from 'three';
 import { WATER_LEVEL } from '../config';
 import { gameState, type StructureType } from '../core/state';
@@ -127,7 +128,12 @@ export function tryPlaceStructure(
     hp: maxHp,
     maxHp,
     waterStored: type === 'water_collector' ? 0 : undefined,
+    anchorSeed: type === 'terrain_anchor' ? effectiveTerrainSeed(gameState.worldSeed) : undefined,
   });
+
+  if (type === 'terrain_anchor') {
+    terrain.setAnchors(collectAnchors(gameState.placedStructures));
+  }
 
   if (type === 'storage_chest') {
     gameState.storageInventories[id] = [];

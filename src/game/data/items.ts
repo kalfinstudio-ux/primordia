@@ -63,6 +63,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
   rad_scrubber: { id: 'rad_scrubber', tier: 4, category: 'medical', stackable: true, maxStack: 8, weight: 0.25, iconType: 'med', color: '#34d399' },
   meteor_drill: { id: 'meteor_drill', tier: 4, category: 'tool', stackable: false, maxStack: 1, weight: 2.6, maxDurability: 220, iconType: 'axe', color: '#38bdf8' },
   research_station: { id: 'research_station', tier: 4, category: 'structure', stackable: true, maxStack: 2, weight: 5.5, iconType: 'station', color: '#38bdf8' },
+  terrain_anchor: { id: 'terrain_anchor', tier: 4, category: 'structure', stackable: true, maxStack: 3, weight: 6.0, iconType: 'beacon', color: '#a78bfa' },
   fast_beacon: { id: 'fast_beacon', tier: 4, category: 'structure', stackable: true, maxStack: 6, weight: 3.0, iconType: 'beacon', color: '#facc15' },
   hazmat_lining: { id: 'hazmat_lining', tier: 4, category: 'suit', stackable: false, maxStack: 1, weight: 1.5, iconType: 'suit', color: '#10b981' },
 

@@ -1,3 +1,4 @@
+import { WisdomPanel } from './WisdomPanel';
 import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
 import { returnToMainMenu, saveCurrentSlot } from '../game/main';
@@ -16,6 +17,7 @@ export function PauseModal() {
     >
       <section className="primordia-scroll max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-5 sm:p-6 shadow-2xl">
         <h2 className="font-display text-2xl sm:text-3xl font-semibold text-stone-100">{t('pause.title')}</h2>
+
 
         <div className="mt-5 flex flex-col gap-2">
           <button
@@ -95,6 +97,7 @@ export function PauseModal() {
             {t('pause.mainMenu')}
           </button>
         </div>
+        <WisdomPanel />
       </section>
     </main>
   );

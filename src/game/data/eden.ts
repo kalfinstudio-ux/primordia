@@ -120,3 +120,119 @@ export function sanitizeBornAt(value: unknown, nowMs: number = Date.now()): numb
   if (!Number.isFinite(n) || n > nowMs || n < Date.UTC(ERA_START_YEAR, 0, 1)) return nowMs;
   return n;
 }
+
+// ─────────────────────────────────────────────────────────────
+// 1) Jangkar Medan — bangunan yang mengunci medan saat peta berganti bulan
+// ─────────────────────────────────────────────────────────────
+export const ANCHOR_RADIUS = 60;
+
+export interface AnchorSpec {
+  x: number;
+  z: number;
+  r: number;
+  /** Seed medan yang dibekukan saat jangkar dipasang. */
+  seed: string;
+}
+
+export function collectAnchors(
+  structs: ReadonlyArray<{ type: string; x: number; z: number; anchorSeed?: string }>
+): AnchorSpec[] {
+  const out: AnchorSpec[] = [];
+  for (const s of structs) {
+    if (s.type === 'terrain_anchor' && s.anchorSeed) out.push({ x: s.x, z: s.z, r: ANCHOR_RADIUS, seed: s.anchorSeed });
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2) Dunia berjalan saat offline
+// ─────────────────────────────────────────────────────────────
+export const OFFLINE_CAP_SEC = 24 * 3600;
+export const OFFLINE_MIN_SEC = 300;
+/** Laju isi penampung air saat offline (/dtk), jauh lebih lambat daripada saat main. */
+export const OFFLINE_WATER_RATE = 0.02;
+
+export interface OfflineReport {
+  seconds: number;
+  collectorsFilled: number;
+  rested: boolean;
+}
+
+export function computeOfflineProgress(
+  structs: Array<{ type: string; waterStored?: number }>,
+  elapsedSec: number
+): OfflineReport {
+  const seconds = Math.max(0, Math.min(OFFLINE_CAP_SEC, Number.isFinite(elapsedSec) ? Math.floor(elapsedSec) : 0));
+  const report: OfflineReport = { seconds, collectorsFilled: 0, rested: false };
+  if (seconds < OFFLINE_MIN_SEC) return report;
+  for (const s of structs) {
+    if (s.type !== 'water_collector') continue;
+    const before = s.waterStored || 0;
+    const after = Math.min(100, before + OFFLINE_WATER_RATE * seconds);
+    if (after > before) report.collectorsFilled++;
+    s.waterStored = after;
+  }
+  report.rested = seconds >= 1800;
+  return report;
+}
+
+export function formatDuration(sec: number): string {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return h > 0 ? `${h} jam ${m} mnt` : `${m} mnt`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3) Kebijaksanaan dari umur abadi
+// ─────────────────────────────────────────────────────────────
+export const WISDOM_MILESTONES = [
+  { days: 7, points: 1 },
+  { days: 30, points: 2 },
+  { days: 100, points: 3 },
+  { days: 365, points: 5 },
+] as const;
+
+export interface WisdomPerk {
+  id: string;
+  name: string;
+  desc: string;
+  cost: number;
+  requires?: string;
+  filterDrainMult?: number;
+  radiationMult?: number;
+  unlockRecipes?: string[];
+}
+
+export const WISDOM_PERKS: WisdomPerk[] = [
+  { id: 'filter_awet', name: 'Filter Awet', desc: 'Filter gas 25% lebih awet.', cost: 1, filterDrainMult: 0.75 },
+  { id: 'kulit_abu', name: 'Kulit Abu', desc: 'Radiasi yang masuk berkurang 25%.', cost: 2, radiationMult: 0.75 },
+  { id: 'resep_leluhur', name: 'Resep Leluhur', desc: 'Resep Jangkar Medan terbuka tanpa perlu kristal inti.', cost: 3, unlockRecipes: ['recipe_terrain_anchor'] },
+  { id: 'filter_awet_2', name: 'Filter Abadi', desc: 'Filter gas 50% lebih awet (butuh Filter Awet).', cost: 3, requires: 'filter_awet', filterDrainMult: 0.5 },
+];
+
+export function wisdomPointsEarned(ageSeconds: number): number {
+  const days = Math.max(0, ageSeconds) / 86400;
+  return WISDOM_MILESTONES.reduce((sum, m) => (days >= m.days ? sum + m.points : sum), 0);
+}
+
+export function wisdomPointsSpent(owned: readonly string[]): number {
+  return WISDOM_PERKS.reduce((sum, p) => (owned.includes(p.id) ? sum + p.cost : sum), 0);
+}
+
+export function canBuyPerk(perkId: string, owned: readonly string[], ageSeconds: number): boolean {
+  const perk = WISDOM_PERKS.find((p) => p.id === perkId);
+  if (!perk || owned.includes(perkId)) return false;
+  if (perk.requires && !owned.includes(perk.requires)) return false;
+  return wisdomPointsEarned(ageSeconds) - wisdomPointsSpent(owned) >= perk.cost;
+}
+
+export function perkEffects(owned: readonly string[]): { filterDrainMult: number; radiationMult: number } {
+  let filterDrainMult = 1;
+  let radiationMult = 1;
+  for (const p of WISDOM_PERKS) {
+    if (!owned.includes(p.id)) continue;
+    if (p.filterDrainMult !== undefined) filterDrainMult = Math.min(filterDrainMult, p.filterDrainMult);
+    if (p.radiationMult !== undefined) radiationMult = Math.min(radiationMult, p.radiationMult);
+  }
+  return { filterDrainMult, radiationMult };
+}

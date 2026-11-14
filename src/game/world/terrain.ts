@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE } from '../config';
 import { createNoise2D, type Noise2D } from './noise';
-import { buildChunkGeometryData, sampleWorldHeight } from './terrainHeight';
+import { buildChunkGeometryData, sampleHeightAnchored, type ResolvedAnchor } from './terrainHeight';
+import type { AnchorSpec } from '../data/eden';
 import type { ProceduralAssets } from '../core/assetLoader';
 import { gameState } from '../core/state';
 import {
@@ -56,6 +57,9 @@ export class TerrainSystem {
   readonly material: THREE.MeshStandardMaterial;
   private noise: Noise2D;
   private seed: string;
+  private anchorSpecs: AnchorSpec[] = [];
+  private anchorNoises = new Map<string, Noise2D>();
+  private resolvedAnchors: ResolvedAnchor[] = [];
   private chunks = new Map<string, ActiveTerrainChunk>();
 
   // Penjadwalan streaming
@@ -104,8 +108,21 @@ export class TerrainSystem {
     this.lastCenterKey = '';
   }
 
+  /** Jangkar medan: area di sekitarnya tetap memakai seed lama. Tidak menghapus chunk (hasil sama saat dipasang). */
+  setAnchors(list: AnchorSpec[]): void {
+    this.anchorSpecs = list.map((a) => ({ ...a }));
+    this.resolvedAnchors = list.map((a) => {
+      let n = this.anchorNoises.get(a.seed);
+      if (!n) {
+        n = createNoise2D(a.seed);
+        this.anchorNoises.set(a.seed, n);
+      }
+      return { x: a.x, z: a.z, r: a.r, noise: n };
+    });
+  }
+
   groundHeightAt(x: number, z: number): number {
-    return sampleWorldHeight(this.noise, x, z);
+    return sampleHeightAnchored(this.noise, this.resolvedAnchors, x, z);
   }
 
   slopeDegreesAt(x: number, z: number): number {
@@ -169,7 +186,7 @@ export class TerrainSystem {
   }
 
   private buildNow(spec: ChunkSpec): void {
-    const data = buildChunkGeometryData(this.seed, this.noise, spec.cx, spec.cz, CHUNK_SIZE, spec.segments);
+    const data = buildChunkGeometryData(this.seed, this.noise, spec.cx, spec.cz, CHUNK_SIZE, spec.segments, this.resolvedAnchors);
     this.applyChunkGeometry(spec.key, spec.cx, spec.cz, spec.segments, data);
   }
 
@@ -211,6 +228,7 @@ export class TerrainSystem {
       chunkZ: spec.cz,
       chunkSize: CHUNK_SIZE,
       segments: spec.segments,
+      anchors: this.anchorSpecs,
     });
   }
 

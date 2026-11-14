@@ -193,6 +193,17 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), beaconMat);
     orb.position.y = 3.1;
     g.add(makeShadowDisc(shadowTex, 1.3), plinth, pylon, orb);
+  } else if (type === 'terrain_anchor') {
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.3, 0.45, 8), darkBasaltMat);
+    plinth.position.y = 0.22;
+    const pylon = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.4, 3.2, 6), ironMat);
+    pylon.position.y = 2.0;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.07, 6, 24), beaconMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 2.6;
+    const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0), crystalMat);
+    orb.position.y = 3.9;
+    g.add(makeShadowDisc(shadowTex, 1.5), plinth, pylon, ring, orb);
   } else if (type === 'floor_tile') {
     const slab = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.24, 3.0), shelterFrameMat);
     slab.position.y = 0.12;

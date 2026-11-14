@@ -317,6 +317,19 @@ export const RECIPES: CraftingRecipe[] = [
     ],
   },
   {
+    id: 'recipe_terrain_anchor',
+    tier: 4,
+    outputId: 'terrain_anchor',
+    outputQty: 1,
+    stationRequired: 'research_station',
+    unlocksOnItem: 'crystal_core',
+    ingredients: [
+      { itemId: 'crystal_core', qty: 3 },
+      { itemId: 'meteor_iron', qty: 4 },
+      { itemId: 'basalt_brick', qty: 6 },
+    ],
+  },
+  {
     id: 'recipe_fast_beacon',
     tier: 4,
     outputId: 'fast_beacon',

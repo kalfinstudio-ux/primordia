@@ -14,6 +14,8 @@ export interface SurvivalEnvironment {
   hasHeatShield: boolean;
   hasThermalCloak?: boolean;
   hasHazmatLining?: boolean;
+  filterDrainMult?: number;
+  radiationMult?: number;
   inLava: boolean;
   inMeteorDanger: boolean;
   difficulty: DifficultyLevel;
@@ -69,7 +71,7 @@ export function stepVitals(
 
   if (rawToxic > 0) {
     if (next.filterDurability > 0) {
-      next.filterDurability = clamp(next.filterDurability - B.filter.drainPerSec * dt, 0, B.filter.maxDurability);
+      next.filterDurability = clamp(next.filterDurability - B.filter.drainPerSec * (env.filterDrainMult ?? 1) * dt, 0, B.filter.maxDurability);
       next.oxygen = clamp(next.oxygen + B.oxygen.regenWithFilter * dt, 0, 100);
     } else {
       const hazmatFactor = env.hasHazmatLining ? B.oxygen.hazmatFactor : 1.0;
@@ -94,7 +96,7 @@ export function stepVitals(
   // 4. Radiation accumulation in meteorite zones
   const radInput = env.inShelter
     ? 0
-    : (env.radiationLevel || 0) * (env.hasHazmatLining ? B.radiation.hazmatFactor : 1.0) * B.radiation.inputFactor * mult;
+    : (env.radiationLevel || 0) * (env.hasHazmatLining ? B.radiation.hazmatFactor : 1.0) * B.radiation.inputFactor * (env.radiationMult ?? 1) * mult;
   if (radInput > 0) {
     next.radiation = clamp(next.radiation + radInput * dt, 0, 100);
   } else {

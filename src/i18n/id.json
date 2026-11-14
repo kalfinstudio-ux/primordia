@@ -595,6 +595,10 @@
       "name": "Lab Riset Archean",
       "desc": "Stasiun Tingkat 4/5 untuk sintesis kimia prebiotik."
     },
+    "terrain_anchor": {
+      "name": "Jangkar Medan",
+      "desc": "Mengunci medan radius 60 m agar tidak berubah saat pergantian bulan. Lindungi base-mu."
+    },
     "fast_beacon": {
       "name": "Suar Teleportasi",
       "desc": "Titik pindah cepat lewat Peta Survei [M]."

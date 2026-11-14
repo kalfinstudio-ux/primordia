@@ -1,4 +1,4 @@
-import { effectivePropSeed, effectiveTerrainSeed } from '../data/eden';
+import { collectAnchors, effectivePropSeed, effectiveTerrainSeed } from '../data/eden';
 import * as THREE from 'three';
 import { AUTOSAVE_INTERVAL_SEC, WATER_LEVEL } from '../config';
 import { Engine } from '../core/engine';
@@ -190,6 +190,7 @@ export class SceneManager {
     const syaw = resetPlayer ? Math.PI : p.yaw;
 
     this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed);
+    this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
     this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
     this.terrain.updateStreaming(sx, sz, true);
     this.chunks.populate(this.terrain, this.appliedEdenSeed);
@@ -391,6 +392,7 @@ export class SceneManager {
         const next = effectivePropSeed(gameState.worldSeed);
         if (next !== this.appliedEdenSeed) {
           this.appliedEdenSeed = next;
+          this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
           this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
           this.chunks.populate(this.terrain, next);
           eventBus.emit('toast:show', { text: 'Hari baru: peta berubah mengikuti waktu dunia nyata.', type: 'info' });

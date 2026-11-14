@@ -50,6 +50,7 @@ export type StructureType =
   | 'workbench'
   | 'smelter_furnace'
   | 'research_station'
+  | 'terrain_anchor'
   | 'storage_chest'
   | 'water_collector'
   | 'fast_beacon'
@@ -69,6 +70,8 @@ export interface PlacedStructure {
   maxHp: number;
   waterStored?: number;
   label?: string;
+  /** Hanya terrain_anchor: seed medan yang dibekukan. */
+  anchorSeed?: string;
 }
 
 export interface DiscoveredPoi {
@@ -159,6 +162,8 @@ export interface RuntimeGameState {
   discoveredPois: DiscoveredPoi[];
   customWaypoints: CustomWaypoint[];
   unlockedRecipes: string[];
+  /** Perk kebijaksanaan yang sudah dibeli (dari umur abadi). */
+  wisdomPerks: string[];
   learnedTutorials: string[];
   achievements: string[];
   journalUnlocked: string[];
@@ -248,6 +253,7 @@ export const gameState: RuntimeGameState = {
   discoveredPois: [],
   customWaypoints: [],
   unlockedRecipes: getDefaultUnlockedRecipes(),
+  wisdomPerks: [],
   learnedTutorials: readStorage<string[]>('learned_tutorials', []),
   achievements: readStorage<string[]>('achievements', []),
   journalUnlocked: ['j_basalt'],
@@ -328,6 +334,7 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
   gameState.customWaypoints = [];
   if (!preserveKnowledge) {
     gameState.unlockedRecipes = getDefaultUnlockedRecipes();
+    gameState.wisdomPerks = [];
     gameState.journalUnlocked = ['j_basalt'];
   }
   gameState.activeStorageId = null;

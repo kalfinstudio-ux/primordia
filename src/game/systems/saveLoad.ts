@@ -1,4 +1,4 @@
-import { sanitizeBornAt } from '../data/eden';
+import { computeOfflineProgress, formatDuration, sanitizeBornAt } from '../data/eden';
 import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
   type DeathBag,
@@ -32,6 +32,7 @@ export interface SaveSlotData {
   discoveredPois: DiscoveredPoi[];
   customWaypoints: CustomWaypoint[];
   unlockedRecipes: string[];
+  wisdomPerks?: string[];
   journalUnlocked: string[];
   campaignComplete: boolean;
   waterCollectedCount: number;
@@ -76,6 +77,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
         maxHp: Number(item.maxHp) || 160,
         waterStored: item.waterStored,
         label: item.label,
+        anchorSeed: typeof item.anchorSeed === 'string' ? item.anchorSeed : undefined,
       };
     }),
     deathBags: (Array.isArray(raw.deathBags) ? (raw.deathBags as Partial<DeathBag>[]) : []).map((b, i) => ({
@@ -93,6 +95,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     discoveredPois: Array.isArray(raw.discoveredPois) ? (raw.discoveredPois as DiscoveredPoi[]) : [],
     customWaypoints: Array.isArray(raw.customWaypoints) ? (raw.customWaypoints as CustomWaypoint[]) : [],
     unlockedRecipes: Array.isArray(raw.unlockedRecipes) ? (raw.unlockedRecipes as string[]) : defaultRecipes,
+    wisdomPerks: Array.isArray(raw.wisdomPerks) ? (raw.wisdomPerks as string[]) : [],
     journalUnlocked: Array.isArray(raw.journalUnlocked) ? (raw.journalUnlocked as string[]) : ['j_basalt'],
     campaignComplete: Boolean(raw.campaignComplete),
     waterCollectedCount: Number(raw.waterCollectedCount) || 0,
@@ -136,6 +139,7 @@ export function buildCurrentSaveSnapshot(slot: number): SaveSlotData {
     discoveredPois: gameState.discoveredPois.map((p) => ({ ...p })),
     customWaypoints: gameState.customWaypoints.map((w) => ({ ...w })),
     unlockedRecipes: [...gameState.unlockedRecipes],
+    wisdomPerks: [...gameState.wisdomPerks],
     journalUnlocked: [...gameState.journalUnlocked],
     campaignComplete: gameState.campaignComplete,
     waterCollectedCount: gameState.waterCollectedCount,
@@ -222,6 +226,7 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.discoveredPois = [...data.discoveredPois];
   gameState.customWaypoints = [...data.customWaypoints];
   gameState.unlockedRecipes = [...data.unlockedRecipes];
+  gameState.wisdomPerks = [...(data.wisdomPerks || [])];
   gameState.journalUnlocked = [...data.journalUnlocked];
   gameState.campaignComplete = data.campaignComplete;
   gameState.waterCollectedCount = data.waterCollectedCount;
@@ -230,7 +235,21 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.meteorIronCollectedCount = data.meteorIronCollectedCount;
   gameState.playerPos = { ...data.playerPos };
   gameState.playtimeSec = data.playtimeSec;
+  applyOfflineProgress(data.updatedAt);
   gameState.bornAtMs = sanitizeBornAt(data.bornAtMs);
   gameState.distanceExplored = data.distanceExplored;
   gameState.activeWorldLoaded = true;
+}
+
+/** Dunia berjalan saat kamu pergi (maks 24 jam): penampung air terisi, tubuh beristirahat. */
+function applyOfflineProgress(updatedAt: string | undefined): void {
+  const savedMs = Date.parse(updatedAt || '');
+  if (!Number.isFinite(savedMs)) return;
+  const report = computeOfflineProgress(gameState.placedStructures, (Date.now() - savedMs) / 1000);
+  if (report.seconds < 300) return;
+  if (report.rested) gameState.vitals.fatigue = 100;
+  const extra = report.collectorsFilled > 0 ? `, ${report.collectorsFilled} penampung air terisi` : '';
+  setTimeout(() => {
+    eventBus.emit('toast:show', { text: `Pergi ${formatDuration(report.seconds)}${extra}.`, type: 'info' });
+  }, 2500);
 }

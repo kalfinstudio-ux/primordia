@@ -114,13 +114,40 @@ export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: numb
   }
 }
 
+export interface ResolvedAnchor {
+  x: number;
+  z: number;
+  r: number;
+  noise: Noise2D;
+}
+
+function anchorWeight(a: ResolvedAnchor, x: number, z: number): number {
+  return 1 - smoothstep(a.r * 0.7, a.r, Math.hypot(x - a.x, z - a.z));
+}
+
+/** Tinggi medan dengan jangkar: di dalam radius jangkar dipakai medan beku, lalu dicampur halus ke medan baru. */
+export function sampleHeightAnchored(noise: Noise2D, anchors: readonly ResolvedAnchor[], x: number, z: number): number {
+  let h = sampleWorldHeight(noise, x, z);
+  for (const a of anchors) {
+    const w = anchorWeight(a, x, z);
+    if (w > 0) h = lerp(h, sampleWorldHeight(a.noise, x, z), w);
+  }
+  return h;
+}
+
+function pickColorNoise(noise: Noise2D, anchors: readonly ResolvedAnchor[], x: number, z: number): Noise2D {
+  for (const a of anchors) if (anchorWeight(a, x, z) >= 0.5) return a.noise;
+  return noise;
+}
+
 export function buildChunkGeometryData(
   seed: string,
   noise: Noise2D,
   chunkX: number,
   chunkZ: number,
   chunkSize: number,
-  segments: number
+  segments: number,
+  anchors: readonly ResolvedAnchor[] = []
 ): { positions: Float32Array; colors: Float32Array; normals: Float32Array; indices: Uint32Array } {
   const gridN = segments + 1;
   const baseVerts = gridN * gridN;
@@ -142,23 +169,23 @@ export function buildChunkGeometryData(
       const idx = gz * gridN + gx;
       const wx = originX + gx * step;
       const wz = originZ + gz * step;
-      const wy = sampleWorldHeight(noise, wx, wz);
+      const wy = sampleHeightAnchored(noise, anchors, wx, wz);
 
       positions[idx * 3] = wx - chunkX * chunkSize;
       positions[idx * 3 + 1] = wy;
       positions[idx * 3 + 2] = wz - chunkZ * chunkSize;
 
-      const [r, g, b] = sampleTerrainColor(noise, wx, wz, wy);
+      const [r, g, b] = sampleTerrainColor(pickColorNoise(noise, anchors, wx, wz), wx, wz, wy);
       colors[idx * 3] = r;
       colors[idx * 3 + 1] = g;
       colors[idx * 3 + 2] = b;
 
       // Finite-difference normal so chunk edges match seamlessly
       const eps = 0.85;
-      const hL = sampleWorldHeight(noise, wx - eps, wz);
-      const hR = sampleWorldHeight(noise, wx + eps, wz);
-      const hD = sampleWorldHeight(noise, wx, wz - eps);
-      const hU = sampleWorldHeight(noise, wx, wz + eps);
+      const hL = sampleHeightAnchored(noise, anchors, wx - eps, wz);
+      const hR = sampleHeightAnchored(noise, anchors, wx + eps, wz);
+      const hD = sampleHeightAnchored(noise, anchors, wx, wz - eps);
+      const hU = sampleHeightAnchored(noise, anchors, wx, wz + eps);
       const nx = hL - hR;
       const ny = 2 * eps;
       const nz = hD - hU;

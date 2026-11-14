@@ -1,3 +1,4 @@
+import { perkEffects } from '../data/eden';
 import type { HazardType, WeatherType, WorldEventType } from '../config';
 import { gameState } from '../core/state';
 import { getBiomeAt, type BiomeId } from '../world/biomes';
@@ -67,6 +68,8 @@ export class SurvivalSystem {
       hasHeatShield: hasItem('heat_shield'),
       hasThermalCloak: hasItem('thermal_cloak'),
       hasHazmatLining: hasItem('hazmat_lining'),
+      filterDrainMult: perkEffects(gameState.wisdomPerks).filterDrainMult,
+      radiationMult: perkEffects(gameState.wisdomPerks).radiationMult,
       inLava,
       inMeteorDanger,
       difficulty,
