@@ -10,12 +10,24 @@
 - **5-Tier Crafting, Modular Building & Campaign (`src/game/data/`, `systems/`)**: 42 items across 5 tech tiers, 33 recipes with station proximity & material unlocks, snap-grid modular building (`3m` ghost preview), persistent Storage Chests, 22-quest **"Seed of Life"** campaign + Victory/New Game+, `[J]` Discovery Journal / Achievements / Repeatable Survey Contracts, and timed world events.
 - **PWA, Save Migration & Hardened Supabase Sync (`public/`, `src/game/systems/saveLoad.ts`, `supabase/`)**: Offline Service Worker, install prompt, v1 → v2 save migration, Cloud Save Conflict resolution (`Keep Local / Keep Cloud / Keep Both`), and validated server-side Postgres RPC leaderboard (`submit_validated_score`).
 
+## Era Adam & Hawa (pembaruan terbaru)
+Lapisan cerita dan sistem baru: awal era manusia pertama, tanpa tua dan tanpa akhir.
+- **Umur abadi** tersimpan di profil Supabase (`born_at`, dihitung server); mati karena bahaya tidak mereset umur.
+- **Waktu dunia nyata**: langit mengikuti jam perangkat; HUD menampilkan jam, tanggal, dan umur.
+- **Peta berubah** mengikuti kalender nyata: medan berganti tiap bulan, sumber daya tumbuh ulang tiap hari. **Jangkar Medan** mengunci area base (radius 60 m).
+- **Dunia berjalan saat offline** (maks 24 jam) + panel **"Saat kamu pergi"** (cuaca, air, hari berganti, Pergeseran Besar).
+- **Kebijaksanaan**: poin dari umur (7/30/100/365 hari) untuk perk permanen di menu Jeda.
+- **Nama karakter** acak dengan tombol 🎲; pemain bebas menggantinya.
+- **Server anti-mati**: `./tools/keepalive.sh` (restart otomatis + watchdog), konfigurasi Codespace di `.devcontainer/`.
+- Semua rincian, risiko, dan backlog ada di [`HANDOFF.md`](./HANDOFF.md). Migrasi database: `supabase/migration-eden.sql`.
+
 ## Running Locally & Testing
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm test
 npm run lint
-npm run dev
+npm run dev            # atau server anti-mati:
+nohup ./tools/keepalive.sh > server.log 2>&1 &
 ```
 
 ## Deploying to GitHub Pages

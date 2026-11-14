@@ -1,4 +1,5 @@
-import { computeOfflineProgress, formatDuration, sanitizeBornAt } from '../data/eden';
+import { buildAwayReport, sanitizeBornAt } from '../data/eden';
+import { setAwayReport } from './awayReport';
 import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
   type DeathBag,
@@ -241,15 +242,12 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.activeWorldLoaded = true;
 }
 
-/** Dunia berjalan saat kamu pergi (maks 24 jam): penampung air terisi, tubuh beristirahat. */
+/** Dunia berjalan saat kamu pergi (efek maks 24 jam): air terisi, istirahat, dan laporan kronik. */
 function applyOfflineProgress(updatedAt: string | undefined): void {
   const savedMs = Date.parse(updatedAt || '');
   if (!Number.isFinite(savedMs)) return;
-  const report = computeOfflineProgress(gameState.placedStructures, (Date.now() - savedMs) / 1000);
+  const report = buildAwayReport(savedMs, Date.now(), gameState.placedStructures);
   if (report.seconds < 300) return;
-  if (report.rested) gameState.vitals.fatigue = 100;
-  const extra = report.collectorsFilled > 0 ? `, ${report.collectorsFilled} penampung air terisi` : '';
-  setTimeout(() => {
-    eventBus.emit('toast:show', { text: `Pergi ${formatDuration(report.seconds)}${extra}.`, type: 'info' });
-  }, 2500);
+  if (report.seconds >= 1800) gameState.vitals.fatigue = 100;
+  setTimeout(() => setAwayReport(report), 1500);
 }

@@ -236,3 +236,105 @@ export function perkEffects(owned: readonly string[]): { filterDrainMult: number
   }
   return { filterDrainMult, radiationMult };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Laporan "Saat kamu pergi" — kronik dunia deterministik dari kalender nyata
+// (semua pemain melihat kronik yang sama untuk rentang waktu yang sama)
+// ─────────────────────────────────────────────────────────────
+export type AwayWeather = 'clear_haze' | 'ash_storm' | 'acid_rain' | 'electrical_storm' | 'meteor_shower';
+
+const AWAY_BLOCK_MS = 6 * 3600 * 1000;
+const AWAY_MAX_WINDOW_MS = 30 * 86400 * 1000;
+const WEATHER_LABEL: Record<AwayWeather, { icon: string; name: string }> = {
+  clear_haze: { icon: '🌫', name: 'Kabut oranye' },
+  ash_storm: { icon: '🌋', name: 'Badai abu' },
+  acid_rain: { icon: '☔', name: 'Hujan asam' },
+  electrical_storm: { icon: '⚡', name: 'Badai petir' },
+  meteor_shower: { icon: '☄', name: 'Hujan meteor' },
+};
+const MONTH_NAMES = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+export function weatherForBlock(blockIdx: number): AwayWeather {
+  const r = mulberry(blockIdx * 2654435761 + 97)();
+  if (r < 0.5) return 'clear_haze';
+  if (r < 0.7) return 'ash_storm';
+  if (r < 0.82) return 'acid_rain';
+  if (r < 0.92) return 'electrical_storm';
+  return 'meteor_shower';
+}
+
+export interface AwayEntry {
+  icon: string;
+  text: string;
+}
+
+export interface AwayReport {
+  seconds: number;
+  entries: AwayEntry[];
+}
+
+/** Gabungan efek offline (air terisi, istirahat) + kronik cuaca/kalender selama pemain pergi. */
+export function buildAwayReport(
+  fromMs: number,
+  toMs: number,
+  structs: Array<{ type: string; x: number; z: number; waterStored?: number; anchorSeed?: string }>
+): AwayReport {
+  const windowMs = Math.min(AWAY_MAX_WINDOW_MS, Math.max(0, toMs - fromMs));
+  const start = toMs - windowMs;
+  const report: AwayReport = { seconds: Math.floor(windowMs / 1000), entries: [] };
+  if (report.seconds < OFFLINE_MIN_SEC) return report;
+
+  // Cuaca: jam per jenis, dihitung dari irisan tiap blok 6 jam dengan jendela
+  const hours: Record<AwayWeather, number> = { clear_haze: 0, ash_storm: 0, acid_rain: 0, electrical_storm: 0, meteor_shower: 0 };
+  for (let b = Math.floor(start / AWAY_BLOCK_MS); b <= Math.floor(toMs / AWAY_BLOCK_MS); b++) {
+    const overlap = Math.min(toMs, (b + 1) * AWAY_BLOCK_MS) - Math.max(start, b * AWAY_BLOCK_MS);
+    if (overlap > 0) hours[weatherForBlock(b)] += overlap / 3600000;
+  }
+  const notable = (Object.keys(hours) as AwayWeather[])
+    .filter((w) => w !== 'clear_haze' && hours[w] >= 1)
+    .sort((a, b) => hours[b] - hours[a])
+    .slice(0, 3);
+  for (const w of notable) {
+    report.entries.push({ icon: WEATHER_LABEL[w].icon, text: `${WEATHER_LABEL[w].name} sekitar ${Math.round(hours[w])} jam` });
+  }
+
+  // Air: efek offline dasar + bonus tiap ~6 jam hujan
+  const fx = computeOfflineProgress(structs, Math.min(report.seconds, OFFLINE_CAP_SEC));
+  const rainBlocks = Math.floor((hours.acid_rain + hours.electrical_storm) / 6);
+  if (rainBlocks > 0) {
+    for (const s of structs) if (s.type === 'water_collector') s.waterStored = Math.min(100, (s.waterStored || 0) + rainBlocks * 8);
+  }
+  const collectors = structs.filter((s) => s.type === 'water_collector').length;
+  if (collectors > 0 && (fx.collectorsFilled > 0 || rainBlocks > 0)) {
+    report.entries.push({ icon: '💧', text: `${collectors} penampung air terisi` });
+  }
+
+  // Kalender: hari berganti, gunung berapi, pergeseran bulan
+  const dFrom = new Date(start);
+  const dTo = new Date(toMs);
+  const dayKey = (d: Date) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  let days = 0;
+  let maxVolcano = 0;
+  let maxVolcanoDay: Date | null = null;
+  for (let t = new Date(dFrom.getFullYear(), dFrom.getMonth(), dFrom.getDate()); t <= dTo; t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1)) {
+    if (dayKey(t) !== dayKey(dFrom)) days++;
+    const va = getEdenCalendar(t).volcanoActivity;
+    if (va > maxVolcano) { maxVolcano = va; maxVolcanoDay = t; }
+  }
+  if (days > 0) report.entries.push({ icon: '🌅', text: `Hari berganti ${days}×: vegetasi dan sumber daya tumbuh ulang` });
+  if (maxVolcano >= 0.85 && maxVolcanoDay) {
+    report.entries.push({ icon: '🔥', text: `Gunung berapi sangat aktif pada ${String(maxVolcanoDay.getDate()).padStart(2, '0')}/${String(maxVolcanoDay.getMonth() + 1).padStart(2, '0')}` });
+  }
+  if (dFrom.getFullYear() * 12 + dFrom.getMonth() !== dTo.getFullYear() * 12 + dTo.getMonth()) {
+    const anchors = collectAnchors(structs);
+    const builds = structs.filter((s) => s.type !== 'terrain_anchor');
+    const exposed = builds.filter((s) => !anchors.some((a) => Math.hypot(s.x - a.x, s.z - a.z) <= a.r)).length;
+    const base = `Pergeseran Besar: peta berganti ke ${MONTH_NAMES[dTo.getMonth()]} ${dTo.getFullYear()}`;
+    report.entries.push({
+      icon: '🗺',
+      text: builds.length === 0 ? base : exposed > 0 ? `${base}. ${exposed} bangunan di luar zona Jangkar Medan` : `${base}. Semua bangunan terlindungi Jangkar`,
+    });
+  }
+  if (fx.rested) report.entries.push({ icon: '😴', text: 'Tubuhmu beristirahat penuh' });
+  return report;
+}

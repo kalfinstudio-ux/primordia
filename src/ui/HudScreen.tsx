@@ -1,3 +1,4 @@
+import { AwayReportModal } from './AwayReportModal';
 import { EdenClock } from './EdenClock';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -294,6 +295,7 @@ export function HudScreen() {
 
   return (
     <div className="safe-hud-pad pointer-events-none fixed inset-0 z-20 flex flex-col justify-between">
+      <AwayReportModal />
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (
         <div
           className="pointer-events-auto fixed inset-x-4 top-16 z-40 flex items-center justify-between gap-2 rounded-lg border border-amber-700 px-3 py-2 text-xs text-amber-200 shadow-lg"
