@@ -169,6 +169,7 @@
     "ambientVol": "Ambien Alam",
     "sensitivity": "Sensitivitas Kamera",
     "joystickSize": "Ukuran Joystick Sentuh",
+    "actionSize": "Ukuran Tombol Aksi Sentuh",
     "hudScale": "Skala HUD",
     "buttonOpacity": "Transparansi Tombol Sentuh",
     "handMode": "Tata Letak Tangan",

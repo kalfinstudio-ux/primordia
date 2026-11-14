@@ -173,7 +173,12 @@ export function HudScreen() {
     ? `${Math.round((snap.vitals.temperature * 9) / 5 + 32)}°F`
     : `${snap.vitals.temperature.toFixed(1)}°C`;
   const tempPct = Math.min(100, Math.max(0, ((snap.vitals.temperature - 30) / 22) * 100));
-  const joyRadius = 42 * ctrl.joystickSize;
+  // Layar landscape pendek: kontrol sedikit diperkecil agar tidak menutupi pandangan.
+  const touchK = isShortLandscape ? 0.88 : 1;
+  const joyRadius = 56 * ctrl.joystickSize * touchK;
+  const knobSize = joyRadius * 0.8;
+  const knobTravel = joyRadius * 0.55;
+  const actionK = (ctrl.actionSize ?? 1.15) * touchK;
   const hudScale = isShortLandscape ? Math.min(ctrl.hudScale, 0.9) : ctrl.hudScale;
   const btnOpacity = ctrl.buttonOpacity ?? 0.9;
   const leftHanded = ctrl.handMode === 'left';
@@ -225,14 +230,10 @@ export function HudScreen() {
   const inspectedDef = inspectedSlot ? ITEMS[inspectedSlot.itemId] : null;
 
   const joystickNode = (
+    // Area sentuh lebih luas (padding 14px) dari lingkaran yang terlihat, supaya jempol tidak meleset.
     <div
-      className="pointer-events-auto relative flex items-center justify-center rounded-full border border-stone-700"
-      style={{
-        width: joyRadius * 2,
-        height: joyRadius * 2,
-        backgroundColor: 'rgba(15, 12, 11, 0.68)',
-        opacity: btnOpacity,
-      }}
+      className="pointer-events-auto relative select-none p-3.5"
+      style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
       onTouchStart={(e) => {
         const touch = e.changedTouches[0];
         if (!touch) return;
@@ -241,7 +242,7 @@ export function HudScreen() {
         const dx = (touch.clientX - joyRef.current.x) / joyRadius;
         const dy = (touch.clientY - joyRef.current.y) / joyRadius;
         input.setTouchJoystick(dx, dy);
-        setJoyKnob({ x: Math.max(-1, Math.min(1, dx)) * 20, y: Math.max(-1, Math.min(1, dy)) * 20 });
+        setJoyKnob({ x: Math.max(-1, Math.min(1, dx)) * knobTravel, y: Math.max(-1, Math.min(1, dy)) * knobTravel });
       }}
       onTouchMove={(e) => {
         if (joyRef.current.touchId === null) return;
@@ -251,7 +252,7 @@ export function HudScreen() {
             const dx = (touch.clientX - joyRef.current.x) / joyRadius;
             const dy = (touch.clientY - joyRef.current.y) / joyRadius;
             input.setTouchJoystick(dx, dy);
-            setJoyKnob({ x: Math.max(-1, Math.min(1, dx)) * 20, y: Math.max(-1, Math.min(1, dy)) * 20 });
+            setJoyKnob({ x: Math.max(-1, Math.min(1, dx)) * knobTravel, y: Math.max(-1, Math.min(1, dy)) * knobTravel });
           }
         }
       }}
@@ -264,17 +265,45 @@ export function HudScreen() {
           }
         }
       }}
+      onTouchCancel={() => {
+        joyRef.current.touchId = null;
+        input.setTouchJoystick(0, 0);
+        setJoyKnob({ x: 0, y: 0 });
+      }}
     >
       <div
-        className="h-9 w-9 rounded-full border border-orange-300/60 bg-orange-600/80"
-        style={{ transform: `translate(${joyKnob.x}px, ${joyKnob.y}px)` }}
-      />
+        className="flex items-center justify-center rounded-full border-2 border-stone-600"
+        style={{
+          width: joyRadius * 2,
+          height: joyRadius * 2,
+          backgroundColor: 'rgba(15, 12, 11, 0.68)',
+          opacity: btnOpacity,
+        }}
+      >
+        <div
+          className="rounded-full border-2 border-orange-300/70 bg-orange-600/85 shadow-lg"
+          style={{ width: knobSize, height: knobSize, transform: `translate(${joyKnob.x}px, ${joyKnob.y}px)` }}
+        />
+      </div>
     </div>
   );
 
+  // Tombol aksi: dua baris, AKSI paling besar di sudut bawah agar mudah dijangkau jempol.
+  const smallBtn = Math.round(64 * actionK);
+  const bigBtn = Math.round(84 * actionK);
+  const btnBase =
+    'select-none flex items-center justify-center rounded-full border-2 font-bold uppercase tracking-wide shadow-lg transition-transform active:scale-90 active:brightness-125';
+  const btnStyle = (size: number): React.CSSProperties => ({
+    width: size,
+    height: size,
+    fontSize: Math.max(11, Math.round(size * 0.2)),
+    touchAction: 'none',
+    WebkitTapHighlightColor: 'transparent',
+    backgroundColor: 'rgba(15, 12, 11, 0.85)',
+  });
   const actionClusterNode = (
     <div
-      className="pointer-events-auto flex items-center gap-1.5"
+      className="pointer-events-auto flex flex-col items-end gap-2 p-1.5"
       style={{ opacity: btnOpacity }}
       onTouchStart={(e) => {
         const touch = e.changedTouches[0];
@@ -299,39 +328,48 @@ export function HudScreen() {
           }
         }
       }}
+      onTouchCancel={() => {
+        lookRef.current.touchId = null;
+      }}
     >
-      <button
-        type="button"
-        onTouchStart={() => input.setVirtualHold(ctrl.keys.sprint, true)}
-        onTouchEnd={() => input.setVirtualHold(ctrl.keys.sprint, false)}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
-        style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
-      >
-        {t('hud.runBtn')}
-      </button>
-      <button
-        type="button"
-        onClick={() => input.triggerVirtualKey(ctrl.keys.build)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
-        style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
-      >
-        {t('hud.buildBtn')}
-      </button>
-      <button
-        type="button"
-        onClick={() => input.triggerVirtualKey(ctrl.keys.interact)}
-        className="flex h-14 w-14 items-center justify-center rounded-full border border-orange-500 bg-orange-600 text-[11px] font-bold text-white"
-      >
-        {t('hud.actionBtn')}
-      </button>
-      <button
-        type="button"
-        onClick={() => input.triggerVirtualKey(ctrl.keys.jump)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-700 text-[9px] font-bold text-stone-100"
-        style={{ backgroundColor: 'rgba(15, 12, 11, 0.85)' }}
-      >
-        {t('hud.jumpBtn')}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onPointerDown={() => input.triggerVirtualKey(ctrl.keys.build)}
+          className={`${btnBase} border-stone-600 text-stone-100`}
+          style={btnStyle(smallBtn)}
+        >
+          {t('hud.buildBtn')}
+        </button>
+        <button
+          type="button"
+          onPointerDown={() => input.triggerVirtualKey(ctrl.keys.jump)}
+          className={`${btnBase} border-stone-600 text-stone-100`}
+          style={btnStyle(smallBtn)}
+        >
+          {t('hud.jumpBtn')}
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onTouchStart={() => input.setVirtualHold(ctrl.keys.sprint, true)}
+          onTouchEnd={() => input.setVirtualHold(ctrl.keys.sprint, false)}
+          onTouchCancel={() => input.setVirtualHold(ctrl.keys.sprint, false)}
+          className={`${btnBase} border-stone-600 text-stone-100`}
+          style={btnStyle(smallBtn)}
+        >
+          {t('hud.runBtn')}
+        </button>
+        <button
+          type="button"
+          onPointerDown={() => input.triggerVirtualKey(ctrl.keys.interact)}
+          className={`${btnBase} border-orange-400 text-white`}
+          style={{ ...btnStyle(bigBtn), backgroundColor: '#ea580c' }}
+        >
+          {t('hud.actionBtn')}
+        </button>
+      </div>
     </div>
   );
 
@@ -695,7 +733,7 @@ export function HudScreen() {
                       useHotbarSlot(idx);
                     }}
                     aria-label={def ? t(`items.${def.id}.name`) : `Slot ${idx + 1}`}
-                    className={`relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border transition-colors ${
+                    className={`relative flex ${touchMode ? 'h-12 w-12' : 'h-10 w-10 sm:h-11 sm:w-11'} items-center justify-center rounded-lg border transition-colors ${
                       selected ? 'border-orange-500 bg-orange-950/50' : 'border-stone-800 bg-stone-900/80 hover:border-stone-700'
                     }`}
                   >

@@ -169,6 +169,7 @@
     "ambientVol": "World Ambience",
     "sensitivity": "Camera Sensitivity",
     "joystickSize": "Touch Joystick Size",
+    "actionSize": "Touch Action Button Size",
     "hudScale": "HUD Scale",
     "buttonOpacity": "Touch Button Opacity",
     "handMode": "Touch Layout",

@@ -60,7 +60,8 @@ export interface GameSettings {
   };
   controls: {
     sensitivity: number; // 0.3 - 2.0
-    joystickSize: number; // 0.8 - 1.4
+    joystickSize: number; // 0.8 - 1.8
+    actionSize: number; // 0.8 - 1.8 (ukuran tombol aksi sentuh)
     hudScale: number; // 0.75 - 1.25
     buttonOpacity: number; // 0.45 - 1.0
     handMode: HandMode;
@@ -153,6 +154,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   controls: {
     sensitivity: 1.0,
     joystickSize: 1.0,
+    actionSize: 1.15,
     hudScale: 1.0,
     buttonOpacity: 0.9,
     handMode: 'right',

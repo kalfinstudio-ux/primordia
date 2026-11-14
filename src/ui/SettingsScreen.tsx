@@ -219,10 +219,20 @@ export function SettingsScreen() {
                 label={t('settings.joystickSize')}
                 valueText={`${Math.round(draft.controls.joystickSize * 100)}%`}
                 min={0.8}
-                max={1.4}
+                max={1.8}
                 step={0.1}
                 value={draft.controls.joystickSize}
                 onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, joystickSize: v } })}
+              />
+              <SliderRow
+                id="action-size"
+                label={t('settings.actionSize')}
+                valueText={`${Math.round((draft.controls.actionSize ?? 1.15) * 100)}%`}
+                min={0.8}
+                max={1.8}
+                step={0.05}
+                value={draft.controls.actionSize ?? 1.15}
+                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, actionSize: v } })}
               />
               <SliderRow
                 id="hud-scale"
