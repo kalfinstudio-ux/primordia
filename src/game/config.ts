@@ -117,11 +117,11 @@ export const BASE44_CONFIG = {
 /** Info hukum yang tampil di Pengaturan → Info Game. Isi lewat .env agar tidak perlu ubah kode. */
 export const LEGAL_CONFIG = {
   /** Tanggal terakhir teks Ketentuan & Kebijakan diperbarui (YYYY-MM-DD). */
-  updatedAt: '2026-11-14',
+  updatedAt: '2026-11-15',
   /** Email kontak pemilik game (VITE_CONTACT_EMAIL). Kosong = baris kontak disembunyikan. */
   contactEmail: viteEnv()?.VITE_CONTACT_EMAIL || '',
   /** Nama pemilik/pengelola game (VITE_OWNER_NAME). Kosong = memakai teks "pengelola PRIMORDIA". */
-  ownerName: viteEnv()?.VITE_OWNER_NAME || '',
+  ownerName: viteEnv()?.VITE_OWNER_NAME || 'Jurkon Studio',
 };
 
 export const DEFAULT_AVATAR: AvatarConfig = {

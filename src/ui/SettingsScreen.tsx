@@ -13,6 +13,7 @@ import { pushCloudSettings } from '../game/net/settingsSync';
 import { clearAllGameStorage, writeStorage } from '../game/utils/storage';
 import { eventBus } from '../game/core/eventBus';
 import { t } from '../game/utils/i18n';
+import { ExitGameButton } from './ExitGameButton';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GameInfoPanel } from './GameInfoPanel';
 import { usePWAInstall } from './pwaInstall';
@@ -446,6 +447,8 @@ export function SettingsScreen() {
               >
                 {t('settings.clearLocalData')}
               </button>
+
+              <ExitGameButton saveFirst={gameState.previousScreen === 'pause'} />
             </div>
           )}
         </div>

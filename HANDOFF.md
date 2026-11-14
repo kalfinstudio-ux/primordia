@@ -177,3 +177,10 @@ Ditulis di sandbox tanpa vite/three/react: hanya `gameInfo.test.ts` (9 tes, lulu
 - [ ] Dengan `VITE_BASE44_APP_ID`: tombol "Masuk dengan Base44 (Google)" → Google → kembali ke game, menu menampilkan nama/email, refresh tetap masuk, Keluar menghapus sesi.
 - [ ] Tanpa `VITE_BASE44_APP_ID`: tombol tidak ada, login Supabase tidak berubah.
 
+
+## 4c. Perubahan v13 (15 Nov 2026) — BELUM diuji di browser
+- **Panel Info Game** (Pengaturan → Info Game) sebelumnya menampilkan kunci mentah (`info.title`, dst.) karena bagian `info` hilang dari `src/i18n/id.json` & `en.json`. Kini lengkap (Tentang, Mekanik, Misi, Panduan, Ketentuan, Privasi) + `settings.tabs.info`, `auth.base44`, `auth.base44NoCloud`. `npm test` (gameInfo.test.ts) memeriksa struktur kedua bahasa & placeholder.
+- **Keluar Game**: `ui/ExitGameButton.tsx` (dengan konfirmasi) di menu Jeda dan Pengaturan → Akun & Data. `exitGame()` di `game/main.ts`: simpan slot 1 (hanya bila dibuka dari Jeda), keluar layar penuh, lalu ke `../` (landing).
+- **Detektor pemain sekitar**: `ui/NearbyPlayers.tsx` di bawah jam HUD (mode Penuh): jumlah pemain dalam 120 m, jarak & panah arah pemain terdekat; ketuk membuka panel Pemain & Teman. Perlu Mode Online aktif.
+- HUD atas: pil kompas/bioma tidak lagi menimpa panel jam & tombol kanan (dipotong dengan elipsis).
+- `LEGAL_CONFIG`: pengelola bawaan "Jurkon Studio", tanggal 2026-11-15.

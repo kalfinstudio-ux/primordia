@@ -119,6 +119,26 @@ export function returnToMainMenu(): void {
   setScreen('menu');
 }
 
+/**
+ * Keluar game: simpan (slot 1 = slot simpan otomatis) bila sedang bermain, keluar layar penuh,
+ * lalu kembali ke halaman utama situs (satu tingkat di atas /play/).
+ */
+export function exitGame(saveFirst = true): void {
+  if (saveFirst) {
+    try {
+      saveGameToSlot(1, true);
+    } catch {
+      /* tetap keluar walau gagal menyimpan */
+    }
+  }
+  try {
+    if (document.fullscreenElement) void document.exitFullscreen();
+  } catch {
+    /* abaikan */
+  }
+  window.setTimeout(() => window.location.assign('../'), 150);
+}
+
 export function respawnExplorer(): void {
   audioSystem.unlock();
   manager?.respawnAtSafeRidge();

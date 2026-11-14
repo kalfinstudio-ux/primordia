@@ -1,4 +1,5 @@
 import { WisdomPanel } from './WisdomPanel';
+import { ExitGameButton } from './ExitGameButton';
 import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
 import { returnToMainMenu, saveCurrentSlot } from '../game/main';
@@ -96,6 +97,8 @@ export function PauseModal() {
           >
             {t('pause.mainMenu')}
           </button>
+
+          <ExitGameButton />
         </div>
         <WisdomPanel />
       </section>

@@ -1,6 +1,7 @@
 import { AwayReportModal } from './AwayReportModal';
 import { SocialPanel } from './SocialPanel';
 import { EdenClock } from './EdenClock';
+import { NearbyPlayers } from './NearbyPlayers';
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Volume2,
@@ -413,6 +414,7 @@ export function HudScreen() {
           style={{ transform: `scale(${hudScale})` }}
         >
           {vis.clock && <EdenClock compact={compact} />}
+          {vis.clock && <NearbyPlayers snap={snap} compact={compact} />}
           {vis.vitalsBasic && (
             <div className="rounded-lg border border-stone-800 p-1.5 shadow-lg sm:p-2" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
               <div className={compact && showFullBars ? 'grid grid-cols-2 gap-x-2' : ''}>
@@ -478,19 +480,19 @@ export function HudScreen() {
         </div>
 
         {/* Tengah: kompas, bahaya, peringatan dunia, tutorial */}
-        <div className="pointer-events-auto flex min-w-0 flex-col items-center gap-1">
+        <div className="pointer-events-auto flex min-w-0 flex-1 flex-col items-center gap-1">
           {vis.compass && (
             <button
               type="button"
               onClick={handleCompassTap}
-              className="hidden sm:flex items-center gap-2 whitespace-nowrap rounded-lg border border-stone-800 px-3 py-1 text-[11px] sm:text-xs shadow-lg"
+              className="hidden sm:flex min-w-0 max-w-full items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border border-stone-800 px-3 py-1 text-[11px] sm:text-xs shadow-lg"
               style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}
             >
               <span className="font-mono-tabular font-semibold text-orange-400">
                 {getCardinal(snap.headingDeg)} · {snap.headingDeg}°
               </span>
               <span className="text-stone-600">|</span>
-              <span className="text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
+              <span className="min-w-0 truncate text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
               <span className="text-stone-600">|</span>
               <span className="text-stone-300">{t(`hud.weather.${snap.weather}`)}</span>
             </button>
