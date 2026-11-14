@@ -1,5 +1,6 @@
 import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
+  type DeathBag,
   createInitialVitals,
   gameState,
   type CustomWaypoint,
@@ -22,6 +23,7 @@ export interface SaveSlotData {
   vitals: PlayerVitals;
   inventory: InventorySlot[];
   placedStructures: PlacedStructure[];
+  deathBags: DeathBag[];
   storageInventories: Record<string, InventorySlot[]>;
   completedQuests: string[];
   activeQuestIdx: number;
@@ -74,6 +76,14 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
         label: item.label,
       };
     }),
+    deathBags: (Array.isArray(raw.deathBags) ? (raw.deathBags as Partial<DeathBag>[]) : []).map((b, i) => ({
+      id: String(b.id || `bag_migrated_${i}`),
+      x: Number(b.x) || 0,
+      y: Number(b.y) || 0,
+      z: Number(b.z) || 0,
+      createdAtSec: Number(b.createdAtSec) || 0,
+      items: Array.isArray(b.items) ? (b.items as InventorySlot[]).map((it) => ({ ...it })) : [],
+    })),
     storageInventories: (raw.storageInventories as Record<string, InventorySlot[]>) || {},
     completedQuests: Array.isArray(raw.completedQuests) ? (raw.completedQuests as string[]) : [],
     activeQuestIdx: Number(raw.activeQuestIdx) || 0,
@@ -115,6 +125,7 @@ export function buildCurrentSaveSnapshot(slot: number): SaveSlotData {
     vitals: { ...gameState.vitals },
     inventory: gameState.inventory.map((s) => ({ ...s })),
     placedStructures: gameState.placedStructures.map((s) => ({ ...s })),
+    deathBags: JSON.parse(JSON.stringify(gameState.deathBags)),
     storageInventories: JSON.parse(JSON.stringify(gameState.storageInventories)),
     completedQuests: [...gameState.completedQuests],
     activeQuestIdx: gameState.activeQuestIdx,
@@ -199,6 +210,7 @@ export function applySaveDataToState(raw: SaveSlotData): void {
   gameState.vitals = { ...data.vitals };
   gameState.inventory = data.inventory.map((s) => ({ ...s }));
   gameState.placedStructures = data.placedStructures.map((s) => ({ ...s }));
+  gameState.deathBags = JSON.parse(JSON.stringify(data.deathBags));
   gameState.storageInventories = JSON.parse(JSON.stringify(data.storageInventories));
   gameState.completedQuests = [...data.completedQuests];
   gameState.activeQuestIdx = data.activeQuestIdx;

@@ -13,6 +13,7 @@ import { eventBus } from './eventBus';
 import { readStorage, writeStorage } from '../utils/storage';
 import { recommendGraphicsPreset } from '../utils/device';
 import { setLanguage } from '../utils/i18n';
+import { BALANCE } from '../data/balance';
 
 export interface InventorySlot {
   itemId: string;
@@ -31,6 +32,16 @@ export interface PlayerVitals {
   filterDurability: number; // 0..100
   burnTimer: number; // seconds remaining
   woundTimer: number; // seconds remaining
+  suffocationTimer: number; // seconds sejak oksigen habis (status sesak)
+}
+
+export interface DeathBag {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  createdAtSec: number;
+  items: InventorySlot[];
 }
 
 export type StructureType =
@@ -114,6 +125,8 @@ export interface HudSnapshot {
   tutorialHintKey: string | null;
   minimapNodes: Array<{ x: number; z: number; kind: 'water' | 'crystal' | 'shelter' | 'volcano' | 'beacon' | 'geyser' | 'player' }>;
   online: { status: 'off' | 'connecting' | 'online' | 'error'; players: number };
+  cleanAir: { dist: number; relDeg: number; kind: 'shelter' | 'terrain' } | null;
+  deathBag: { dist: number; relDeg: number } | null;
   debug: DebugTelemetry;
 }
 
@@ -138,6 +151,7 @@ export interface RuntimeGameState {
   completedQuests: string[];
   activeQuestIdx: number;
   placedStructures: PlacedStructure[];
+  deathBags: DeathBag[];
   storageInventories: Record<string, InventorySlot[]>;
   discoveredChunks: string[];
   discoveredPois: DiscoveredPoi[];
@@ -206,6 +220,7 @@ export function createInitialVitals(): PlayerVitals {
     filterDurability: 0,
     burnTimer: 0,
     woundTimer: 0,
+    suffocationTimer: 0,
   };
 }
 
@@ -224,6 +239,7 @@ export const gameState: RuntimeGameState = {
   completedQuests: [],
   activeQuestIdx: 0,
   placedStructures: [],
+  deathBags: [],
   storageInventories: {},
   discoveredChunks: [],
   discoveredPois: [],
@@ -288,10 +304,15 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
   writeStorage('last_avatar', gameState.avatar);
   gameState.vitals = createInitialVitals();
   gameState.inventory = [{ itemId: 'basalt_rock', qty: 2 }];
+  const filterQty = Math.max(
+    BALANCE.newPlayer.gasFilterQty[gameState.settings.gameplay.difficulty] ?? 0,
+    preserveKnowledge ? 1 : 0
+  );
+  if (filterQty > 0) gameState.inventory.push({ itemId: 'gas_filter', qty: filterQty });
   if (preserveKnowledge) {
     gameState.inventory.push({ itemId: 'stone_axe', qty: 1, durability: 60 });
-    gameState.inventory.push({ itemId: 'gas_filter', qty: 1 });
   }
+  gameState.deathBags = [];
   gameState.hotbarItemIds = ['stone_axe', 'water_vessel', 'heat_shield', 'basic_shelter', 'campfire_kit', null];
   gameState.selectedHotbarIdx = 0;
   gameState.completedQuests = [];

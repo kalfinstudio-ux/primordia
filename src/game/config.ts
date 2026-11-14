@@ -150,7 +150,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
     },
   },
   gameplay: {
-    difficulty: 'survivor',
+    difficulty: 'explorer',
     showHud: true,
     units: 'metric',
   },

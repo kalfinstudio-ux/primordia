@@ -23,6 +23,7 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
         },
         world_state: {
           placedStructures: snapshot.placedStructures,
+          deathBags: snapshot.deathBags,
           storageInventories: snapshot.storageInventories,
           completedQuests: snapshot.completedQuests,
           activeQuestIdx: snapshot.activeQuestIdx,

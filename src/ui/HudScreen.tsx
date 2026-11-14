@@ -12,8 +12,10 @@ import {
   RotateCw,
   X,
   MessageCircle,
+  ArrowUp,
 } from 'lucide-react';
 import { ITEMS, WORLD_RADIUS } from '../game/config';
+import { BALANCE } from '../game/data/balance';
 import { eventBus } from '../game/core/eventBus';
 import { input } from '../game/core/input';
 import { gameState, saveSettingsToLocal, setScreen, type HudSnapshot } from '../game/core/state';
@@ -120,6 +122,8 @@ export function HudScreen() {
 
   const ctrl = gameState.settings.controls;
   const showFull = gameState.settings.gameplay.showHud;
+  const lowOxygen = snap.vitals.oxygen < BALANCE.oxygen.lowWarnPct;
+  const suffocating = snap.vitals.oxygen <= BALANCE.oxygen.depletedAtPct && (snap.vitals.suffocationTimer || 0) > 0;
   const isImperial = gameState.settings.gameplay.units === 'imperial';
   const tempDisplay = isImperial
     ? `${Math.round((snap.vitals.temperature * 9) / 5 + 32)}°F`
@@ -313,11 +317,14 @@ export function HudScreen() {
         >
           <div className="rounded-lg border border-stone-800 p-2 shadow-lg" style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}>
             <VitalBar label={t('hud.health')} pct={snap.vitals.health} text={`${Math.round(snap.vitals.health)}`} barColor="bg-red-600" />
+            {!showFull && lowOxygen && (
+              <VitalBar label={t('hud.oxygen')} pct={snap.vitals.oxygen} text={`${Math.round(snap.vitals.oxygen)}%`} barColor="bg-red-500" blink />
+            )}
             {showFull && (
               <>
                 <VitalBar label={t('hud.stamina')} pct={snap.vitals.stamina} text={`${Math.round(snap.vitals.stamina)}`} barColor="bg-amber-500" />
                 <VitalBar label={t('hud.temperature')} pct={tempPct} text={tempDisplay} barColor="bg-orange-500" />
-                <VitalBar label={t('hud.oxygen')} pct={snap.vitals.oxygen} text={`${Math.round(snap.vitals.oxygen)}%`} barColor="bg-emerald-500" />
+                <VitalBar label={t('hud.oxygen')} pct={snap.vitals.oxygen} text={`${Math.round(snap.vitals.oxygen)}%`} barColor={lowOxygen ? 'bg-red-500' : 'bg-emerald-500'} blink={lowOxygen} />
                 <VitalBar label={t('hud.water')} pct={snap.vitals.water} text={`${Math.round(snap.vitals.water)}%`} barColor="bg-sky-500" />
                 {(snap.vitals.radiation > 1 || snap.vitals.filterDurability > 0 || snap.vitals.fatigue < 80) && (
                   <div className="mt-1 flex flex-wrap gap-1.5 border-t border-stone-800 pt-1 text-[10px] font-mono-tabular">
@@ -385,6 +392,30 @@ export function HudScreen() {
           <div className={`rounded-md border px-2.5 py-0.5 text-[11px] font-medium ${hazardClass}`} style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
             {t(`hud.hazards.${snap.hazard}`)}
           </div>
+
+          {suffocating && (
+            <div className="animate-pulse rounded-md border border-red-500 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-red-300" style={{ backgroundColor: 'rgba(40, 8, 8, 0.92)' }} role="alert">
+              {t('hud.suffocating')}
+            </div>
+          )}
+
+          {snap.cleanAir && snap.cleanAir.dist > 0 && (
+            <div className="flex animate-pulse items-center gap-1.5 rounded-md border border-emerald-500/70 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300" style={{ backgroundColor: 'rgba(8, 28, 20, 0.92)' }}>
+              <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.cleanAir.relDeg}deg)` }} aria-hidden="true" />
+              <span>
+                {snap.cleanAir.kind === 'shelter' ? t('hud.shelterHint') : t('hud.cleanAirHint')} · {snap.cleanAir.dist} m
+              </span>
+            </div>
+          )}
+
+          {snap.deathBag && (
+            <div className="flex items-center gap-1.5 rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-300" style={{ backgroundColor: 'rgba(36, 24, 6, 0.92)' }}>
+              <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.deathBag.relDeg}deg)` }} aria-hidden="true" />
+              <span>
+                {t('hud.bagHint')} · {snap.deathBag.dist} m
+              </span>
+            </div>
+          )}
 
           {snap.online.status !== 'off' && (
             <div className="rounded-md border border-stone-800 px-2.5 py-0.5 text-[11px] font-medium text-yellow-200" style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)' }}>
@@ -665,10 +696,10 @@ function HudIconBtn({
   );
 }
 
-function VitalBar({ label, pct, text, barColor }: { label: string; pct: number; text: string; barColor: string }) {
+function VitalBar({ label, pct, text, barColor, blink = false }: { label: string; pct: number; text: string; barColor: string; blink?: boolean }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className="mb-1 last:mb-0">
+    <div className={`mb-1 last:mb-0 ${blink ? 'animate-pulse' : ''}`}>
       <div className="flex items-center justify-between text-[10px] sm:text-[11px]">
         <span className="text-stone-300">{label}</span>
         <span className="font-mono-tabular font-semibold text-stone-100">{text}</span>

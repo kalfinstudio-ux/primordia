@@ -5,6 +5,7 @@ import { eventBus } from '../core/eventBus';
 import type { SkySystem } from './sky';
 import type { TerrainSystem } from './terrain';
 import { distance2D } from '../utils/math';
+import { BALANCE, isSafeStartActive } from '../data/balance';
 
 const PARTICLE_COUNT = 160;
 const _dummy = new THREE.Object3D();
@@ -80,8 +81,19 @@ export class WeatherSystem {
   }
 
   update(dt: number, scene: THREE.Scene, sky: SkySystem, centerPos: THREE.Vector3, terrain?: TerrainSystem): void {
-    this.timer -= dt;
-    if (this.timer <= 0) {
+    const safeStart = isSafeStartActive(gameState.settings.gameplay.difficulty, gameState.playtimeSec);
+    if (safeStart && this.currentWeather !== 'clear_haze') {
+      // Masa aman awal: tidak ada badai abu / cuaca berbahaya (termasuk sisa dari run sebelumnya).
+      this.seqIndex = 0;
+      this.setWeather('clear_haze', scene, sky);
+    }
+    if (safeStart) {
+      // Timer ditahan; setelah masa aman habis ada jeda cerah penuh sebelum cuaca pertama berganti.
+      this.timer = Math.max(this.timer, BALANCE.safeStart.weatherClearAfterSec);
+    } else {
+      this.timer -= dt;
+    }
+    if (!safeStart && this.timer <= 0) {
       this.seqIndex = (this.seqIndex + 1) % WEATHER_SEQUENCE.length;
       this.setWeather(WEATHER_SEQUENCE[this.seqIndex], scene, sky);
       this.timer = this.currentWeather === 'clear_haze' ? 40 : 24;

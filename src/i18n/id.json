@@ -178,6 +178,13 @@
     "ash_dunes": "Bukit Abu Vulkanik",
     "meteor_impact": "Zona Tumbukan Meteorit"
   },
+  "survival": {
+    "lowOxygen": "Oksigen menipis! Ikuti panah hijau ke udara bersih atau pakai Filter Gas.",
+    "suffocating": "Kamu sesak napas — nyawa akan turun sebentar lagi!",
+    "bagRecovered": "Kantong barang diambil kembali.",
+    "bagPartial": "Inventaris penuh — sebagian barang masih tertinggal di kantong.",
+    "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning."
+  },
   "events": {
     "super_eruption": "ERUPSI SUPER SEGERA TERJADI — CARI PERLINDUNGAN",
     "toxic_surge": "GELOMBANG GAS SULFUR BERACUN",
@@ -191,6 +198,10 @@
     "tut_fatigue": "Kelelahan Tinggi: Beristirahatlah di dalam Shelter untuk memulihkan energi tidur."
   },
   "hud": {
+    "suffocating": "SESAK",
+    "cleanAirHint": "Udara bersih",
+    "shelterHint": "Shelter",
+    "bagHint": "Kantong",
     "health": "Kesehatan",
     "stamina": "Stamina",
     "temperature": "Suhu Tubuh",
@@ -220,6 +231,7 @@
     },
     "interact": "Tekan [E] untuk",
     "actions": {
+      "pickup_bag": "Ambil Kantong Barang",
       "gather_rock": "Ambil Basalt & Lempung",
       "gather_mineral": "Tambang Sulfur & Bijih Besi",
       "gather_obsidian": "Pecah Serpihan Obsidian",
@@ -694,6 +706,7 @@
     "completedAll": "Kampanye Selesai! Lanjutkan Survival Bebas atau NG+."
   },
   "gameOver": {
+    "bagNote": "Barangmu jatuh sebagai kantong di lokasi tumbang dan bisa diambil kembali.",
     "title": "Penjelajah Tumbang",
     "reasonTemp": "Hipertermia atau hipotermia akibat suhu ekstrem.",
     "reasonOxygen": "Kehabisan oksigen di zona gas beracun.",

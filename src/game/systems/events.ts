@@ -3,19 +3,27 @@ import { gameState } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { writeStorage } from '../utils/storage';
 import { t } from '../utils/i18n';
+import { BALANCE, isSafeStartActive } from '../data/balance';
 
 export class WorldEventSystem {
   activeEvent: WorldEventType = 'none';
   remainingSec = 0;
-  private cooldownSec = 75;
+  private cooldownSec: number = BALANCE.events.initialCooldownSec;
 
   update(dt: number, weather: WeatherType): { type: WorldEventType; remainingSec: number } {
+    // Masa aman awal: tidak ada event dunia; cooldown tidak berjalan sampai masa aman selesai.
+    if (isSafeStartActive(gameState.settings.gameplay.difficulty, gameState.playtimeSec)) {
+      this.activeEvent = 'none';
+      this.remainingSec = 0;
+      this.cooldownSec = Math.max(this.cooldownSec, BALANCE.events.initialCooldownSec);
+      return { type: 'none', remainingSec: 0 };
+    }
     if (this.activeEvent !== 'none') {
       this.remainingSec -= dt;
       if (this.remainingSec <= 0) {
         this.activeEvent = 'none';
         this.remainingSec = 0;
-        this.cooldownSec = 85 + Math.random() * 35;
+        this.cooldownSec = BALANCE.events.cooldownMinSec + Math.random() * BALANCE.events.cooldownRandomSec;
       }
       return { type: this.activeEvent, remainingSec: Math.max(0, Math.ceil(this.remainingSec)) };
     }
@@ -27,7 +35,7 @@ export class WorldEventSystem {
           ? ['meteor_swarm', 'toxic_surge']
           : ['super_eruption', 'toxic_surge', 'meteor_swarm'];
       this.activeEvent = pool[Math.floor(Math.random() * pool.length)];
-      this.remainingSec = 25;
+      this.remainingSec = BALANCE.events.durationSec;
       eventBus.emit('audio:sfx', 'event');
       eventBus.emit('toast:show', { text: t(`events.${this.activeEvent}`), type: 'warn' });
       if (this.activeEvent === 'super_eruption') {

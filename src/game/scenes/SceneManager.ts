@@ -30,6 +30,7 @@ import { BuildingGhostSystem, tickStructures, tryPlaceStructure } from '../syste
 import { WorldEventSystem, evaluateContextualTutorial } from '../systems/events';
 import { evaluateQuests } from '../systems/quests';
 import {
+  addItem,
   computeCarryWeight,
   getBestMiningToolId,
   getHotbarSlots,
@@ -38,6 +39,11 @@ import {
   useHotbarSlot,
 } from '../systems/inventory';
 import { saveGameToSlot } from '../systems/saveLoad';
+import { DeathBagView } from '../world/deathBagView';
+import { findBagInRange, pickUpBag } from '../systems/deathBag';
+import { pickRespawnPoint, relativeBearingDeg } from '../systems/cleanAir';
+import { BALANCE } from '../data/balance';
+import { distance2D } from '../utils/math';
 import { audioSystem } from '../systems/audio';
 import { t } from '../utils/i18n';
 
@@ -64,6 +70,7 @@ export class SceneManager {
   private controller: PlayerController;
   private camRig = new ThirdPersonCamera();
   private survival = new SurvivalSystem();
+  private deathBagView!: DeathBagView;
   private worldEvents = new WorldEventSystem();
 
   private activeEvent: HudSnapshot['activeEvent'] = { type: 'none', remainingSec: 0 };
@@ -147,6 +154,7 @@ export class SceneManager {
     this.lava = new LavaSystem(this.engine.scene, this.terrain, this.assets);
     this.volcano = new VolcanoSystem(this.engine.scene, this.terrain);
     this.weather = new WeatherSystem(this.engine.scene);
+    this.deathBagView = new DeathBagView(this.engine.scene);
     this.meteors = new MeteorSystem(this.engine.scene);
     this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash);
     this.buildingGhost = new BuildingGhostSystem(this.engine.scene, this.assets.contactShadowTexture);
@@ -218,23 +226,37 @@ export class SceneManager {
   }
 
   respawnAtSafeRidge(): void {
+    const R = BALANCE.respawn.vitals;
+    const diff = gameState.settings.gameplay.difficulty;
+    const death = gameState.playerPos;
+    const spot = pickRespawnPoint(death.x, death.z, gameState.placedStructures, (x, z) =>
+      this.terrain.groundHeightAt(x, z)
+    );
     gameState.vitals = {
       ...gameState.vitals,
-      health: 100,
-      stamina: 100,
-      temperature: 37.0,
-      oxygen: 100,
-      water: 85,
-      radiation: Math.min(gameState.vitals.radiation, 20),
-      fatigue: 100,
+      health: R.health,
+      stamina: R.stamina,
+      temperature: R.temperature,
+      oxygen: R.oxygen,
+      water: R.water,
+      radiation: Math.min(gameState.vitals.radiation, R.radiationCap),
+      fatigue: R.fatigue,
       burnTimer: 0,
       woundTimer: 0,
+      suffocationTimer: 0,
+      filterDurability: 0,
     };
-    this.terrain.updateStreaming(0, 18, true);
-    this.chunks.updateStreaming(this.terrain, 0, 18, true);
-    this.controller.resetTo(0, 18, Math.PI, this.terrain);
+    // Bekal darurat: barang ada di kantong, jadi beri filter agar perjalanan mengambilnya tidak mustahil.
+    const emergencyFilters = BALANCE.newPlayer.respawnFilterQty[diff] ?? 0;
+    if (emergencyFilters > 0 && !hasItem('gas_filter')) addItem('gas_filter', emergencyFilters);
+    this.terrain.updateStreaming(spot.x, spot.z, true);
+    this.chunks.updateStreaming(this.terrain, spot.x, spot.z, true);
+    this.controller.resetTo(spot.x, spot.z, Math.PI, this.terrain);
     this.camRig.snapToPlayer(this.controller.position, Math.PI);
     setScreen('hud');
+    if (gameState.deathBags.length > 0) {
+      eventBus.emit('toast:show', { text: t('survival.bagHint'), type: 'info' });
+    }
     this.emitHudSnapshot();
   }
 
@@ -320,6 +342,11 @@ export class SceneManager {
       inMeteorDanger,
       this.activeEvent.type
     );
+    this.survival.updateCleanAir(
+      fixedDt,
+      (x, z) => this.terrain.groundHeightAt(x, z),
+      this.weather.currentWeather
+    );
     tickStructures(fixedDt, this.weather.currentWeather);
   }
 
@@ -359,6 +386,7 @@ export class SceneManager {
       this.lava.update(dt, elapsed);
       this.volcano.update(dt, gameState.settings.graphics.particles, pos, this.terrain);
       this.weather.update(dt, this.engine.scene, this.sky, pos, this.terrain);
+      this.deathBagView.update(elapsed, (x, z) => this.terrain.groundHeightAt(x, z));
 
       const swarmMult = this.activeEvent.type === 'meteor_swarm' ? 2.8 : 1;
       this.meteors.update(
@@ -461,8 +489,19 @@ export class SceneManager {
       if (gameState.buildModeItem) {
         this.confirmBuildPlacement();
       } else {
-        const nearest = this.chunks.findNearestInteractable(this.controller.position.x, this.controller.position.z);
-        if (nearest) {
+        const bag = findBagInRange(gameState.deathBags, this.controller.position.x, this.controller.position.z);
+        const nearest = bag
+          ? null
+          : this.chunks.findNearestInteractable(this.controller.position.x, this.controller.position.z);
+        if (bag) {
+          this.animator.triggerInteract();
+          const all = pickUpBag(bag.id);
+          audioSystem.playSfx('gather');
+          eventBus.emit('toast:show', {
+            text: t(all ? 'survival.bagRecovered' : 'survival.bagPartial'),
+            type: all ? 'success' : 'warn',
+          });
+        } else if (nearest) {
           this.animator.triggerInteract();
           performInteraction(nearest, this.chunks, this.sky);
         }
@@ -519,6 +558,16 @@ export class SceneManager {
       minimapNodes.push({ x: rp.x, z: rp.z, kind: 'player' });
     }
 
+    const bagNear = findBagInRange(gameState.deathBags, p.x, p.z);
+    let nearestBag: HudSnapshot['deathBag'] = null;
+    for (const b of gameState.deathBags) {
+      const d = distance2D(p.x, p.z, b.x, b.z);
+      if (d <= BALANCE.deathBag.hudDistanceMaxM && (!nearestBag || d < nearestBag.dist)) {
+        nearestBag = { dist: Math.round(d), relDeg: relativeBearingDeg(p.x, p.z, b.x, b.z, headingRad) };
+      }
+    }
+    const ca = this.survival.cleanAir;
+
     const snap: HudSnapshot = {
       vitals: { ...gameState.vitals },
       headingDeg,
@@ -530,7 +579,11 @@ export class SceneManager {
       hazard: this.survival.currentHazard,
       biomeId: biome.id,
       activeEvent: this.activeEvent,
-      interactTarget: nearest ? { id: nearest.id, actionKey: nearest.actionKey } : null,
+      interactTarget: bagNear
+        ? { id: bagNear.id, actionKey: 'pickup_bag' }
+        : nearest
+          ? { id: nearest.id, actionKey: nearest.actionKey }
+          : null,
       activeQuestId: quest.activeQuestId,
       questProgressText: quest.progressText,
       questsCompletedCount: gameState.completedQuests.length,
@@ -546,6 +599,14 @@ export class SceneManager {
       tutorialHintKey: evaluateContextualTutorial(this.survival.currentHazard, this.survival.nearWater),
       minimapNodes,
       online: multiplayer.getHudInfo(),
+      cleanAir: ca
+        ? {
+            dist: Math.round(ca.dist),
+            relDeg: relativeBearingDeg(p.x, p.z, ca.x, ca.z, headingRad),
+            kind: ca.kind,
+          }
+        : null,
+      deathBag: nearestBag,
       debug: {
         fps: this.currentFps,
         activeChunks: this.terrain.getActiveChunkCount(),
@@ -573,6 +634,7 @@ export class SceneManager {
     this.lava?.dispose();
     this.volcano?.dispose();
     this.weather?.dispose();
+    this.deathBagView?.dispose();
     this.meteors?.dispose();
     this.buildingGhost?.dispose();
     multiplayer.leave();

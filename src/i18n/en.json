@@ -178,6 +178,13 @@
     "ash_dunes": "Ash Dunes",
     "meteor_impact": "Meteorite Impact Zone"
   },
+  "survival": {
+    "lowOxygen": "Oxygen running low! Follow the green arrow to clean air or use a Gas Filter.",
+    "suffocating": "You are gasping — health will start dropping soon!",
+    "bagRecovered": "Item bag recovered.",
+    "bagPartial": "Inventory full — some items are still left in the bag.",
+    "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar."
+  },
   "events": {
     "super_eruption": "SUPER-ERUPTION IMMINENT — SEEK SHELTER",
     "toxic_surge": "TOXIC SULFUR SURGE",
@@ -191,6 +198,10 @@
     "tut_fatigue": "Fatigue Low: Rest inside any Shelter to recover sleep and restore energy."
   },
   "hud": {
+    "suffocating": "GASPING",
+    "cleanAirHint": "Clean air",
+    "shelterHint": "Shelter",
+    "bagHint": "Bag",
     "health": "Health",
     "stamina": "Stamina",
     "temperature": "Body Temp",
@@ -220,6 +231,7 @@
     },
     "interact": "Press [E] to",
     "actions": {
+      "pickup_bag": "Pick Up Item Bag",
       "gather_rock": "Gather Basalt & Clay",
       "gather_mineral": "Mine Sulfur & Slag",
       "gather_obsidian": "Chip Obsidian Shard",
@@ -694,6 +706,7 @@
     "completedAll": "Campaign Complete! Enjoy Freeform Archean Survival or NG+."
   },
   "gameOver": {
+    "bagNote": "Your items dropped as a bag where you fell and can be recovered.",
     "title": "Explorer Incapacitated",
     "reasonTemp": "Hyperthermia or hypothermia from extreme temperatures.",
     "reasonOxygen": "Asphyxiation inside dense volcanic gas.",

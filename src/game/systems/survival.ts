@@ -1,16 +1,24 @@
 import type { HazardType, WeatherType, WorldEventType } from '../config';
-import { gameState, setScreen } from '../core/state';
+import { gameState } from '../core/state';
 import { getBiomeAt, type BiomeId } from '../world/biomes';
-import { computeHazardState, stepVitals } from '../player/stats';
+import { computeHazardState, isSuffocating, stepVitals } from '../player/stats';
 import { hasItem } from './inventory';
 import { distance2D } from '../utils/math';
 import { eventBus } from '../core/eventBus';
+import { t } from '../utils/i18n';
+import { BALANCE, capToxicLevelForSafeStart } from '../data/balance';
+import { handlePlayerDeath } from './deathBag';
+import { findNearestCleanAir, type CleanAirTarget, type HeightSampler } from './cleanAir';
 
 export class SurvivalSystem {
   currentHazard: HazardType = 'safe';
   currentBiomeId: BiomeId = 'black_basalt_plains';
   currentSurface: 'basalt' | 'ash' | 'water' | 'crystal' | 'obsidian' | 'sulfur' = 'basalt';
   nearWater = false;
+  cleanAir: CleanAirTarget | null = null;
+  private cleanAirTimer = 0;
+  private lowOxygenWarned = false;
+  private suffocationWarned = false;
 
   update(
     dt: number,
@@ -37,13 +45,20 @@ export class SurvivalSystem {
       (s) => s.type === 'campfire_kit' && distance2D(px, pz, s.x, s.z) < 6.0
     );
 
-    const toxicSurgeBonus = activeEvent === 'toxic_surge' ? 0.35 : 0;
-    const heatSurgeBonus = activeEvent === 'super_eruption' ? 8 : 0;
+    const toxicSurgeBonus = activeEvent === 'toxic_surge' ? BALANCE.events.toxicSurgeBonus : 0;
+    const heatSurgeBonus = activeEvent === 'super_eruption' ? BALANCE.events.superEruptionHeat : 0;
+    const difficulty = gameState.settings.gameplay.difficulty;
     const isNight = timeOfDay < 0.18 || timeOfDay > 0.78;
 
     const env = {
       ambientTempC: biome.ambientTempC + heatSurgeBonus,
-      toxicLevel: Math.min(1, biome.toxicLevel + toxicSurgeBonus),
+      toxicLevel: capToxicLevelForSafeStart(
+        Math.min(1, biome.toxicLevel + toxicSurgeBonus),
+        px,
+        pz,
+        difficulty,
+        gameState.playtimeSec
+      ),
       radiationLevel: biome.radiationLevel,
       weather,
       isNight,
@@ -54,7 +69,7 @@ export class SurvivalSystem {
       hasHazmatLining: hasItem('hazmat_lining'),
       inLava,
       inMeteorDanger,
-      difficulty: gameState.settings.gameplay.difficulty,
+      difficulty,
     };
 
     // Progressive ash/soot grime during ash storms or volcanic zones (washed clean in water)
@@ -69,11 +84,49 @@ export class SurvivalSystem {
     const result = stepVitals(gameState.vitals, env, dt);
     gameState.vitals = result.vitals;
 
+    this.emitBreathingWarnings();
+
     if (result.deathReason) {
-      gameState.deathReason = result.deathReason;
-      eventBus.emit('audio:sfx', 'gameover');
-      setScreen('gameOver');
+      handlePlayerDeath(result.deathReason);
     }
+  }
+
+  /** Toast bertahap: oksigen rendah, lalu sesak. Direset saat oksigen pulih. */
+  private emitBreathingWarnings(): void {
+    const v = gameState.vitals;
+    if (!this.lowOxygenWarned && v.oxygen < BALANCE.oxygen.lowWarnPct) {
+      this.lowOxygenWarned = true;
+      eventBus.emit('toast:show', { text: t('survival.lowOxygen'), type: 'warn' });
+    } else if (this.lowOxygenWarned && v.oxygen > BALANCE.oxygen.lowWarnResetPct) {
+      this.lowOxygenWarned = false;
+    }
+    if (!this.suffocationWarned && isSuffocating(v)) {
+      this.suffocationWarned = true;
+      eventBus.emit('toast:show', { text: t('survival.suffocating'), type: 'warn' });
+    } else if (this.suffocationWarned && v.suffocationTimer === 0) {
+      this.suffocationWarned = false;
+    }
+  }
+
+  /** Perbarui target udara bersih (dibatasi waktu) hanya saat oksigen rendah. */
+  updateCleanAir(dt: number, sampleHeight: HeightSampler, weather: WeatherType): void {
+    if (gameState.screen !== 'hud') return;
+    if (gameState.vitals.oxygen >= BALANCE.oxygen.lowWarnPct) {
+      this.cleanAir = null;
+      this.cleanAirTimer = 0;
+      return;
+    }
+    this.cleanAirTimer -= dt;
+    if (this.cleanAirTimer > 0) return;
+    this.cleanAirTimer = BALANCE.cleanAir.refreshSec;
+    const p = gameState.playerPos;
+    this.cleanAir = findNearestCleanAir(
+      p.x,
+      p.z,
+      sampleHeight,
+      gameState.placedStructures,
+      weather === 'ash_storm' || weather === 'acid_rain'
+    );
   }
 
   applyMeteorHit(dist: number): void {
@@ -82,9 +135,7 @@ export class SurvivalSystem {
     gameState.vitals.health = Math.max(0, gameState.vitals.health - dmg);
     gameState.vitals.woundTimer = Math.max(gameState.vitals.woundTimer, 8);
     if (gameState.vitals.health <= 0) {
-      gameState.deathReason = 'reasonMeteor';
-      eventBus.emit('audio:sfx', 'gameover');
-      setScreen('gameOver');
+      handlePlayerDeath('reasonMeteor');
     }
   }
 
@@ -93,9 +144,7 @@ export class SurvivalSystem {
     gameState.vitals.health = Math.max(0, gameState.vitals.health - 28);
     gameState.vitals.burnTimer = Math.max(gameState.vitals.burnTimer, 6);
     if (gameState.vitals.health <= 0) {
-      gameState.deathReason = 'reasonTemp';
-      eventBus.emit('audio:sfx', 'gameover');
-      setScreen('gameOver');
+      handlePlayerDeath('reasonTemp');
     }
   }
 }
