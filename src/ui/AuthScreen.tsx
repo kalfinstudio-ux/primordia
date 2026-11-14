@@ -1,20 +1,47 @@
-import React, { useState } from 'react';
-import { gameState, isSignedIn as isUserSignedIn, setScreen } from '../game/core/state';
+import React, { useEffect, useState } from 'react';
+import { gameState, setScreen } from '../game/core/state';
 import { isSupabaseConfigured } from '../game/net/supabaseClient';
-import { isBase44Configured } from '../game/net/base44Client';
-import { sendMagicLink, signInWithBase44, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
+import { sendMagicLink, signInWithGoogle, signInWithPassword, signOutAccount, signUpWithPassword } from '../game/net/auth';
 import { t } from '../game/utils/i18n';
+import { getBase44Identity, signInWithBase44, signOutBase44, type Base44Identity } from '../game/net/base44';
+
+// Logo resmi: taruh file di public/logos/google.svg dan public/logos/base44.svg
+function BrandLogo({ name }: { name: 'google' | 'base44' }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={`logos/${name}.svg`} alt="" aria-hidden className="h-5 w-5 shrink-0" onError={() => setOk(false)} />;
+}
 
 export function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [b44, setB44] = useState<Base44Identity | null>(null);
+
+  useEffect(() => {
+    void getBase44Identity().then(setB44);
+  }, []);
+
+  const handleBase44 = async () => {
+    setStatus(null);
+    if (!email.trim() || !password) {
+      setStatus('Email dan kata sandi Base44 diperlukan.');
+      return;
+    }
+    setBusy(true);
+    const res = await signInWithBase44(email.trim(), password);
+    if (res.ok && res.identity) {
+      setB44(res.identity);
+      setStatus(`Masuk Base44 sebagai ${res.identity.name}.`);
+    } else {
+      setStatus(res.error || 'Error');
+    }
+    setBusy(false);
+  };
 
   const configured = isSupabaseConfigured();
-  const base44On = isBase44Configured();
-  const isSignedIn = isUserSignedIn(gameState.user);
-  const isBase44User = gameState.user.provider === 'base44';
+  const isSignedIn = gameState.user.mode === 'authenticated';
 
   const handleAction = async (mode: 'signin' | 'signup' | 'magic') => {
     setStatus(null);
@@ -46,16 +73,6 @@ export function AuthScreen() {
     }
   };
 
-  const handleBase44 = async () => {
-    setStatus(null);
-    setBusy(true);
-    const res = await signInWithBase44('google');
-    if (!res.ok) {
-      setStatus(res.error || 'Error');
-      setBusy(false);
-    }
-  };
-
   return (
     <main className="fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: 'rgba(11, 9, 8, 0.86)' }}>
       <section className="primordia-scroll max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-xl border border-stone-800 bg-[#14100e] p-5 sm:p-7 shadow-2xl">
@@ -72,7 +89,7 @@ export function AuthScreen() {
 
         <p className="mt-2 text-sm text-stone-400">{t('auth.subtitle')}</p>
 
-        {!configured && !base44On && (
+        {!configured && (
           <div className="mt-4 rounded-lg border border-amber-800/60 bg-amber-950/40 p-3 text-xs text-amber-200">
             {t('auth.notConfigured')}
           </div>
@@ -81,17 +98,8 @@ export function AuthScreen() {
         {isSignedIn ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-lg border border-stone-800 bg-stone-900/90 p-4 text-sm text-stone-200">
-              {t('menu.signedInAs')}:{' '}
-              <span className="font-semibold text-orange-400">{gameState.user.displayName || gameState.user.email}</span>
-              {isBase44User && gameState.user.displayName && gameState.user.email && (
-                <div className="mt-1 text-xs text-stone-400">{gameState.user.email}</div>
-              )}
+              {t('menu.signedInAs')}: <span className="font-semibold text-orange-400">{gameState.user.email}</span>
             </div>
-            {isBase44User && (
-              <div className="rounded-lg border border-amber-800/60 bg-amber-950/40 p-3 text-xs text-amber-200">
-                {t('auth.base44NoCloud')}
-              </div>
-            )}
             <button
               type="button"
               onClick={async () => {
@@ -111,25 +119,37 @@ export function AuthScreen() {
               void handleAction('signin');
             }}
           >
-            {base44On && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void handleBase44()}
-                className="min-h-[44px] w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
-              >
-                {t('auth.base44')}
-              </button>
-            )}
-
             <button
               type="button"
               disabled={!configured || busy}
               onClick={() => void handleGoogle()}
-              className="min-h-[44px] w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
             >
-              {t('auth.google')}
+              <BrandLogo name="google" />
+              <span>{t('auth.google')}</span>
             </button>
+
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void handleBase44()}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-40"
+            >
+              <BrandLogo name="base44" />
+              <span>Masuk dengan Base44</span>
+            </button>
+            {b44 && (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-stone-800 bg-stone-900/90 px-3 py-2 text-xs text-stone-300">
+                <span>Base44: <span className="font-semibold text-orange-400">{b44.name}</span></span>
+                <button
+                  type="button"
+                  onClick={() => { void signOutBase44().then(() => setB44(null)); }}
+                  className="text-stone-400 underline hover:text-white"
+                >
+                  Keluar
+                </button>
+              </div>
+            )}
 
             <div className="flex items-center gap-3 text-[11px] text-stone-500">
               <span className="h-px flex-1 bg-stone-800" />
@@ -146,7 +166,7 @@ export function AuthScreen() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={!configured || busy}
+                disabled={busy}
                 placeholder="explorer@primordia.earth"
                 className="mt-1 min-h-[44px] w-full rounded-lg border border-stone-800 bg-stone-950 px-3 py-2 text-sm text-stone-100 placeholder-stone-600 focus:border-orange-500 focus:outline-none disabled:opacity-50"
               />
@@ -161,7 +181,7 @@ export function AuthScreen() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={!configured || busy}
+                disabled={busy}
                 className="mt-1 min-h-[44px] w-full rounded-lg border border-stone-800 bg-stone-950 px-3 py-2 text-sm text-stone-100 focus:border-orange-500 focus:outline-none disabled:opacity-50"
               />
             </div>
