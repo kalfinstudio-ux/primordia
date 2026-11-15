@@ -4,6 +4,12 @@ Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia 
 Terakhir diperbarui: 15 November 2026 (v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
+## 0i. Landing page disinkronkan dengan v21 (15 Nov 2026) — hanya teks `index.html`, belum dilihat di browser
+- Dikoreksi (klaim salah): jumlah item/resep 42/33 → **45/36** (dihitung dari `ITEMS`/`RECIPES`); "peta berubah tiap bulan" di Features, Roadmap Stage 3, dan Help sekarang menyatakan **Great Shift dimatikan** (`MONTHLY_TERRAIN_SHIFT=false` sejak v14); Roadmap "karakter wanita" dihapus dari Planned (sudah ada, kode-dibangun).
+- Ditambah: peta interaktif + wilayah bernama, Adam & Hawa bergerak (v20), satu simpanan + Lanjutkan (v21), tas penuh/Buang, tombol sentuh 48 px + petunjuk "Ketuk AKSI"; Help: Spasi/Shift, "Tas penuh", "Tombol Lanjutkan tidak muncul"; tabel privasi: satu simpanan, umur & perk ikut cloud.
+- Roadmap: v0.8.0 jadi "Released", baru "Current · v0.9.0-Archean"; footer v0.9.0. **Nomor versi 0.9.0 adalah usulan**: ubah di `index.html` jika pemilik memilih lain.
+- Belum dicek: tampilan HP (412 px) dan desktop setelah teks bertambah; `package.json` masih `0.0.0`.
+
 ## 0h. Perubahan v21 — Simpanan tunggal, audit bug, navigasi pemain baru (15 Nov 2026) — logika teruji (tsx), UI & visual BELUM diuji di browser
 
 Dikerjakan di sandbox tanpa `vite`/`three`/`@types/react`: `npm test` (dengan paket `@supabase/supabase-js` di-stub sementara) **161/161 lulus**; `npm run lint` dan `npm run build` **belum dijalankan** (jalankan di Codespace). Semua file `.tsx` baru/diubah belum dicek tipe.
