@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SHELTER_WALL_COLLIDER_R, SHELTER_INTERIOR_R, shelterColliders, shelterDoorWorld, shelterCover, isInsideShelter, type ShelterLike,
+  SHELTER_WALL_COLLIDER_R, SHELTER_INTERIOR_R, shelterColliders, shelterRibColliders, shelterDoorWorld, shelterCover, isInsideShelter, type ShelterLike,
 } from './world/shelterLayout';
 
 const PLAYER_R = 0.45;
@@ -59,4 +59,29 @@ test('shelterCover: 1 di dalam, memudar, 0 di luar; abaikan struktur lain', () =
   assert.equal(shelterCover(0, 0, [{ ...s, type: 'roof_panel' }]), 0);
   assert.equal(shelterCover(0, 0, []), 0);
   assert.ok(isInsideShelter(0.5, 0.5, s) && !isInsideShelter(2, 0, s));
+});
+
+test('collider dunia pondok (4 rusuk): pemain bisa masuk dari segala arah dan berdiri di tengah', () => {
+  for (const rot of [0, 0.7, Math.PI / 2, -2.3, 5.1]) {
+    const s = mk(rot, 0, 0);
+    const cols = shelterRibColliders(s);
+    assert.equal(cols.length, 4);
+    for (const c of cols) assert.ok(Math.hypot(c.x - s.x, c.z - s.z) - c.radius - PLAYER_R > 0, 'tengah terhalang');
+    // 4 arah di sela antar rusuk (rusuk ada di 45° + k·90° lokal), dari luar sampai pusat
+    for (let k = 0; k < 4; k++) {
+      const ang = -rot + (k / 4) * Math.PI * 2;
+      for (let r = 3; r >= 0; r -= 0.1) {
+        const px = s.x + Math.cos(ang) * r;
+        const pz = s.z + Math.sin(ang) * r;
+        for (const c of cols) assert.ok(Math.hypot(px - c.x, pz - c.z) >= c.radius + PLAYER_R - 1e-6, `terhalang rot=${rot} k=${k} r=${r}`);
+      }
+    }
+  }
+});
+
+test('collider lama (silinder padat r=2,1) memang menghalangi masuk: bukti masalah', () => {
+  // pemain yang berdiri 1 m dari pusat bertabrakan dengan silinder lama, tidak dengan 4 rusuk
+  const s = mk(0, 0, 0);
+  assert.ok(1 < 2.1 + PLAYER_R);
+  for (const c of shelterRibColliders(s)) assert.ok(Math.hypot(1 - c.x, 0 - c.z) >= c.radius + PLAYER_R);
 });

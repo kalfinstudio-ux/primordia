@@ -50,6 +50,25 @@ export function shelterColliders(s: ShelterLike): Disc[] {
   return out;
 }
 
+/** Jari-jari pusat rusuk model 3D (4 rusuk di sudut 45°+k·90°, lihat props.ts) dan collider tiap rusuk. */
+export const SHELTER_RIB_RING_R = 1.45;
+export const SHELTER_RIB_COLLIDER_R = 0.4;
+
+/**
+ * Collider yang dipakai di dunia: HANYA 4 rusuk model (pondok berpilar, sisi-sisinya terbuka).
+ * Sebelumnya satu silinder padat r=2,1 di tengah menahan pemain 2,5 m dari pusat, sehingga tidak bisa masuk.
+ * Celah antar rusuk ≈ 2,05 − 0,8 = 1,25 m (> 2 × 0,45 kapsul pemain).
+ */
+export function shelterRibColliders(s: ShelterLike): Disc[] {
+  const out: Disc[] = [];
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const w = localToWorld(s, Math.cos(a) * SHELTER_RIB_RING_R, Math.sin(a) * SHELTER_RIB_RING_R);
+    out.push({ x: w.x, z: w.z, radius: SHELTER_RIB_COLLIDER_R });
+  }
+  return out;
+}
+
 /** Titik tengah pintu di dunia (untuk uji/petunjuk). */
 export function shelterDoorWorld(s: ShelterLike): { x: number; z: number } {
   const l = wallSlotLocal(SHELTER_DOOR_SLOT);

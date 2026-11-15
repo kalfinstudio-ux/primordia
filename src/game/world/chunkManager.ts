@@ -19,6 +19,7 @@ import {
   createThermalSaltNode,
   type WorldInteractable,
 } from './props';
+import { shelterRibColliders } from './shelterLayout';
 
 // Aset spire dipakai bersama semua chunk (dibuat sekali, tidak pernah dibuang per chunk).
 const SPIRE_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#2b2422', roughness: 0.92, metalness: 0.1 }));
@@ -42,6 +43,7 @@ export class ChunkManager {
   private propChunks = new Map<string, LoadedPropChunk>();
   private extraInteractables: WorldInteractable[] = [];
   private structureInteractables: WorldInteractable[] = [];
+  private structureColliderIds: string[] = [];
   private assets: ProceduralAssets;
   private seed = 'HADEAN-01';
   private lastCenterKey = '';
@@ -328,6 +330,8 @@ export class ChunkManager {
     }
     this.structureMeshes.length = 0;
     for (const s of this.structureInteractables) this.spatialHash.remove(`col_str_${s.id}`);
+    for (const id of this.structureColliderIds) this.spatialHash.remove(id);
+    this.structureColliderIds = [];
     this.structureInteractables = [];
 
     for (const s of structures) {
@@ -339,16 +343,19 @@ export class ChunkManager {
 
       // Register collision for solid structures (skip flat floor_tile/roof/door walk-throughs)
       if (s.type !== 'floor_tile' && s.type !== 'roof_panel' && s.type !== 'door_frame') {
-        const colR = s.type === 'basic_shelter' ? 2.1 : s.type === 'wall_panel' ? 1.3 : 0.85;
-        this.spatialHash.insert({
-          id: `col_str_${s.id}`,
-          x: s.x,
-          z: s.z,
-          radius: colR,
-          yMin: s.y - 0.3,
-          yMax: s.y + 2.8,
-          kind: 'structure',
-        });
+        if (s.type === 'basic_shelter') {
+          // Pondok berpilar: 4 collider rusuk saja, supaya pemain bisa masuk ke dalam.
+          shelterRibColliders(s).forEach((c, i) => {
+            const id = `col_str_${s.id}_r${i}`;
+            this.spatialHash.insert({ id, x: c.x, z: c.z, radius: c.radius, yMin: s.y - 0.3, yMax: s.y + 2.8, kind: 'structure' });
+            this.structureColliderIds.push(id);
+          });
+        } else {
+          const colR = s.type === 'wall_panel' ? 1.3 : 0.85;
+          const id = `col_str_${s.id}`;
+          this.spatialHash.insert({ id, x: s.x, z: s.z, radius: colR, yMin: s.y - 0.3, yMax: s.y + 2.8, kind: 'structure' });
+          this.structureColliderIds.push(id);
+        }
       }
 
       if (s.type === 'basic_shelter') {

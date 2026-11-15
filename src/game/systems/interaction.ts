@@ -146,15 +146,30 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
   } else if (target.kind === 'fast_beacon') {
     setScreen('map');
   } else if (target.kind === 'shelter') {
-    gameState.vitals.health = Math.min(100, gameState.vitals.health + 40);
-    gameState.vitals.oxygen = 100;
-    gameState.vitals.temperature = 37.0;
-    gameState.vitals.fatigue = 100;
-    if (sky && (sky.getTimeOfDay() > 0.72 || sky.getTimeOfDay() < 0.2)) {
+    const v = gameState.vitals;
+    const before = { health: v.health, fatigue: v.fatigue, oxygen: v.oxygen, temperature: v.temperature };
+    v.health = Math.min(100, v.health + 40);
+    v.oxygen = 100;
+    v.temperature = 37.0;
+    v.fatigue = 100;
+    const tod = sky ? sky.getTimeOfDay() : 0.5;
+    const isNight = Boolean(sky) && (tod > 0.72 || tod < 0.2);
+    if (sky && isNight) {
       sky.setTimeOfDay(0.28); // Sleep safely until morning
     }
-    eventBus.emit('audio:sfx', 'craft');
-    eventBus.emit('toast:show', { text: t('hud.actions.rest_shelter'), type: 'success' });
+    const healed = Math.round(v.health - before.health);
+    const changed =
+      healed > 0 || v.fatigue - before.fatigue > 1 || v.oxygen - before.oxygen > 1 || Math.abs(v.temperature - before.temperature) > 0.3;
+    if (isNight) {
+      eventBus.emit('audio:sfx', 'craft');
+      eventBus.emit('toast:show', { text: t('hud.actions.rest_slept'), type: 'success' });
+    } else if (changed) {
+      eventBus.emit('audio:sfx', 'craft');
+      eventBus.emit('toast:show', { text: healed > 0 ? `${t('hud.actions.rest_shelter')} (+${healed})` : t('hud.actions.rest_shelter'), type: 'success' });
+    } else {
+      // Tidak ada yang berubah: beri tahu alasannya agar pemain tidak mengira aksinya gagal.
+      eventBus.emit('toast:show', { text: t('hud.actions.rest_fresh'), type: 'info' });
+    }
   }
 
   // Respawn basic resource nodes after 45s
