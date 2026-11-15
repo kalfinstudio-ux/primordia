@@ -666,7 +666,7 @@
     },
     "terrain_anchor": {
       "name": "Jangkar Medan",
-      "desc": "Mengunci medan radius 60 m agar tidak berubah saat pergantian bulan. Lindungi base-mu."
+      "desc": "Mengunci medan radius 60 m agar tidak berubah saat pergantian era. Lindungi base-mu."
     },
     "fast_beacon": {
       "name": "Suar Teleportasi",
@@ -925,7 +925,7 @@
             "{items} item dan {recipes} resep dalam {tiers} tingkat teknologi",
             "Bangunan modular, peti, tungku, Kebun Lumut, dan Bor Otomatis",
             "Kampanye {quests} misi dalam {chapters} bab, {journal} entri jurnal, {achievements} pencapaian",
-            "Era Adam & Hawa: umur abadi, langit mengikuti jam nyata, peta berubah tiap bulan",
+            "Era Adam & Hawa: umur abadi, langit mengikuti jam nyata, sumber daya tumbuh ulang tiap hari",
             "Mode tamu, cloud save, peringkat, teman, dan pesan"
           ]
         },
@@ -972,7 +972,7 @@
           "items": [
             "Umur abadi: tidak ada kematian karena usia. Mati karena bahaya tidak mengurangi umurmu",
             "Langit mengikuti jam perangkat; musim: {seasons}",
-            "Medan berganti tiap awal bulan. Jangkar Medan mengunci area radius {anchorR} m",
+            "Medan dasar tetap; sumber daya tumbuh ulang tiap hari (UTC). Jangkar Medan mengunci area radius {anchorR} m dari perubahan era",
             "Kebijaksanaan dari umur ({wisdom}) membuka perk: {perks}"
           ]
         },

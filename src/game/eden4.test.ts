@@ -7,7 +7,7 @@ import {
 } from './data/eden';
 
 const H = 3600 * 1000;
-const at = (y: number, m: number, d: number, h = 12, mi = 0) => new Date(y, m - 1, d, h, mi).getTime();
+const at = (y: number, m: number, d: number, h = 12, mi = 0) => Date.UTC(y, m - 1, d, h, mi);
 
 // ── #3 anti-curang ──
 test('server menjadi sumber kebenaran: save lokal dimanipulasi tidak menambah waktu pergi', () => {
@@ -29,9 +29,9 @@ test('jawaban server dibatasi 30 hari', () => {
 
 // ── #5 musim & peringatan ──
 test('musim memengaruhi efek gameplay', () => {
-  assert.equal(seasonEffects(new Date(2026, 4, 10)).label, 'Musim Hujan');
-  assert.ok(seasonEffects(new Date(2026, 4, 10)).waterFillMult > seasonEffects(new Date(2026, 1, 10)).waterFillMult);
-  assert.ok(seasonEffects(new Date(2026, 10, 14)).tempOffsetC < 0); // November = dingin
+  assert.equal(seasonEffects(new Date(Date.UTC(2026, 4, 10))).label, 'Musim Hujan');
+  assert.ok(seasonEffects(new Date(Date.UTC(2026, 4, 10))).waterFillMult > seasonEffects(new Date(Date.UTC(2026, 1, 10))).waterFillMult);
+  assert.ok(seasonEffects(new Date(Date.UTC(2026, 10, 14))).tempOffsetC < 0); // November = dingin
 });
 test('musim menggeser peluang cuaca (hujan asam lebih sering di musim hujan)', () => {
   const count = (startMs: number, kind: string) => {
@@ -43,10 +43,10 @@ test('musim menggeser peluang cuaca (hujan asam lebih sering di musim hujan)', (
   assert.equal(weatherForBlock(777777), weatherForBlock(777777));
 });
 test('peringatan Pergeseran Besar: none → soon (≤6j) → imminent (≤30m)', () => {
-  assert.equal(shiftWarning(at(2026, 11, 20)).level, 'none');
-  assert.equal(shiftWarning(at(2026, 11, 30, 19)).level, 'soon');
-  assert.equal(shiftWarning(at(2026, 11, 30, 23, 45)).level, 'imminent');
-  assert.equal(shiftWarning(at(2026, 11, 30, 19)).key, '2026-12:soon');
+  assert.equal(shiftWarning(at(2026, 11, 20), true).level, 'none');
+  assert.equal(shiftWarning(at(2026, 11, 30, 19), true).level, 'soon');
+  assert.equal(shiftWarning(at(2026, 11, 30, 23, 45), true).level, 'imminent');
+  assert.equal(shiftWarning(at(2026, 11, 30, 19), true).key, '2026-12:soon');
   assert.equal(msUntilMonthShift(at(2026, 12, 31, 23, 0)), H); // lintas tahun
   assert.equal(formatShiftCountdown(3 * H + 20 * 60000), '3j 20m');
   assert.equal(formatShiftCountdown(5 * 60000), '5m');

@@ -25,13 +25,13 @@ jobs:
         with:
           node-version: "22"
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-      - name: Type check
-        run: npm run lint
-        continue-on-error: true
+        run: npm ci --no-audit --no-fund
       - name: Run unit tests
+        # Sengaja TIDAK continue-on-error: tes gagal = deploy dihentikan.
         run: npm test
-        continue-on-error: true
+      - name: Type check
+        # Terbukti bersih di Codespace (15 Nov 2026): kini memblokir deploy bila ada error tipe.
+        run: npm run lint
       - name: Build production bundle
         run: npm run build
         env:

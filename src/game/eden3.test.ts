@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildAwayReport, weatherForBlock, weatherAtTime, msUntilWeatherChange } from './data/eden';
 
 const H = 3600 * 1000;
-const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
+const at = (y: number, m: number, d: number, h = 12) => Date.UTC(y, m - 1, d, h);
 
 test('cuaca per blok deterministik', () => {
   assert.equal(weatherForBlock(123456), weatherForBlock(123456));
@@ -32,11 +32,11 @@ test('pergantian bulan: lapor bangunan di luar / di dalam zona jangkar', () => {
     { type: 'basic_shelter', x: 110, z: 100 },
     { type: 'basic_shelter', x: 900, z: 900 },
   ];
-  const r = buildAwayReport(at(2026, 11, 30, 20), at(2026, 12, 1, 8), structs);
+  const r = buildAwayReport(at(2026, 11, 30, 20), at(2026, 12, 1, 8), structs, true);
   const e = r.entries.find((x) => x.text.startsWith('Pergeseran Besar'));
   assert.ok(e && e.text.includes('Desember 2026'));
   assert.ok(e.text.includes('1 bangunan di luar zona Jangkar'));
-  const all = buildAwayReport(at(2026, 11, 30, 20), at(2026, 12, 1, 8), structs.slice(0, 2));
+  const all = buildAwayReport(at(2026, 11, 30, 20), at(2026, 12, 1, 8), structs.slice(0, 2), true);
   assert.ok(all.entries.some((x) => x.text.includes('Semua bangunan terlindungi')));
 });
 

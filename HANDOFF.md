@@ -4,6 +4,24 @@ Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia 
 Terakhir diperbarui: 14 November 2026 (v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
+## 0a. Perubahan v14 — hasil audit Minggu 1 (15 Nov 2026) — BELUM diuji di browser
+Dokumen audit lengkap + roadmap ada di dokumen "Audit & Roadmap PRIMORDIA". Yang dikerjakan:
+- **Keamanan:** `supabase/migration-fix-profile-privileges.sql` (**wajib dijalankan sekali** di SQL Editor). `revoke update (kolom)` lama tidak efektif karena izin UPDATE tingkat tabel; kini hanya `id, username, avatar_config` yang boleh ditulis klien. `born_at`, `deaths`, `last_seen_at` hanya lewat RPC. Verifikasi: query di akhir file harus tidak memuat ketiga kolom itu.
+- **Kalender = UTC** (`data/eden.ts`): hari/bulan/musim/seed sama untuk semua zona waktu. Langit tetap memakai jam lokal (`realTimeOfDay`).
+- **`MONTHLY_TERRAIN_SHIFT = false`**: medan TIDAK lagi diacak tiap bulan; bangunan tidak terkubur. Peringatan "Pergeseran Besar" dan baris laporan "Saat kamu pergi" ikut mati (parameter `enabled`/`terrainShift`, default = konstanta itu). Medan dunia yang sudah ada kini memakai seed dasar, jadi bentuknya bisa berbeda dari bulan lalu: **cek save lama**. Pengganti: lapisan Era (Fase 2 roadmap).
+- **Multiplayer:** nama kamar memakai `effectiveTerrainSeed` (`SceneManager.enterWorld`), jadi medan berbeda tidak pernah satu kamar.
+- **CI:** `npm ci` (lockfile diperbaiki: `@base44/sdk` di root lock kini `^0.8.26`, bukan `latest`), `npm test` kini memblokir deploy. `npm run lint` terbukti bersih di Codespace (0 error) dan build Vite lolos, jadi `lint` juga memblokir deploy.
+- **Tes:** `eden*.test.ts` dipindah ke tanggal UTC; baru `eden5.test.ts` (UTC, seed tetap, kamar). Total 83 tes lulus di TZ Asia/Jakarta, UTC, America/Los_Angeles, Pacific/Kiritimati (tes yang butuh paket supabase tidak dijalankan di sandbox).
+- Teks i18n (id/en) yang menyebut "peta berubah tiap bulan" disesuaikan.
+
+### Cek manual v14
+- [ ] Jalankan `migration-fix-profile-privileges.sql`; dari konsol login biasa: `update profiles set born_at=...` → **permission denied**.
+- [ ] Daftar akun baru / login Google / simpan avatar: profil tetap terbuat & tersimpan (uji upsert setelah izin dipersempit).
+- [ ] `sync_immortal_age()` dan `presence_ping()` masih berjalan (umur tampil, panel "Saat kamu pergi").
+- [ ] Buka save lama: bangunan tidak di bawah tanah / di udara; catat bila medan bergeser.
+- [ ] Ubah zona waktu perangkat: bioma/medan identik; tidak ada toast "Pergeseran Besar".
+- [ ] `npm ci && npm test && npm run build` hijau; `npm run lint` — catat jumlah error (target 0 lalu hapus `continue-on-error`).
+
 ## 0. Site layout (v13)
 | URL | Source |
 |---|---|
@@ -47,7 +65,7 @@ Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang bole
 |---|---|---|
 | Umur abadi | Tidak ada kematian karena usia. `bornAtMs` dihitung dari server (`born_at`) untuk akun login, lokal untuk tamu. Mati karena bahaya hanya menambah penghitung `deaths`; umur tidak reset. | `eden.ts`, `net/immortal.ts`, `core/state.ts`, `systems/deathBag.ts` |
 | Waktu nyata | Langit mengikuti jam perangkat (0 = tengah malam, 0.5 = tengah hari). | `world/sky.ts` (`realTimeOfDay`) |
-| Peta berubah | Medan berganti tiap **bulan** (seed `dunia\|Y{tahun}\|M{bulan}`); props/sumber daya tumbuh ulang tiap **hari**. Dicek tiap 30 dtk. Matikan lewat `MONTHLY_TERRAIN_SHIFT=false`. | `eden.ts`, `scenes/SceneManager.ts` |
+| Peta berubah (NONAKTIF sejak v14) | Medan berganti tiap **bulan** (seed `dunia\|Y{tahun}\|M{bulan}`); props/sumber daya tumbuh ulang tiap **hari**. Dicek tiap 30 dtk. Matikan lewat `MONTHLY_TERRAIN_SHIFT=false`. | `eden.ts`, `scenes/SceneManager.ts` |
 | Jangkar Medan | Bangunan (`terrain_anchor`) mengunci medan radius 60 m dengan seed saat dipasang; tepi dicampur halus. Resep: 3 kristal inti + 4 besi meteorit + 6 bata basalt (stasiun riset). | `world/terrainHeight.ts`, `terrain.ts`, `terrainWorker.ts`, `systems/building.ts` |
 | Offline berjalan | Maks 24 jam efek; <5 menit diabaikan. Penampung air +0,02/dtk (+8 per ~6 jam hujan). >30 menit = kelelahan pulih. | `eden.ts` (`buildAwayReport`), `systems/saveLoad.ts` |
 | Laporan "Saat kamu pergi" | Panel sekali muncul: cuaca (kronik 6 jam, deterministik dari kalender), air, hari berganti, gunung berapi, Pergeseran Besar. | `systems/awayReport.ts`, `ui/AwayReportModal.tsx` |

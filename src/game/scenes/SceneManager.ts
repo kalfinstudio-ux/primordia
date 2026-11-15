@@ -207,7 +207,7 @@ export class SceneManager {
     this.camRig.snapToPlayer(this.controller.position, 0);
     this.camRig.updateGameplay(0.016, this.engine.camera, this.controller.position, this.terrain, this.spatialHash);
     this.autosaveAccum = 0;
-    multiplayer.enterWorld(gameState.worldSeed);
+    multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed));
     this.emitHudSnapshot();
     this.engine.render();
   }

@@ -48,15 +48,16 @@ export interface EdenCalendar {
 }
 
 function dayOfYearOf(d: Date): number {
-  const start = Date.UTC(d.getFullYear(), 0, 0);
-  const cur = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+  const cur = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   return Math.round((cur - start) / 86400000);
 }
 
 export function getEdenCalendar(date: Date = new Date()): EdenCalendar {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  // Kalender dunia = UTC, sama untuk semua pemain di zona waktu mana pun (langit tetap memakai jam lokal).
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
   const doy = dayOfYearOf(date);
   const eraYear = Math.max(1, year - ERA_START_YEAR + 1);
   const seasons: EdenCalendar['season'][] = ['kering', 'hujan', 'abu', 'dingin'];
@@ -73,19 +74,20 @@ export function getEdenCalendar(date: Date = new Date()): EdenCalendar {
 /**
  * Seed efektif untuk medan: berubah tiap BULAN (dan otomatis tiap tahun).
  * Props/sumber daya memakai seed harian, jadi vegetasi & batu tumbuh ulang tiap hari.
- * Set `MONTHLY_TERRAIN_SHIFT=false` jika medan tidak boleh berubah (mis. saat banyak bangunan).
+ * `MONTHLY_TERRAIN_SHIFT=false` (bawaan sejak audit): medan TIDAK diacak tiap bulan, agar bangunan tidak terkubur.
+ * Penggantinya (lapisan Era) direncanakan di Fase 2 roadmap. Semua kalender di file ini memakai UTC.
  */
-export const MONTHLY_TERRAIN_SHIFT = true;
+export const MONTHLY_TERRAIN_SHIFT = false;
 
-export function effectiveTerrainSeed(worldSeed: string, date: Date = new Date()): string {
-  if (!MONTHLY_TERRAIN_SHIFT) return worldSeed;
+export function effectiveTerrainSeed(worldSeed: string, date: Date = new Date(), shift: boolean = MONTHLY_TERRAIN_SHIFT): string {
+  if (!shift) return worldSeed;
   const c = getEdenCalendar(date);
   return `${worldSeed}|Y${c.year}|M${c.month}`;
 }
 
-export function effectivePropSeed(worldSeed: string, date: Date = new Date()): string {
+export function effectivePropSeed(worldSeed: string, date: Date = new Date(), shift: boolean = MONTHLY_TERRAIN_SHIFT): string {
   const c = getEdenCalendar(date);
-  return `${effectiveTerrainSeed(worldSeed, date)}|D${c.day}`;
+  return `${effectiveTerrainSeed(worldSeed, date, shift)}|D${c.day}`;
 }
 
 /** Fraksi hari dari jam lokal nyata: 0 = tengah malam, 0.5 = tengah hari (cocok dengan sky.ts). */
@@ -332,10 +334,10 @@ export function currentSeasonFx(nowMs: number = Date.now()): SeasonEffects {
 export const SHIFT_WARN_SOON_MS = 6 * 3600 * 1000;
 export const SHIFT_WARN_IMMINENT_MS = 30 * 60 * 1000;
 
-/** Milidetik sampai tanggal 1 bulan berikutnya pukul 00:00 lokal. */
+/** Milidetik sampai tanggal 1 bulan berikutnya pukul 00:00 UTC. */
 export function msUntilMonthShift(nowMs: number = Date.now()): number {
   const d = new Date(nowMs);
-  return new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() - nowMs;
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) - nowMs;
 }
 
 export interface ShiftWarning {
@@ -345,11 +347,11 @@ export interface ShiftWarning {
   key: string;
 }
 
-export function shiftWarning(nowMs: number = Date.now()): ShiftWarning {
+export function shiftWarning(nowMs: number = Date.now(), enabled: boolean = MONTHLY_TERRAIN_SHIFT): ShiftWarning {
   const msLeft = msUntilMonthShift(nowMs);
   const next = new Date(nowMs + msLeft);
-  const level = msLeft <= SHIFT_WARN_IMMINENT_MS ? 'imminent' : msLeft <= SHIFT_WARN_SOON_MS ? 'soon' : 'none';
-  return { level, msLeft, key: `${next.getFullYear()}-${next.getMonth() + 1}:${level}` };
+  const level = !enabled ? 'none' : msLeft <= SHIFT_WARN_IMMINENT_MS ? 'imminent' : msLeft <= SHIFT_WARN_SOON_MS ? 'soon' : 'none';
+  return { level, msLeft, key: `${next.getUTCFullYear()}-${next.getUTCMonth() + 1}:${level}` };
 }
 
 export function formatShiftCountdown(ms: number): string {
@@ -493,7 +495,8 @@ export interface AwayReport {
 export function buildAwayReport(
   fromMs: number,
   toMs: number,
-  structs: Array<{ type: string; x: number; z: number; waterStored?: number; anchorSeed?: string; hp?: number; maxHp?: number; growth?: number; stored?: number }>
+  structs: Array<{ type: string; x: number; z: number; waterStored?: number; anchorSeed?: string; hp?: number; maxHp?: number; growth?: number; stored?: number }>,
+  terrainShift: boolean = MONTHLY_TERRAIN_SHIFT
 ): AwayReport {
   const windowMs = Math.min(AWAY_MAX_WINDOW_MS, Math.max(0, toMs - fromMs));
   const start = toMs - windowMs;
@@ -536,24 +539,24 @@ export function buildAwayReport(
   // Kalender: hari berganti, gunung berapi, pergeseran bulan
   const dFrom = new Date(start);
   const dTo = new Date(toMs);
-  const dayKey = (d: Date) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const dayKey = (d: Date) => d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
   let days = 0;
   let maxVolcano = 0;
   let maxVolcanoDay: Date | null = null;
-  for (let t = new Date(dFrom.getFullYear(), dFrom.getMonth(), dFrom.getDate()); t <= dTo; t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1)) {
+  for (let t = new Date(Date.UTC(dFrom.getUTCFullYear(), dFrom.getUTCMonth(), dFrom.getUTCDate())); t <= dTo; t = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + 1))) {
     if (dayKey(t) !== dayKey(dFrom)) days++;
     const va = getEdenCalendar(t).volcanoActivity;
     if (va > maxVolcano) { maxVolcano = va; maxVolcanoDay = t; }
   }
   if (days > 0) report.entries.push({ icon: '🌅', text: `Hari berganti ${days}×: vegetasi dan sumber daya tumbuh ulang` });
   if (maxVolcano >= 0.85 && maxVolcanoDay) {
-    report.entries.push({ icon: '🔥', text: `Gunung berapi sangat aktif pada ${String(maxVolcanoDay.getDate()).padStart(2, '0')}/${String(maxVolcanoDay.getMonth() + 1).padStart(2, '0')}` });
+    report.entries.push({ icon: '🔥', text: `Gunung berapi sangat aktif pada ${String(maxVolcanoDay.getUTCDate()).padStart(2, '0')}/${String(maxVolcanoDay.getUTCMonth() + 1).padStart(2, '0')}` });
   }
-  if (dFrom.getFullYear() * 12 + dFrom.getMonth() !== dTo.getFullYear() * 12 + dTo.getMonth()) {
+  if (terrainShift && dFrom.getUTCFullYear() * 12 + dFrom.getUTCMonth() !== dTo.getUTCFullYear() * 12 + dTo.getUTCMonth()) {
     const anchors = collectAnchors(structs);
     const builds = structs.filter((s) => s.type !== 'terrain_anchor');
     const exposed = builds.filter((s) => !anchors.some((a) => Math.hypot(s.x - a.x, s.z - a.z) <= a.r)).length;
-    const base = `Pergeseran Besar: peta berganti ke ${MONTH_NAMES[dTo.getMonth()]} ${dTo.getFullYear()}`;
+    const base = `Pergeseran Besar: peta berganti ke ${MONTH_NAMES[dTo.getUTCMonth()]} ${dTo.getUTCFullYear()}`;
     report.entries.push({
       icon: '🗺',
       text: builds.length === 0 ? base : exposed > 0 ? `${base}. ${exposed} bangunan di luar zona Jangkar Medan` : `${base}. Semua bangunan terlindungi Jangkar`,

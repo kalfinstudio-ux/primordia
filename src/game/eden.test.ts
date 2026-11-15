@@ -6,21 +6,21 @@ import {
 } from './data/eden';
 
 test('kalender deterministik dan berubah per hari', () => {
-  const a = getEdenCalendar(new Date(2026, 10, 14));
-  const b = getEdenCalendar(new Date(2026, 10, 14));
-  const c = getEdenCalendar(new Date(2026, 10, 15));
+  const a = getEdenCalendar(new Date(Date.UTC(2026, 10, 14)));
+  const b = getEdenCalendar(new Date(Date.UTC(2026, 10, 14)));
+  const c = getEdenCalendar(new Date(Date.UTC(2026, 10, 15)));
   assert.deepEqual(a, b);
   assert.notEqual(a.volcanoActivity + a.tideOffset, c.volcanoActivity + c.tideOffset);
   assert.equal(a.eraYear, 1);
-  assert.equal(getEdenCalendar(new Date(2028, 0, 1)).eraYear, 3);
+  assert.equal(getEdenCalendar(new Date(Date.UTC(2028, 0, 1))).eraYear, 3);
 });
 
 test('seed medan berubah per bulan, props per hari', () => {
   const s = 'HADEAN-01';
-  assert.equal(effectiveTerrainSeed(s, new Date(2026, 10, 1)), effectiveTerrainSeed(s, new Date(2026, 10, 28)));
-  assert.notEqual(effectiveTerrainSeed(s, new Date(2026, 10, 1)), effectiveTerrainSeed(s, new Date(2026, 11, 1)));
-  assert.notEqual(effectiveTerrainSeed(s, new Date(2026, 10, 1)), effectiveTerrainSeed(s, new Date(2027, 10, 1)));
-  assert.notEqual(effectivePropSeed(s, new Date(2026, 10, 1)), effectivePropSeed(s, new Date(2026, 10, 2)));
+  assert.equal(effectiveTerrainSeed(s, new Date(Date.UTC(2026, 10, 1)), true), effectiveTerrainSeed(s, new Date(Date.UTC(2026, 10, 28)), true));
+  assert.notEqual(effectiveTerrainSeed(s, new Date(Date.UTC(2026, 10, 1)), true), effectiveTerrainSeed(s, new Date(Date.UTC(2026, 11, 1)), true));
+  assert.notEqual(effectiveTerrainSeed(s, new Date(Date.UTC(2026, 10, 1)), true), effectiveTerrainSeed(s, new Date(Date.UTC(2027, 10, 1)), true));
+  assert.notEqual(effectivePropSeed(s, new Date(Date.UTC(2026, 10, 1)), true), effectivePropSeed(s, new Date(Date.UTC(2026, 10, 2)), true));
 });
 
 test('jam nyata → fraksi hari', () => {

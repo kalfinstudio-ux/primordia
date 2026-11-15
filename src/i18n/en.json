@@ -666,7 +666,7 @@
     },
     "terrain_anchor": {
       "name": "Terrain Anchor",
-      "desc": "Locks terrain within 60 m so it will not change at the monthly shift. Protects your base."
+      "desc": "Locks terrain within 60 m so it will not change at an era shift. Protects your base."
     },
     "fast_beacon": {
       "name": "Fast-Travel Beacon",
@@ -925,7 +925,7 @@
             "{items} items and {recipes} recipes across {tiers} tech tiers",
             "Modular building, chests, furnaces, Moss Gardens and Auto Drills",
             "A {quests}-mission campaign in {chapters} chapters, {journal} journal entries, {achievements} achievements",
-            "Adam & Eve era: immortal age, a real-time sky, a map that changes every month",
+            "Adam & Eve era: immortal age, a real-time sky, resources that regrow daily",
             "Guest mode, cloud saves, leaderboard, friends and messages"
           ]
         },
@@ -972,7 +972,7 @@
           "items": [
             "Immortal age: no death from old age. Dying to hazards does not reduce your age",
             "The sky follows your device clock; seasons: {seasons}",
-            "Terrain changes at the start of every month. A Terrain Anchor locks a {anchorR} m radius",
+            "Base terrain is fixed; resources regrow daily (UTC). A Terrain Anchor shields a {anchorR} m radius from era changes",
             "Wisdom from age ({wisdom}) unlocks perks: {perks}"
           ]
         },

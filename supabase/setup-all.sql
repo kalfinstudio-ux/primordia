@@ -476,3 +476,10 @@ to authenticated;
 -- ---------- SELESAI ----------
 -- Multiplayer: tidak ada SQL tambahan. Pastikan di Dashboard →
 -- Project Settings → Realtime: "Allow public access" tetap ON.
+
+-- ============================================================
+-- PERBAIKAN KEAMANAN profiles (audit Nov 2026) — lihat migration-fix-profile-privileges.sql
+-- ============================================================
+revoke insert, update on public.profiles from anon, authenticated;
+grant insert (id, username, avatar_config) on public.profiles to authenticated;
+grant update (id, username, avatar_config) on public.profiles to authenticated;
