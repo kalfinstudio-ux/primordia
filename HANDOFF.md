@@ -3,6 +3,15 @@
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau AI) tanpa konteks percakapan sebelumnya.
 Terakhir diperbarui: November 2026 (v25: pipeline kompresi aset 3D & decoder lokal, penguatan RPC umur abadi Supabase + UI profil/jeda, siklus waktu Hari/Bulan/Tahun + relokasi aman, cerita Bab 6–7 Era Adam & Hawa + Pasang Pertama, sinkronisasi penuh i18n `id.json`/`en.json`; v24: Bruk wujud 3D; v23: pilihan akhir Bruk).
 
+## 0o. v27 — lava kawah, blokir lereng, titik bangkit (16 Nov 2026) — BELUM diuji di browser/`npm test`
+- **Lava gunung tidak mematikan:** `controller.ts` memakai `inLava = jarak < 2.2 && y < 1.2`, padahal dasar kawah ada di y≈12. Kini `isInLava(x,y,z,groundY)` di `world/biomes.ts` (kawah: radius 6,5 m dari `VOLCANO_MAIN` dan y < tanah+2,5; sungai lava: aturan lama).
+- **Dinding kawah/tebing bisa dipanjat:** blokir lereng (>46°) hanya aktif bila tanah naik >0,45 m per langkah fisika (1/60 dtk), padahal lereng kawah ±67° hanya naik ±0,3 m/langkah. Kini ambangnya `stepDeltaY > 0.02`.
+- **Bangkit di tebing:** `pickRespawnPoint` (`systems/cleanAir.ts`) kini menolak titik dengan lereng > 30° dan mencari titik datar & bersih terdekat (≤ 80 m).
+- **Karakter pucat/putih & kustomisasi hilang:** `SceneManager.syncPlayerGlbModel` otomatis memuat `primordia_adam/hawa.glb` dan menyembunyikan karakter prosedural. Kini GLB hanya dipakai bila dipilih di Galeri Aset (`getAssignments()`); bawaan = karakter prosedural. Selain itu warna GLB buatan sendiri dikoreksi sRGB→linear saat dimuat (`glbCharacter.ts`) karena `make_character.py` menulis nilai sRGB sebagai linear (dugaan, belum dilihat di game; perbaikan sebenarnya: ubah nilai di `tools/make_character.py` lalu regenerasi GLB).
+- `sw.js` CACHE_NAME → `primordia-v4-shell`.
+- **Cek manual:** (1) masuk ke kawah gunung → HP turun cepat & mati; (2) dinding kawah & tebing tak bisa dipanjat, jalur normal tetap bisa; (3) mati lalu bangkit dekat tebing → muncul di tempat datar; (4) `npm test && npm run lint`.
+- **Belum dikerjakan:** kolam magma yang digambar (r 5,8 m, y 12,2) tertutup lekukan tanah → hanya ±2 m di tengah terlihat.
+
 ## 0n. Audit pasca-v25 (16 Nov 2026) — dilakukan di sandbox TANPA vite/three (tsc penuh & build belum dijalankan)
 - Dijalankan: 296 tes murni (di-compile dengan tsc, `@supabase`/`@base44` di-stub, `import.meta` di-shim) → **296 lulus** setelah perbaikan di bawah. Cek statis: tidak ada impor relatif rusak, `id.json`/`en.json` sama persis, tidak ada kunci `t()` yang hilang.
 - **Bug diperbaiki:** `stats.ts` — Explorer tanpa item kehabisan air dalam ±520 dtk di Punggung Gunung Api / Musim Kering siang (suhu aman 41°C > `hotThreshold` 39,5 → `hotFactor` 1,45). Kini `hotFactor` tidak berlaku selama masa aman suhu (`isSafeTempActive`, s/d 25 menit untuk non-Hadean). Tes `balance.test.ts` "pemain baru Explorer: 600 detik..." sebelumnya MERAH dan akan memblokir CI.

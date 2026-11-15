@@ -87,6 +87,18 @@ export function getDistanceToLava(x: number, z: number): number {
   return Math.min(craterDist - 6.5, minRiverDist);
 }
 
+/**
+ * Apakah titik (x, y, z) terendam lava? Menggantikan cek lama `jarak < 2.2 && y < 1.2`,
+ * yang tidak pernah benar di kawah gunung karena dasar kawah ada di y≈12 (bukan <1.2).
+ * - Kawah Gunung Hadean: kolam magma radius 5.8 m (+ margin) di sekitar VOLCANO_MAIN.
+ * - Sungai lava: lebar ±2.2 m dari garis tengah, permukaan di sekitar y < 1.2.
+ */
+export function isInLava(x: number, y: number, z: number, groundY: number): boolean {
+  if (distance2D(x, z, VOLCANO_MAIN.x, VOLCANO_MAIN.z) < 6.5 && y < groundY + 2.5) return true;
+  if (z >= -48 && z <= 26 && Math.abs(x - getLavaRiverCenterX(z)) < 2.2 && y < 1.2) return true;
+  return false;
+}
+
 // Smooth macro climate/geology hashes using pure trig blending (seed-independent biome regions + local seed terrain)
 function macroSignal(x: number, z: number, freq: number, phase: number): number {
   return (

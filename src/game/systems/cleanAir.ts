@@ -86,6 +86,17 @@ export function relativeBearingDeg(px: number, pz: number, tx: number, tz: numbe
   return Math.round(rel);
 }
 
+/** Batas kemiringan titik bangkit (di bawah batas blokir lereng pemain, 46°). */
+const RESPAWN_MAX_SLOPE_DEG = 30;
+
+/** Kemiringan medan (derajat) di titik ini dari sampler tinggi, tanpa THREE. */
+function slopeDegAt(x: number, z: number, sampleHeight: HeightSampler): number {
+  const e = 0.7;
+  const dx = (sampleHeight(x + e, z) - sampleHeight(x - e, z)) / (2 * e);
+  const dz = (sampleHeight(x, z + e) - sampleHeight(x, z - e)) / (2 * e);
+  return (Math.atan(Math.hypot(dx, dz)) * 180) / Math.PI;
+}
+
 /** Titik bangkit aman: shelter/beacon milik pemain terdekat dari lokasi mati, kalau tidak titik spawn. */
 export function pickRespawnPoint(
   deathX: number,
@@ -104,7 +115,18 @@ export function pickRespawnPoint(
       best = { x: s.x + BALANCE.respawn.offsetFromShelterM, z: s.z };
     }
   }
-  if (isCleanAirAt(best.x, best.z, sampleHeight)) return best;
+  if (isCleanAirAt(best.x, best.z, sampleHeight) && slopeDegAt(best.x, best.z, sampleHeight) <= RESPAWN_MAX_SLOPE_DEG) {
+    return best;
+  }
+  // Titik awal curam (tebing/dinding kawah) atau udara tidak bersih: cari titik datar & bersih terdekat.
+  for (let r = 2; r <= 80; r += 2) {
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const x = best.x + Math.sin(a) * r;
+      const z = best.z - Math.cos(a) * r;
+      if (isCleanAirAt(x, z, sampleHeight) && slopeDegAt(x, z, sampleHeight) <= RESPAWN_MAX_SLOPE_DEG) return { x, z };
+    }
+  }
   const alt = findNearestCleanAir(best.x, best.z, sampleHeight, [], false);
   return alt ? { x: alt.x, z: alt.z } : best;
 }

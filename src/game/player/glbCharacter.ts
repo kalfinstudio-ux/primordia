@@ -47,8 +47,15 @@ export async function tryLoadExplorerGlb(
     const loader = createConfiguredGltfLoader(renderer);
     const gltf = await loader.loadAsync(url);
     const model = gltf.scene;
+    // Model buatan sendiri (tools/make_character.py) menulis warna gaya-sRGB ke baseColorFactor yang seharusnya
+    // linear → kulit/baju tampak pucat hampir putih di bawah cahaya api. Koreksi sekali saat dimuat.
+    const fixSrgb = /primordia_(adam|hawa)\.glb$/.test(url);
     model.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
+        if (fixSrgb) {
+          const mats = Array.isArray((obj as THREE.Mesh).material) ? (obj as THREE.Mesh).material : [(obj as THREE.Mesh).material];
+          for (const m of mats as THREE.MeshStandardMaterial[]) if (m && m.color && !m.map) m.color.convertSRGBToLinear();
+        }
         obj.castShadow = true;
         obj.receiveShadow = true;
         // Mesh berkerangka sering salah dihitung kotak pembatasnya → hilang saat kamera bergerak

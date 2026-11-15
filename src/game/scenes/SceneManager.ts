@@ -50,7 +50,7 @@ import type { AnimState } from '../net/multiplayerProtocol';
 import { VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getLavaRiverCenterX } from '../world/biomes';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
 import { tryLoadExplorerGlb, type GlbExplorerHandle } from '../player/glbCharacter';
-import { currentPlayerModelUrl } from '../utils/assetPrefs';
+import { currentPlayerModelUrl, getAssignments } from '../utils/assetPrefs';
 import { CharacterAnimator, actionKindFor } from '../player/animator';
 import { PlayerController } from '../player/controller';
 import { ThirdPersonCamera } from '../player/camera';
@@ -266,6 +266,20 @@ export class SceneManager {
 
   private syncPlayerGlbModel(): void {
     if (!this.character) return;
+    // Bawaan = karakter prosedural yang bisa disesuaikan (baju, ransel, tudung, warna kulit, kacamata).
+    // Model GLB (mis. Adam/Hawa) hanya dipakai bila pemain memilihnya sendiri di Galeri Aset; dulu GLB polos
+    // otomatis menggantikan karakter prosedural sehingga kustomisasi hilang dan tampilannya pucat.
+    const customKey = gameState.avatar.gender === 'female' ? 'player_female' : 'player';
+    if (!getAssignments()[customKey]) {
+      ++this.glbLoadSeq;
+      if (this.glbHandle) {
+        this.character.root.remove(this.glbHandle.root);
+        this.glbHandle = null;
+      }
+      this.loadedGlbUrl = '';
+      this.character.bodyPivot.visible = true;
+      return;
+    }
     const url = currentPlayerModelUrl(gameState.avatar.gender);
     if (url === this.loadedGlbUrl && this.glbHandle) return;
     this.loadedGlbUrl = url;

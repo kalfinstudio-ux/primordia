@@ -4,7 +4,7 @@ import { input } from '../core/input';
 import { gameState } from '../core/state';
 import { resolveCapsuleObstacles, type SpatialHashGrid } from '../core/spatialHash';
 import type { TerrainSystem } from '../world/terrain';
-import { getDistanceToLava } from '../world/biomes';
+import { isInLava } from '../world/biomes';
 import type { CharacterRig } from './character';
 import type { CharacterAnimator } from './animator';
 import type { GlbExplorerHandle } from './glbCharacter';
@@ -142,7 +142,10 @@ export class PlayerController {
     const stepDeltaY = candidateGroundY - currentGroundY;
     const slopeDeg = terrain.slopeDegreesAt(nextX, nextZ);
 
-    if (this.grounded && stepDeltaY > 0.45 && slopeDeg > 46) {
+    // Dulu syaratnya `stepDeltaY > 0.45` per langkah fisika (1/60 dtk ≈ 0,07–0,13 m jalan), padahal pada
+    // lereng 67° (dinding kawah gunung) tanah hanya naik ±0,3 m per langkah → blokir tak pernah aktif dan
+    // dinding kawah/tebing bisa dipanjat. Kini: lereng > 46° dan langkah menaik sedikit saja sudah ditolak.
+    if (this.grounded && stepDeltaY > 0.02 && slopeDeg > 46) {
       // Too steep to climb directly—deflect back along horizontal
       nextX = prevX;
       nextZ = prevZ;
@@ -188,8 +191,7 @@ export class PlayerController {
     this.wasGrounded = this.grounded;
     this.inWater = landedInWater;
 
-    const lavaDist = getDistanceToLava(this.position.x, this.position.z);
-    this.inLava = lavaDist < 2.2 && this.position.y < 1.2;
+    this.inLava = isInLava(this.position.x, this.position.y, this.position.z, newGroundY);
 
     const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
     this.lastHorizontalSpeed = horizSpeed;
