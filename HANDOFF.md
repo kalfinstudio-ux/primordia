@@ -4,6 +4,20 @@ Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia 
 Terakhir diperbarui: 15 November 2026 (v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
+## 0e. Perubahan v18 — Peta langkah 1: atmosfer biome, siluet landmark jauh, peta interaktif (15 Nov 2026) — BELUM diuji di browser
+
+- **Atmosfer per biome** (`data/atmosphere.ts`, `world/sky.ts`): kabut dan warna horizon/langit bergeser halus (±2-3 dtk) mengikuti biome pemain; biome dicek 2x/detik di `SceneManager`.
+- **Siluet landmark jauh** (`world/landmarks.ts`, `world/landmarkMath.ts`): ≤12 mesh berbagi geometri, bidang 235 m dari kamera, skala perspektif, memudar masuk >235 m dan keluar >1800 m. Radius chunk TIDAK berubah.
+- **Peta interaktif** (`ui/MapScreen.tsx`, `world/mapView.ts`): geser, cubit/roda mouse zoom, tombol +/−/ke posisiku/seluruh dunia, kanvas HiDPI, label POI saat zoom, batang skala, ketuk POI/Suar -> kartu info (nama, jarak, Jadikan Penanda, Teleportasi Suar). Ketuk kosong = penanda; geser TIDAK lagi menaruh penanda. Penanda tampil di HUD (panah + jarak) dan hilang otomatis <12 m.
+- Tes baru: `atmosphere.test.ts`, `mapView.test.ts` (10 tes). i18n: kunci `map.*` baru + `hud.waypointHint`.
+
+### Cek manual v18
+1. Jalan dari spawn ke biome lain: warna kabut/horizon berubah halus, tanpa kedipan. Ukur FPS di HP lama (harus sama dengan v17).
+2. Dari ±400-1000 m dari gunung api: siluet gunung terlihat di horizon, memudar saat mendekat, tidak "melompat".
+3. Peta (HP): geser 1 jari, cubit 2 jari, ketuk POI -> kartu, ketuk kosong -> penanda; halaman tidak ikut scroll saat menyentuh kanvas.
+4. Peta (desktop): roda mouse zoom ke arah kursor, panah/+/- saat kanvas fokus.
+5. Penanda muncul di HUD, hilang saat tiba, tetap tersimpan setelah simpan/muat.
+
 ## 0d. Perubahan v17 — Fase 1 langkah (a): gerbang aset karakter (15 Nov 2026) — BELUM diuji di browser
 Keputusan pemilik: sumber model = **Mixamo + model gratis**; perangkat terlemah = **HP murah/lama** (anggaran ketat).
 - `data/assets.ts` (murni): `CHARACTER_BUDGET` (≤8.000 segitiga, ≤2 MB, tekstur ≤512 px bersaran / ≤1024 batas, ≤75 sendi), `ASSET_LICENSES` (kosong; wajib diisi per model), `characterGate()` → `{ok, blockers, warnings}`, `canAssignRole()`; peran karakter = `player`, `adam`, `hawa`.

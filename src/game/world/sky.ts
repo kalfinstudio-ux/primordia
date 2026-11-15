@@ -4,6 +4,8 @@ import { distance2D } from '../utils/math';
 import * as THREE from 'three';
 import type { WeatherType } from '../config';
 import { gameState } from '../core/state';
+import { atmosphereFor } from '../data/atmosphere';
+import type { BiomeId } from './biomes';
 
 /** Warna langit & pengali kabut per cuaca (hari: horizon/tengah; glow = pengali semburat gunung api). */
 const WEATHER_SKY: Record<WeatherType, { horizon: string; mid: string; glow: number }> = {
@@ -32,6 +34,15 @@ export class SkySystem {
   private timeOfDay = 0.28; // Start in dramatic fiery primordial morning
   private flashIntensity = 0;
   private glowTime = 0;
+  /** Atmosfer biome: target lalu dihaluskan agar transisi kabut/warna tidak melonjak. */
+  private biomeTint = new THREE.Color('#000000');
+  private biomeTintTarget = new THREE.Color('#000000');
+  private biomeAmount = 0;
+  private biomeAmountTarget = 0;
+  private biomeFog = 1;
+  private biomeFogTarget = 1;
+  /** Warna horizon/kabut terakhir (dipakai siluet landmark). */
+  readonly horizonColor = new THREE.Color('#d9581a');
 
   constructor(scene: THREE.Scene, isSoftwareGl: boolean) {
     // Hadean-Archean hazy orange-red atmospheric sky shader
@@ -142,6 +153,14 @@ export class SkySystem {
     this.timeOfDay = ((t % 1) + 1) % 1;
   }
 
+  /** Atur biome tempat pemain berada; transisi halus di update(). */
+  setBiome(id: BiomeId): void {
+    const a = atmosphereFor(id);
+    this.biomeTintTarget.set(a.tint);
+    this.biomeAmountTarget = a.amount;
+    this.biomeFogTarget = a.fogMult;
+  }
+
   triggerLightning(): void {
     this.flashIntensity = 0.9;
   }
@@ -149,7 +168,7 @@ export class SkySystem {
   applyFog(scene: THREE.Scene, weather: WeatherType): void {
     const viewDist = gameState.settings.graphics.viewDistance;
     const baseDensity = THREE.MathUtils.mapLinear(viewDist, 70, 180, 0.017, 0.0065);
-    const weatherMult = FOG_MULT[weather] ?? 1.0;
+    const weatherMult = (FOG_MULT[weather] ?? 1.0) * this.biomeFog;
     const fog = scene.fog as THREE.FogExp2 | null;
     if (fog) {
       fog.density = baseDensity * weatherMult;
@@ -197,9 +216,18 @@ export class SkySystem {
     const horizonNight = new THREE.Color('#2b110b');
     const horizon = horizonNight.clone().lerp(horizonDay, dayFactor);
 
+    // Haluskan atmosfer biome (≈ 2–3 detik), lalu campurkan ke horizon/tengah langit.
+    const sm = 1 - Math.exp(-Math.min(dt, 0.25) * 0.7);
+    this.biomeTint.lerp(this.biomeTintTarget, sm);
+    this.biomeAmount += (this.biomeAmountTarget - this.biomeAmount) * sm;
+    this.biomeFog += (this.biomeFogTarget - this.biomeFog) * sm;
+    const tintAmt = this.biomeAmount * (0.35 + dayFactor * 0.35);
+    horizon.lerp(this.biomeTint, tintAmt);
+
     const midDay = new THREE.Color(tint.mid);
     const midNight = new THREE.Color('#180a0b');
     const mid = midNight.clone().lerp(midDay, dayFactor);
+    mid.lerp(this.biomeTint, tintAmt * 0.5);
 
     const topDay = new THREE.Color('#1c0d0c');
     const topNight = new THREE.Color('#090507');
@@ -235,6 +263,7 @@ export class SkySystem {
       fog.color.copy(horizon);
       this.applyFog(scene, weather);
     }
+    this.horizonColor.copy(horizon);
     scene.background = horizon.clone();
   }
 

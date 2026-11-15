@@ -519,6 +519,15 @@ export function HudScreen() {
             </div>
           )}
 
+          {vis.hazardPills && snap.waypoint && (
+            <div className="flex items-center gap-1.5 rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-200" style={{ backgroundColor: 'rgba(34, 24, 8, 0.92)' }}>
+              <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.waypoint.relDeg}deg)` }} aria-hidden="true" />
+              <span>
+                {t('hud.waypointHint')} · {snap.waypoint.dist} m
+              </span>
+            </div>
+          )}
+
           {vis.hazardPills && snap.questGuide && snap.questGuide.dist > 6 && (
             <div className="flex items-center gap-1.5 rounded-md border border-sky-500/70 px-2.5 py-0.5 text-[11px] font-medium text-sky-200" style={{ backgroundColor: 'rgba(10, 22, 34, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.questGuide.relDeg}deg)` }} aria-hidden="true" />

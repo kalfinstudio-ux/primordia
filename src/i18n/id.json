@@ -321,7 +321,8 @@
       "alone": "Sendirian di dunia ini",
       "count": "{n} pemain dekat",
       "nearest": "terdekat"
-    }
+    },
+    "waypointHint": "Penanda"
   },
   "map": {
     "title": "Peta Survei Primordial (4 km × 4 km)",
@@ -331,10 +332,22 @@
     "beacon": "Suar Teleportasi",
     "poi": "Titik Penting",
     "waypoint": "Penanda Pribadi",
-    "clickHint": "Klik/Sentuh area peta untuk menaruh penanda. Klik Suar untuk berpindah cepat.",
+    "clickHint": "Ketuk peta untuk menaruh penanda. Geser untuk menggeser peta, cubit atau roda mouse untuk zoom. Ketuk Suar atau titik penting untuk detail.",
     "fastTravel": "Teleportasi ke Sini",
     "clearWaypoint": "Hapus Penanda",
-    "discoveredChunks": "Sektor Terjelajahi"
+    "discoveredChunks": "Sektor Terjelajahi",
+    "zoomIn": "Perbesar",
+    "zoomOut": "Perkecil",
+    "centerPlayer": "Ke posisiku",
+    "fullWorld": "Seluruh dunia",
+    "unknownPoi": "Sinyal belum dikenal",
+    "unknownPoiHint": "Dekati sekitar 40 m untuk mengungkapnya.",
+    "markThis": "Jadikan Penanda",
+    "distance": "Jarak",
+    "waypointReached": "Tiba di penanda.",
+    "scale": "Skala",
+    "selected": "Terpilih",
+    "beaconLabel": "Suar Teleportasi"
   },
   "journal": {
     "title": "Jurnal Penjelajah & Pencapaian",

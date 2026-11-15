@@ -10,6 +10,7 @@ import { gameState, saveSettingsToLocal, setScreen, type HudSnapshot, type Struc
 import { eventBus } from '../core/eventBus';
 import { TerrainSystem } from '../world/terrain';
 import { SkySystem } from '../world/sky';
+import { LandmarkSilhouettes } from '../world/landmarks';
 import { WaterSystem } from '../world/water';
 import { LavaSystem } from '../world/lava';
 import { VolcanoSystem } from '../world/volcano';
@@ -59,6 +60,8 @@ export class SceneManager {
   private assets!: ProceduralAssets;
   private terrain!: TerrainSystem;
   private sky!: SkySystem;
+  private landmarks!: LandmarkSilhouettes;
+  private biomeTimer = 0;
   private water!: WaterSystem;
   private lava!: LavaSystem;
   private volcano!: VolcanoSystem;
@@ -156,6 +159,7 @@ export class SceneManager {
     this.engine.scene.add(this.terrain.group);
 
     this.sky = new SkySystem(this.engine.scene, this.engine.isSoftwareGl);
+    this.landmarks = new LandmarkSilhouettes(this.engine.scene);
     this.water = new WaterSystem(this.engine.scene);
     this.lava = new LavaSystem(this.engine.scene, this.terrain, this.assets);
     this.volcano = new VolcanoSystem(this.engine.scene, this.terrain);
@@ -368,6 +372,7 @@ export class SceneManager {
 
     if (isFlyover) {
       this.sky.update(dt * 0.4, this.engine.scene, _worldCenter, this.weather.currentWeather);
+      this.landmarks.update(_worldCenter, this.sky.horizonColor);
       this.water.update(dt, _worldCenter);
       this.lava.update(dt, elapsed);
       this.volcano.update(dt, gameState.settings.graphics.particles);
@@ -411,7 +416,13 @@ export class SceneManager {
         }
       }
       this.activeEvent = this.worldEvents.update(dt, this.weather.currentWeather);
+      this.biomeTimer -= dt;
+      if (this.biomeTimer <= 0) {
+        this.biomeTimer = 0.5;
+        this.sky.setBiome(getBiomeAt(pos.x, pos.z, this.terrain.groundHeightAt(pos.x, pos.z)).id);
+      }
       this.sky.update(dt, this.engine.scene, pos, this.weather.currentWeather);
+      this.landmarks.update(pos, this.sky.horizonColor);
       this.water.update(dt, pos);
       this.lava.update(dt, elapsed);
       this.volcano.update(dt, gameState.settings.graphics.particles, pos, this.terrain);
@@ -596,6 +607,17 @@ export class SceneManager {
         nearestBag = { dist: Math.round(d), relDeg: relativeBearingDeg(p.x, p.z, b.x, b.z, headingRad) };
       }
     }
+    let wpInfo: HudSnapshot['waypoint'] = null;
+    const wp = gameState.customWaypoints[0];
+    if (wp) {
+      const wd = distance2D(p.x, p.z, wp.x, wp.z);
+      if (wd < 12) {
+        gameState.customWaypoints = [];
+        eventBus.emit('toast:show', { text: t('map.waypointReached'), type: 'success' });
+      } else {
+        wpInfo = { dist: Math.round(wd), relDeg: relativeBearingDeg(p.x, p.z, wp.x, wp.z, headingRad) };
+      }
+    }
     const ca = this.survival.cleanAir;
     const guide = pickQuestGuide(quest.activeQuestId, p.x, p.z, minimapNodes);
 
@@ -638,6 +660,7 @@ export class SceneManager {
           }
         : null,
       deathBag: nearestBag,
+      waypoint: wpInfo,
       questGuide: guide
         ? { kind: guide.kind, dist: Math.round(guide.dist), relDeg: relativeBearingDeg(p.x, p.z, guide.x, guide.z, headingRad) }
         : null,
@@ -664,6 +687,7 @@ export class SceneManager {
     this.unsubs.forEach((u) => u());
     this.terrain?.dispose();
     this.sky?.dispose();
+    this.landmarks?.dispose();
     this.water?.dispose();
     this.lava?.dispose();
     this.volcano?.dispose();

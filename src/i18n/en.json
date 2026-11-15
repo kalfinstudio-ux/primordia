@@ -321,7 +321,8 @@
       "alone": "Alone in this world",
       "count": "{n} nearby",
       "nearest": "nearest"
-    }
+    },
+    "waypointHint": "Waypoint"
   },
   "map": {
     "title": "Primordial Survey Map (4 km × 4 km)",
@@ -331,10 +332,22 @@
     "beacon": "Fast-Travel Beacon",
     "poi": "Point of Interest",
     "waypoint": "Custom Waypoint",
-    "clickHint": "Click/Tap terrain on the map to place a waypoint. Click a Beacon to fast-travel.",
+    "clickHint": "Tap the map to place a waypoint. Drag to pan, pinch or mouse wheel to zoom. Tap a Beacon or point of interest for details.",
     "fastTravel": "Fast-Travel Here",
     "clearWaypoint": "Clear Waypoint",
-    "discoveredChunks": "Explored Sectors"
+    "discoveredChunks": "Explored Sectors",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "centerPlayer": "To my position",
+    "fullWorld": "Whole world",
+    "unknownPoi": "Unknown signal",
+    "unknownPoiHint": "Get within about 40 m to reveal it.",
+    "markThis": "Set as Waypoint",
+    "distance": "Distance",
+    "waypointReached": "Waypoint reached.",
+    "scale": "Scale",
+    "selected": "Selected",
+    "beaconLabel": "Fast-Travel Beacon"
   },
   "journal": {
     "title": "Explorer Journal & Achievements",
