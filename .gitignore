@@ -15,3 +15,4 @@ nohup.out
 server.log
 *.zip
 .env
+*.zip
