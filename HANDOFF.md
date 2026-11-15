@@ -1,8 +1,22 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0d. Perubahan v17 — Fase 1 langkah (a): gerbang aset karakter (15 Nov 2026) — BELUM diuji di browser
+Keputusan pemilik: sumber model = **Mixamo + model gratis**; perangkat terlemah = **HP murah/lama** (anggaran ketat).
+- `data/assets.ts` (murni): `CHARACTER_BUDGET` (≤8.000 segitiga, ≤2 MB, tekstur ≤512 px bersaran / ≤1024 batas, ≤75 sendi), `ASSET_LICENSES` (kosong; wajib diisi per model), `characterGate()` → `{ok, blockers, warnings}`, `canAssignRole()`; peran karakter = `player`, `adam`, `hawa`.
+- `ui/AssetGalleryScreen.tsx`: statistik baru (jumlah sendi, tekstur terbesar); kotak **Gerbang karakter**; tombol peran karakter **terkunci** bila model belum lolos. Tiga model lama (`naked_dude`, `party_starter…`, `daren…`) kini tidak lolos (tanpa rangka/klip/lisensi) → peran Karakter pemain kosong = karakter buatan kode (perilaku bawaan). Pilihan lama yang sudah tersimpan di localStorage TIDAK dihapus.
+- i18n id/en: `assets.gateTitle/gatePass/gateFail/gateLocked/joints`.
+- `tools/CHARACTER-PIPELINE.md`: langkah Mixamo → Blender → gltf-transform → masuk game.
+- Tes: `assets.test.ts` +5 tes gerbang. Sandbox: 92 lulus (2 gagal = tes yang butuh paket Supabase).
+- **Berikutnya (Fase 1 b):** pemilik menyiapkan satu `.glb` berangka sesuai pipeline; Claude menghubungkannya (arah hadap/skala/transisi), lalu menyatukan jalur gambar (lokal, jauh, pratinjau).
+
+### Cek manual v17
+- [ ] Galeri Aset: pilih tiap model → kotak "Gerbang karakter" tampil dengan alasan penolakan; tombol Karakter pemain/Adam/Hawa abu-abu (terkunci); peran Gua/Hewan/Musuh tetap bisa dipilih.
+- [ ] Jumlah sendi tampil (daren ≈ 68; dua lainnya 0).
+- [ ] Game tetap jalan dengan karakter buatan kode.
 
 ## 0c. Perubahan v16 — Fase 0: perapian dokumen & CI (15 Nov 2026) — v15 sudah diuji pemilik: game berjalan baik
 - `GAME_VERSION` → `0.9.0-Archean` (`config.ts`).

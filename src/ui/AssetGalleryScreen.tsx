@@ -4,11 +4,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
   ASSET_FILES,
+  ASSET_LICENSES,
   ASSET_ROLES,
+  CHARACTER_BUDGET,
   MODELS_DIR,
   assetFormat,
   assetUrl,
   assetWarnings,
+  canAssignRole,
+  characterGate,
   isWebLoadable,
   sanitizeAssetFile,
 } from '../game/data/assets';
@@ -26,6 +30,8 @@ interface ModelStats {
   textures: number;
   height: number;
   clipNames: string[];
+  joints: number;
+  maxTexturePx: number;
 }
 
 interface Runtime {
@@ -179,11 +185,15 @@ export function AssetGalleryScreen() {
         let triangles = 0;
         let meshes = 0;
         const textures = new Set<THREE.Texture>();
+        const bones = new Set<THREE.Bone>();
         model.traverse((o) => {
           const mesh = o as THREE.Mesh;
           if (!mesh.isMesh) return;
           meshes++;
-          if ((o as THREE.SkinnedMesh).isSkinnedMesh) o.frustumCulled = false;
+          if ((o as THREE.SkinnedMesh).isSkinnedMesh) {
+            o.frustumCulled = false;
+            for (const b of (o as THREE.SkinnedMesh).skeleton.bones) bones.add(b);
+          }
           const g = mesh.geometry;
           triangles += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
@@ -227,6 +237,11 @@ export function AssetGalleryScreen() {
           textures: textures.size,
           height: size.y,
           clipNames: gltf.animations.map((c) => c.name || '(tanpa nama)'),
+          joints: bones.size,
+          maxTexturePx: Math.max(0, ...[...textures].map((tx) => {
+            const im = tx.image as { width?: number; height?: number } | undefined;
+            return Math.max(im?.width ?? 0, im?.height ?? 0);
+          })),
         });
         setStatus('ready');
       } catch {
@@ -274,6 +289,18 @@ export function AssetGalleryScreen() {
         clipNames: stats?.clipNames ?? [],
       })
     : [];
+
+  const gate = selected && stats
+    ? characterGate({
+        file: selected,
+        bytes: stats.bytes,
+        triangles: stats.triangles,
+        clipNames: stats.clipNames,
+        joints: stats.joints,
+        maxTexturePx: stats.maxTexturePx,
+        license: ASSET_LICENSES[selected] ?? null,
+      })
+    : null;
 
   return (
     <main className="fixed inset-0 z-40 flex flex-col" style={{ backgroundColor: 'rgba(11, 9, 8, 0.96)' }}>
@@ -368,21 +395,50 @@ export function AssetGalleryScreen() {
           </div>
         )}
 
+        {gate && (
+          <div className="rounded-lg border border-stone-800 bg-stone-900/70 p-2.5 text-xs">
+            <div className="mb-1 font-semibold text-sky-300">
+              {t('assets.gateTitle')} ({CHARACTER_BUDGET.maxTriangles.toLocaleString('id-ID')} {t('assets.tris').toLowerCase()})
+            </div>
+            {gate.ok ? (
+              <div className="text-emerald-300">{t('assets.gatePass')}</div>
+            ) : (
+              <>
+                <div className="mb-1 text-red-300">{t('assets.gateFail')}</div>
+                <ul className="list-disc space-y-0.5 pl-4 text-stone-300">
+                  {gate.blockers.map((b) => <li key={b}>{b}</li>)}
+                </ul>
+              </>
+            )}
+            {gate.warnings.length > 0 && (
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-amber-200">
+                {gate.warnings.map((w) => <li key={w}>{w}</li>)}
+              </ul>
+            )}
+            <div className="mt-1 text-stone-500">{t('assets.joints')}: {stats?.joints ?? 0}</div>
+          </div>
+        )}
+
         {selected && isWebLoadable(assetFormat(selected)) && (
           <div className="space-y-1.5">
             <div className="text-xs text-stone-500">{t('assets.roles')}</div>
             <div className="flex flex-wrap gap-1.5">
               {ASSET_ROLES.map((role) => {
                 const on = assignments[role.id] === selected;
+                const locked = !on && !canAssignRole(role.id, gate);
                 return (
                   <button
                     key={role.id}
                     type="button"
+                    disabled={locked}
+                    title={locked ? t('assets.gateLocked') : undefined}
                     onClick={() => assign(role.id, on ? null : selected)}
                     className={`rounded-lg border px-2.5 py-1.5 text-xs ${
                       on
                         ? 'border-emerald-500 bg-emerald-950/60 text-emerald-200'
-                        : 'border-stone-800 bg-stone-900/90 text-stone-300 hover:border-stone-700'
+                        : locked
+                          ? 'cursor-not-allowed border-stone-900 bg-stone-950 text-stone-600'
+                          : 'border-stone-800 bg-stone-900/90 text-stone-300 hover:border-stone-700'
                     }`}
                   >
                     {on ? '✓ ' : ''}{role.label}

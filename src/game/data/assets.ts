@@ -128,3 +128,77 @@ export function assetWarnings(info: AssetInfo): string[] {
   else if (missing.length > 0) w.push(`Klip tidak ditemukan: ${missing.join(', ')}.`);
   return w;
 }
+
+// ── Gerbang karakter (Fase 1 / Gerbang 2) ──
+// Target perangkat: HP murah/lama (keputusan pemilik, 15 Nov 2026). Ubah angka di sini bila target berubah.
+export const CHARACTER_ROLES: readonly string[] = ['player', 'adam', 'hawa'];
+
+export const CHARACTER_BUDGET = {
+  /** Segitiga maksimum model yang dipasang (LOD0). LOD1 ≈ 3.000, LOD2 ≈ 1.000 menyusul. */
+  maxTriangles: 8_000,
+  maxBytes: 2 * 1024 * 1024,
+  /** Tekstur > warnTexturePx memberi peringatan; > maxTexturePx ditolak. */
+  warnTexturePx: 512,
+  maxTexturePx: 1024,
+  /** Rangka humanoid sehat ±50–65 sendi; di atas ini membebani skinning di HP lama. */
+  maxJoints: 75,
+} as const;
+
+export interface AssetLicense {
+  /** Mis. "CC0", "CC-BY 4.0", "Mixamo (Adobe)". */
+  license: string;
+  /** Sumber/pembuat — wajib agar atribusi bisa ditulis di Kredit. */
+  source: string;
+}
+
+/**
+ * Catatan lisensi per berkas model. Model karakter TANPA entri di sini ditolak gerbang.
+ * Tambahkan entri hanya setelah lisensi benar-benar diperiksa; lalu tulis atribusi di ui/CreditsScreen.tsx.
+ */
+export const ASSET_LICENSES: Readonly<Record<string, AssetLicense>> = {};
+
+export interface CharacterInfo extends AssetInfo {
+  /** Jumlah sendi (bone) pada rangka; 0 = tanpa rangka. */
+  joints: number;
+  /** Sisi terpanjang tekstur terbesar (px); 0 = tanpa tekstur. */
+  maxTexturePx: number;
+  license: AssetLicense | null;
+}
+
+export interface GateResult {
+  ok: boolean;
+  /** Alasan penolakan — model tidak boleh dipakai untuk peran karakter. */
+  blockers: string[];
+  warnings: string[];
+}
+
+/** Gerbang aset karakter: lolos hanya bila punya rangka, klip inti, dalam anggaran, dan lisensi tercatat. */
+export function characterGate(info: CharacterInfo): GateResult {
+  const blockers: string[] = [];
+  const warnings: string[] = [];
+  const B = CHARACTER_BUDGET;
+  if (!isWebLoadable(assetFormat(info.file))) {
+    return { ok: false, blockers: [`Format .${assetFormat(info.file)} tidak bisa dimuat browser — konversi ke .glb dulu.`], warnings };
+  }
+  if (info.joints <= 0) blockers.push('Tanpa rangka (skeleton) — karakter tidak bisa dianimasikan.');
+  else if (info.joints > B.maxJoints) warnings.push(`Rangka ${info.joints} sendi (disarankan ≤${B.maxJoints}) — berat untuk HP lama.`);
+  const missing = missingCoreClips(info.clipNames);
+  if (info.clipNames.length === 0) blockers.push('Tanpa klip animasi (butuh idle, walk, run).');
+  else if (missing.length > 0) blockers.push(`Klip inti hilang: ${missing.join(', ')}.`);
+  if (info.triangles > B.maxTriangles) {
+    blockers.push(`Segitiga ${info.triangles.toLocaleString('id-ID')} melebihi anggaran ${B.maxTriangles.toLocaleString('id-ID')} (HP lama).`);
+  }
+  if (info.bytes !== null && info.bytes > B.maxBytes) {
+    blockers.push(`Ukuran ${(info.bytes / 1048576).toFixed(1)} MB melebihi anggaran ${(B.maxBytes / 1048576).toFixed(0)} MB.`);
+  }
+  if (info.maxTexturePx > B.maxTexturePx) blockers.push(`Tekstur ${info.maxTexturePx}px melebihi ${B.maxTexturePx}px.`);
+  else if (info.maxTexturePx > B.warnTexturePx) warnings.push(`Tekstur ${info.maxTexturePx}px; 512px lebih aman untuk HP lama.`);
+  if (!info.license) blockers.push('Belum ada catatan lisensi (tambahkan di ASSET_LICENSES, assets.ts).');
+  return { ok: blockers.length === 0, blockers, warnings };
+}
+
+/** Peran karakter hanya boleh diisi model yang lolos gerbang. Peran lain bebas. */
+export function canAssignRole(role: string, gate: GateResult | null): boolean {
+  if (!CHARACTER_ROLES.includes(role)) return true;
+  return gate?.ok === true;
+}

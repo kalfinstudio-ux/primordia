@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ASSET_FILES, assetFormat, assetUrl, assetWarnings, isWebLoadable, missingCoreClips,
   parseAssignments, playerModelUrl, sanitizeAssetFile, DEFAULT_PLAYER_MODEL,
+  CHARACTER_BUDGET, canAssignRole, characterGate, type CharacterInfo,
 } from './data/assets';
 
 test('format dikenali dari ekstensi, tidak peka huruf besar', () => {
@@ -50,4 +51,52 @@ test('peringatan: berat, poligon, tanpa animasi, usdz', () => {
   const usdz = assetWarnings({ file: 'Cave.usdz', bytes: null, triangles: 0, clipNames: [] });
   assert.equal(usdz.length, 1);
   assert.ok(usdz[0].includes('konversi'));
+});
+
+const goodChar = (over: Partial<CharacterInfo> = {}): CharacterInfo => ({
+  file: 'hero.glb', bytes: 1_500_000, triangles: 7_500, clipNames: ['Idle', 'Walking', 'Running', 'Jump'],
+  joints: 55, maxTexturePx: 512, license: { license: 'CC0', source: 'contoh' }, ...over,
+});
+
+test('gerbang karakter: model sehat lolos tanpa peringatan', () => {
+  const g = characterGate(goodChar());
+  assert.deepEqual(g, { ok: true, blockers: [], warnings: [] });
+});
+
+test('gerbang karakter: tolak tanpa rangka, tanpa klip, klip inti hilang', () => {
+  assert.ok(characterGate(goodChar({ joints: 0 })).blockers[0].includes('rangka'));
+  assert.ok(characterGate(goodChar({ clipNames: [] })).blockers.some((b) => b.includes('klip')));
+  const g = characterGate(goodChar({ clipNames: ['Idle', 'Walk'] }));
+  assert.equal(g.ok, false);
+  assert.ok(g.blockers[0].includes('run'));
+});
+
+test('gerbang karakter: anggaran segitiga, ukuran, tekstur', () => {
+  assert.equal(characterGate(goodChar({ triangles: CHARACTER_BUDGET.maxTriangles })).ok, true);
+  assert.equal(characterGate(goodChar({ triangles: CHARACTER_BUDGET.maxTriangles + 1 })).ok, false);
+  assert.equal(characterGate(goodChar({ bytes: CHARACTER_BUDGET.maxBytes + 1 })).ok, false);
+  assert.equal(characterGate(goodChar({ maxTexturePx: 2048 })).ok, false);
+  const warn = characterGate(goodChar({ maxTexturePx: 1024 }));
+  assert.equal(warn.ok, true);
+  assert.equal(warn.warnings.length, 1);
+  const manyJoints = characterGate(goodChar({ joints: 200 }));
+  assert.equal(manyJoints.ok, true);
+  assert.equal(manyJoints.warnings.length, 1);
+});
+
+test('gerbang karakter: tanpa lisensi ditolak; format usdz ditolak', () => {
+  const g = characterGate(goodChar({ license: null }));
+  assert.equal(g.ok, false);
+  assert.ok(g.blockers[0].includes('lisensi'));
+  assert.equal(characterGate(goodChar({ file: 'a.usdz' })).ok, false);
+});
+
+test('canAssignRole: peran karakter wajib lolos gerbang; peran lain bebas', () => {
+  const pass = characterGate(goodChar());
+  const fail = characterGate(goodChar({ joints: 0 }));
+  assert.equal(canAssignRole('player', pass), true);
+  assert.equal(canAssignRole('player', fail), false);
+  assert.equal(canAssignRole('hawa', null), false);
+  assert.equal(canAssignRole('cave', fail), true);
+  assert.equal(canAssignRole('animal', null), true);
 });
