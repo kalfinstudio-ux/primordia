@@ -271,3 +271,9 @@ Ditulis di sandbox tanpa vite/three/react: hanya `gameInfo.test.ts` (9 tes, lulu
 - **Detektor pemain sekitar**: `ui/NearbyPlayers.tsx` di bawah jam HUD (mode Penuh): jumlah pemain dalam 120 m, jarak & panah arah pemain terdekat; ketuk membuka panel Pemain & Teman. Perlu Mode Online aktif.
 - HUD atas: pil kompas/bioma tidak lagi menimpa panel jam & tombol kanan (dipotong dengan elipsis).
 - `LEGAL_CONFIG`: pengelola bawaan "Jurkon Studio", tanggal 2026-11-15.
+
+## 0g. Perubahan v20 — Landing page: maskot Bruk realistis (15 Nov 2026) — sudah dicek di Chromium (HP 412px & desktop 1280px)
+- Hero `index.html` kini 3 lapis SVG bertumpuk (`.mascot` > `.m-base` statis berfilter, `.m-eye` & `.m-lava` cahaya blend-screen berdenyut, `.m-fx` uap+bara). Filter berat tidak ikut dianimasikan → hemat baterai HP.
+- Sumber tunggal: `tools/make_mascot.py` + `tools/mascot_shapes.json` (siluet lama). Ubah tampilan → jalankan `python3 tools/make_mascot.py <folder>` lalu salin `hero_inline.html` ke index.html, `mascot.svg`/`favicon.svg` ke `public/`. PNG (`mascot-512.png`, `apple-touch-icon.png`, `favicon.ico`) dirender ulang dari SVG.
+- Perbaikan bug: di HP, badan maskot menutupi baris pertama judul (margin negatif −60px). Kini −22px dan dasar badan memudar.
+- Bobot: index.html ±115 KB (gzip jauh lebih kecil). Belum diuji di HP asli (Galaxy A36): cek FPS scroll & kedip.
