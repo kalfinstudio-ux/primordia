@@ -1,8 +1,15 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0c. Perubahan v16 — Fase 0: perapian dokumen & CI (15 Nov 2026) — v15 sudah diuji pemilik: game berjalan baik
+- `GAME_VERSION` → `0.9.0-Archean` (`config.ts`).
+- README: path model `public/play/models/` (bukan `public/models/`).
+- CI: `npm run lint` **tidak lagi** `continue-on-error`; tes, type check, dan build semuanya memblokir deploy. Bila lint gagal setelah ini, perbaiki tipenya, jangan kembalikan `continue-on-error`.
+- `supabase/setup-all.sql`: konflik merge diselesaikan (sudah di repo sejak `c3a1a1f`).
+- Catatan Gerbang 1: v15 lolos uji pemilik di game; daftar cek lama §8/§0a di HP + desktop masih perlu dicentang pemilik.
 
 ## 0b. Perubahan v15 — Fase 0 / Minggu 2: dispose chunk & aset spire bersama (15 Nov 2026) — BELUM diuji di browser
 - **Baru** `world/disposal.ts` (logika murni, tanpa import three): `disposeObject3D(root)` membuang geometri & material satu pohon objek (tiap objek sekali); `markShared(res)` menandai sumber daya bersama (`userData.sharedResource`) yang tidak pernah dibuang. Tekstur tidak pernah dibuang.

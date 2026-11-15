@@ -92,7 +92,7 @@ export * from './data/items';
 export * from './data/recipes';
 export * from './data/quests';
 
-export const GAME_VERSION = '0.8.0-Archean';
+export const GAME_VERSION = '0.9.0-Archean';
 export const SAVE_VERSION = 2;
 export const WORLD_RADIUS = 115; // Legacy starter landmark zone radius
 export const WORLD_HALF_EXTENT = 2048; // 4km x 4km open world (-2048..+2048)

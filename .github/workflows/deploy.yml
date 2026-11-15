@@ -30,7 +30,7 @@ jobs:
         # Sengaja TIDAK continue-on-error: tes gagal = deploy dihentikan.
         run: npm test
       - name: Type check
-        # Terbukti bersih di Codespace (15 Nov 2026): kini memblokir deploy bila ada error tipe.
+        # Bersih di Codespace (v15, dua kali berturut-turut) → kini memblokir deploy bila gagal.
         run: npm run lint
       - name: Build production bundle
         run: npm run build
