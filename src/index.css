@@ -61,6 +61,34 @@ body,
   justify-content: space-between;
   gap: 0.5rem;
 }
+/* Portrait sempit (<640px): kiri = panel status (memanjang 2 baris), kanan = tombol menu (membungkus)
+   lalu chip kompas/panah tepat di bawahnya. Tidak ada yang saling menimpa & tombol Jeda tetap terjangkau. */
+@media (max-width: 639px) {
+  .hud-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 0.5rem;
+    row-gap: 0.25rem;
+    align-items: start;
+    align-content: start;
+  }
+  .hud-top-left {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .hud-top-right {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    max-width: 100%;
+  }
+  .hud-top-center {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+  }
+}
 .hud-bottom {
   display: flex;
   flex-direction: column;

@@ -303,11 +303,11 @@ export function HudScreen() {
   const smallBtn = Math.round(64 * actionK);
   const bigBtn = Math.round(84 * actionK);
   const btnBase =
-    'select-none flex items-center justify-center rounded-full border-2 font-bold uppercase tracking-wide shadow-lg transition-transform active:scale-90 active:brightness-125';
+    'select-none flex items-center justify-center rounded-full border-2 font-bold uppercase tracking-tight shadow-lg transition-transform active:scale-90 active:brightness-125';
   const btnStyle = (size: number): React.CSSProperties => ({
     width: size,
     height: size,
-    fontSize: Math.max(11, Math.round(size * 0.2)),
+    fontSize: Math.max(10, Math.round(size * (size === smallBtn ? 0.17 : 0.2))),
     touchAction: 'none',
     WebkitTapHighlightColor: 'transparent',
     backgroundColor: 'rgba(15, 12, 11, 0.85)',
@@ -421,7 +421,7 @@ export function HudScreen() {
       {/* Baris atas: vitals + kompas/peringatan + tombol. Tingginya dibatasi (hud-top) sehingga tidak pernah mendorong kontrol bawah keluar layar. */}
       <div className="hud-top">
         <div
-          className={`pointer-events-auto flex flex-col gap-1 origin-top-left ${compact ? 'w-40' : 'w-36 sm:w-56'}`}
+          className={`hud-top-left pointer-events-auto flex shrink-0 flex-col gap-1 origin-top-left ${compact ? 'w-40' : 'w-36 sm:w-56'}`}
           style={{ transform: `scale(${hudScale})` }}
         >
           {vis.clock && <EdenClock compact={compact} />}
@@ -491,7 +491,7 @@ export function HudScreen() {
         </div>
 
         {/* Tengah: kompas, bahaya, peringatan dunia, tutorial */}
-        <div className="pointer-events-auto flex min-w-0 flex-1 flex-col items-center gap-1">
+        <div className="hud-top-center pointer-events-auto flex min-w-0 flex-1 flex-col items-center gap-1">
           {vis.compass && (
             <button
               type="button"
@@ -503,9 +503,9 @@ export function HudScreen() {
                 {getCardinal(snap.headingDeg)} · {snap.headingDeg}°
               </span>
               <span className="text-stone-600">|</span>
-              <span className="min-w-0 truncate text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
+              <span className="min-w-[8ch] truncate text-stone-200">{t(`biomes.${snap.biomeId}`)}</span>
               <span className="text-stone-600">|</span>
-              <span className="text-stone-300">{t(`hud.weather.${snap.weather}`)}</span>
+              <span className="min-w-0 truncate text-stone-300">{t(`hud.weather.${snap.weather}`)}</span>
             </button>
           )}
 
@@ -531,7 +531,7 @@ export function HudScreen() {
           )}
 
           {vis.hazardPills && snap.waypoint && (
-            <div className="flex items-center gap-1.5 rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-200" style={{ backgroundColor: 'rgba(34, 24, 8, 0.92)' }}>
+            <div className="flex max-w-full items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-200" style={{ backgroundColor: 'rgba(34, 24, 8, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.waypoint.relDeg}deg)` }} aria-hidden="true" />
               <span>
                 {t('hud.waypointHint')} · {snap.waypoint.dist} m
@@ -540,7 +540,7 @@ export function HudScreen() {
           )}
 
           {vis.hazardPills && snap.questGuide && snap.questGuide.dist > 6 && (
-            <div className="flex items-center gap-1.5 rounded-md border border-sky-500/70 px-2.5 py-0.5 text-[11px] font-medium text-sky-200" style={{ backgroundColor: 'rgba(10, 22, 34, 0.92)' }}>
+            <div className="flex max-w-full items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-md border border-sky-500/70 px-2.5 py-0.5 text-[11px] font-medium text-sky-200" style={{ backgroundColor: 'rgba(10, 22, 34, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.questGuide.relDeg}deg)` }} aria-hidden="true" />
               <Flag className="h-3 w-3 opacity-70" aria-hidden="true" />
               <span>
@@ -550,7 +550,7 @@ export function HudScreen() {
           )}
 
           {vis.hazardPills && snap.deathBag && (
-            <div className="flex items-center gap-1.5 rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-300" style={{ backgroundColor: 'rgba(36, 24, 6, 0.92)' }}>
+            <div className="flex max-w-full items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-md border border-amber-500/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-300" style={{ backgroundColor: 'rgba(36, 24, 6, 0.92)' }}>
               <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.deathBag.relDeg}deg)` }} aria-hidden="true" />
               <span>
                 {t('hud.bagHint')} · {snap.deathBag.dist} m
@@ -590,7 +590,7 @@ export function HudScreen() {
 
         {/* Kanan atas: tombol menu + minimap. Tombol mata (tampilan HUD) selalu ada. */}
         <div
-          className="pointer-events-auto flex shrink-0 flex-col items-end gap-1.5 origin-top-right"
+          className="hud-top-right pointer-events-auto flex shrink-0 flex-col items-end gap-1.5 origin-top-right"
           style={{ transform: `scale(${hudScale})` }}
         >
           <div className="flex flex-wrap items-center justify-end gap-1">
