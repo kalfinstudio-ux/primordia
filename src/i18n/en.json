@@ -276,7 +276,9 @@
       "collect_rain": "Collect Condensed Water",
       "use_beacon": "Open Fast-Travel Map",
       "seed_pool": "Deposit Seed of Life",
-      "rest_shelter": "Rest & Sleep in Shelter"
+      "rest_shelter": "Rest & Sleep in Shelter",
+      "rest_done": "You rest in the shelter. Air, warmth and energy are restored (+{hp} HP).",
+      "rest_done_night": "You sleep in the shelter until morning. Air, warmth and energy are restored (+{hp} HP)."
     },
     "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",

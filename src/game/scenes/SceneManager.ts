@@ -16,6 +16,7 @@ import { WaterSystem } from '../world/water';
 import { LavaSystem } from '../world/lava';
 import { VolcanoSystem } from '../world/volcano';
 import { WeatherSystem } from '../world/weather';
+import { shelterCover } from '../world/shelterLayout';
 import { MeteorSystem } from '../world/meteors';
 import { ChunkManager } from '../world/chunkManager';
 import { RemotePlayersSystem } from '../world/remotePlayers';
@@ -442,6 +443,7 @@ export class SceneManager {
       this.water.update(dt, pos);
       this.lava.update(dt, elapsed);
       this.volcano.update(dt, gameState.settings.graphics.particles, pos, this.terrain);
+      this.weather.shelterCover = shelterCover(pos.x, pos.z, gameState.placedStructures);
       this.weather.update(dt, this.engine.scene, this.sky, pos, this.terrain);
       this.deathBagView.update(elapsed, (x, z) => this.terrain.groundHeightAt(x, z));
 

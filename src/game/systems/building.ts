@@ -84,6 +84,7 @@ export class BuildingGhostSystem {
       this.ghostMesh.traverse((o) => {
         if ((o as THREE.Mesh).isMesh) {
           (o as THREE.Mesh).material = mat;
+          if (o.userData.ghostHide) o.visible = false; // lantai bara/cahaya pintu tak ikut pratinjau
         }
       });
     }

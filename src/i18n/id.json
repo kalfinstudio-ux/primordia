@@ -276,7 +276,9 @@
       "collect_rain": "Ambil Air Kondensasi",
       "use_beacon": "Buka Peta Teleportasi",
       "seed_pool": "Tanam Benih Kehidupan",
-      "rest_shelter": "Istirahat & Tidur di Shelter"
+      "rest_shelter": "Istirahat & Tidur di Shelter",
+      "rest_done": "Kamu beristirahat di shelter. Napas, suhu, dan tenaga pulih (+{hp} HP).",
+      "rest_done_night": "Kamu tidur di shelter sampai pagi. Napas, suhu, dan tenaga pulih (+{hp} HP)."
     },
     "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas · B Bangun · M Peta · J Jurnal · F3 Debug",
     "pauseBtn": "Jeda",

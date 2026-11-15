@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { StructureType } from '../core/state';
 import { markShared } from './disposal';
+import { SHELTER_DOOR_SLOT, SHELTER_WALL_SLOTS, wallSlotLocal } from './shelterLayout';
 
 export interface WorldInteractable {
   id: string;
@@ -39,6 +40,12 @@ const meteorIronMat = markShared(new THREE.MeshStandardMaterial({ color: '#47556
 const crystalMat = markShared(new THREE.MeshStandardMaterial({ color: '#fb923c', emissive: '#ea580c', emissiveIntensity: 1.15, roughness: 0.14, metalness: 0.2 }));
 const shelterFrameMat = markShared(new THREE.MeshStandardMaterial({ color: '#57534e', roughness: 0.75, metalness: 0.25 }));
 const shelterShieldMat = markShared(new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32, metalness: 0.65 }));
+const hutWallMat = markShared(new THREE.MeshStandardMaterial({ color: '#4a423d', roughness: 0.92, metalness: 0.06 }));
+const hutWallLightMat = markShared(new THREE.MeshStandardMaterial({ color: '#5f5650', roughness: 0.88, metalness: 0.06 }));
+const hutRoofMat = markShared(new THREE.MeshStandardMaterial({ color: '#2c2724', roughness: 0.8, metalness: 0.18 }));
+const hutRimMat = markShared(new THREE.MeshStandardMaterial({ color: '#b45309', emissive: '#7c2d12', emissiveIntensity: 0.35, roughness: 0.5, metalness: 0.55 }));
+const hutHearthMat = markShared(new THREE.MeshStandardMaterial({ color: '#7c2d12', emissive: '#f97316', emissiveIntensity: 1.25, roughness: 0.6 }));
+const hutDoorGlowMat = markShared(new THREE.MeshBasicMaterial({ color: '#ff9a4d', transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
 const ironMat = markShared(new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 }));
 const glassMat = markShared(new THREE.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.65, roughness: 0.1, metalness: 0.2 }));
 const mossMat = markShared(new THREE.MeshStandardMaterial({ color: '#4d7c0f', emissive: '#14532d', emissiveIntensity: 0.25, roughness: 0.85 }));
@@ -129,21 +136,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
   const g = new THREE.Group();
 
   if (type === 'basic_shelter') {
-    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.55, 0.3, 8), darkBasaltMat);
-    plinth.position.y = 0.15;
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2.5, 0.32), shelterFrameMat);
-      rib.position.set(Math.cos(a) * 1.45, 1.25, Math.sin(a) * 1.45);
-      rib.rotation.y = -a;
-      rib.rotation.z = 0.22;
-      g.add(rib);
-    }
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.5, 1.3, 8), shelterShieldMat);
-    roof.position.y = 2.55;
-    const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.25, 0), crystalMat);
-    beacon.position.y = 3.35;
-    g.add(makeShadowDisc(shadowTex, 3.0), plinth, roof, beacon);
+    buildBasaltHut(g, shadowTex);
   } else if (type === 'campfire_kit') {
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
@@ -253,6 +246,73 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
   }
 
   return g;
+}
+
+/**
+ * Pondok basal: cincin 8 slot dinding batu (slot ke-6 = pintu menghadap -Z lokal), atap bertingkat
+ * dengan tepi berkarat, lantai bara hangat, dan cahaya lembut di pintu. Tanpa PointLight (hemat GPU HP).
+ * Ukuran harus sinkron dengan `shelterLayout.ts` (cincin R=1,9; collider dibuat di chunkManager).
+ * Mesh bertanda `userData.ghostHide` disembunyikan pada pratinjau penempatan.
+ */
+function buildBasaltHut(g: THREE.Group, shadowTex: THREE.Texture): void {
+  // Alas batu bundar + lantai bara di dalam
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.55, 2.75, 0.3, 16), darkBasaltMat);
+  plinth.position.y = 0.15;
+  const floor = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.04, 16), hutHearthMat);
+  floor.position.y = 0.32;
+  floor.userData.ghostHide = true;
+  g.add(makeShadowDisc(shadowTex, 3.3), plinth, floor);
+
+  // Dinding: balok batu bersusun, tinggi/kemiringan dibuat bervariasi (deterministik) agar tidak terlihat kotak
+  const heights = [2.25, 2.0, 2.35, 2.1, 2.3, 2.05, 0, 2.2];
+  for (let i = 0; i < SHELTER_WALL_SLOTS; i++) {
+    if (i === SHELTER_DOOR_SLOT) continue;
+    const l = wallSlotLocal(i);
+    const h = heights[i];
+    const lower = new THREE.Mesh(new THREE.BoxGeometry(1.6, h * 0.58, 0.62), i % 2 ? hutWallMat : hutWallLightMat);
+    lower.position.set(l.x, 0.3 + (h * 0.58) / 2, l.z);
+    lower.rotation.y = -l.angle + Math.PI / 2;
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(1.46, h * 0.46, 0.54), i % 2 ? hutWallLightMat : hutWallMat);
+    upper.position.set(l.x * 0.985, 0.3 + h * 0.58 + (h * 0.46) / 2 - 0.04, l.z * 0.985);
+    upper.rotation.y = -l.angle + Math.PI / 2 + (i % 3 === 0 ? 0.07 : -0.05);
+    g.add(lower, upper);
+  }
+
+  // Pintu: dua tiang besi + ambang amber + cahaya hangat dari dalam (pintu di -Z lokal)
+  const door = wallSlotLocal(SHELTER_DOOR_SLOT);
+  for (const side of [-0.78, 0.78]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.3, 0.5), shelterFrameMat);
+    post.position.set(door.x + side, 1.45, door.z);
+    g.add(post);
+  }
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.42, 0.62), hutRimMat);
+  lintel.position.set(door.x, 2.42, door.z);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 2.0), hutDoorGlowMat);
+  glow.position.set(door.x, 1.35, door.z + 0.12);
+  glow.rotation.y = Math.PI; // sisi depan menghadap -Z (keluar)
+  glow.userData.ghostHide = true;
+  g.add(lintel, glow);
+
+  // Atap: tiga cincin kerucut terpancung bertumpuk (limpasan hujan asam) + tepi berkarat + puncak kristal
+  const tiers: Array<[number, number, number, number]> = [
+    // [radiusAtas, radiusBawah, tinggi, y]
+    [2.45, 2.75, 0.42, 2.72],
+    [1.85, 2.35, 0.46, 3.14],
+    [1.0, 1.7, 0.5, 3.58],
+  ];
+  for (const [rt, rb, h, y] of tiers) {
+    const tier = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 16), hutRoofMat);
+    tier.position.y = y;
+    g.add(tier);
+  }
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(2.72, 0.08, 6, 24), hutRimMat);
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 2.52;
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(1.0, 0.55, 12), hutRoofMat);
+  cap.position.y = 4.1;
+  const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), crystalMat);
+  beacon.position.y = 4.55;
+  g.add(rim, cap, beacon);
 }
 
 function makeShadowDisc(tex: THREE.Texture, radius: number): THREE.Mesh {

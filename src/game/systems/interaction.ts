@@ -146,15 +146,20 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
   } else if (target.kind === 'fast_beacon') {
     setScreen('map');
   } else if (target.kind === 'shelter') {
+    const hpBefore = gameState.vitals.health;
     gameState.vitals.health = Math.min(100, gameState.vitals.health + 40);
     gameState.vitals.oxygen = 100;
     gameState.vitals.temperature = 37.0;
     gameState.vitals.fatigue = 100;
+    let sleptToMorning = false;
     if (sky && (sky.getTimeOfDay() > 0.72 || sky.getTimeOfDay() < 0.2)) {
       sky.setTimeOfDay(0.28); // Sleep safely until morning
+      sleptToMorning = true;
     }
+    const gained = Math.round(gameState.vitals.health - hpBefore);
     eventBus.emit('audio:sfx', 'craft');
-    eventBus.emit('toast:show', { text: t('hud.actions.rest_shelter'), type: 'success' });
+    const key = sleptToMorning ? 'hud.actions.rest_done_night' : 'hud.actions.rest_done';
+    eventBus.emit('toast:show', { text: t(key).replace('{hp}', String(gained)), type: 'success' });
   }
 
   // Respawn basic resource nodes after 45s
