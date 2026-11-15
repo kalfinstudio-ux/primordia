@@ -1,21 +1,19 @@
-import type { WORLD_POIS } from './biomes';
+import type { PoiKind } from './poiGen';
 
 /** Jarak bidang siluet dari kamera (di dalam kubah langit r=280 dan far kamera 420). */
 export const SIL_RADIUS = 235;
 /** Siluet baru muncul bila landmark lebih jauh dari ini; memudar masuk sepanjang SIL_FADE_IN. */
 export const SIL_FADE_IN = 120;
-export const SIL_MAX_DIST = 1800;
+export const SIL_MAX_DIST = 1400;
 export const SIL_FADE_OUT = 500;
 
-type PoiKind = (typeof WORLD_POIS)[number]['kind'];
 
 /** Ukuran nyata landmark (meter): radius dasar & tinggi. */
-export const LANDMARK_SIZE: Record<PoiKind, { r: number; h: number }> = {
+/** Hanya jenis yang tinggi/terlihat dari jauh; jenis lain (kawah, tabung lava, dst.) tidak diberi siluet. */
+export const LANDMARK_SIZE: Partial<Record<PoiKind, { r: number; h: number }>> = {
   volcano: { r: 110, h: 95 },
-  crater: { r: 60, h: 18 },
   geyser: { r: 6, h: 55 },
   obsidian_crevasse: { r: 40, h: 28 },
-  meteor_site: { r: 38, h: 14 },
 };
 
 export function smooth01(t: number): number {

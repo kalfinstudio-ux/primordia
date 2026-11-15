@@ -1185,5 +1185,32 @@
       "owner": "Pengelola: {owner}",
       "contact": "Kontak: {contact}"
     }
+  },
+  "poiNames": {
+    "lava_tube": "Tabung Lava",
+    "hot_spring": "Mata Air Panas"
+  },
+  "regions": {
+    "tier": {
+      "0": "Zona Awal",
+      "1": "Dataran Perbatasan",
+      "2": "Hamparan Bergolak",
+      "3": "Wilayah Tandus",
+      "4": "Tepi Neraka"
+    },
+    "dir": {
+      "n": "Utara",
+      "ne": "Timur Laut",
+      "e": "Timur",
+      "se": "Tenggara",
+      "s": "Selatan",
+      "sw": "Barat Daya",
+      "w": "Barat",
+      "nw": "Barat Laut"
+    },
+    "format": "{tier} {dir}",
+    "danger": "Bahaya",
+    "entered": "Memasuki",
+    "current": "Wilayah"
   }
 }

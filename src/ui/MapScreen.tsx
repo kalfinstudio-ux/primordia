@@ -19,6 +19,7 @@ import {
   zoomAt,
 } from '../game/world/mapView';
 import { t } from '../game/utils/i18n';
+import { MAX_TIER, SPAWN_POINT, TIER_RADII, dangerLevel, getRegionAt, regionLabel } from '../game/world/regions';
 
 type Selected =
   | { type: 'beacon'; id: string; x: number; z: number }
@@ -35,7 +36,12 @@ const POI_COLOR: Record<string, string> = {
   meteor_site: '#a855f7',
   crater: '#f59e0b',
   obsidian_crevasse: '#94a3b8',
+  lava_tube: '#fb923c',
+  hot_spring: '#2dd4bf',
 };
+
+/** Warna latar tiap tingkat bahaya (makin jauh makin merah-gelap). */
+const TIER_BG = ['#0c0a09', '#100c0a', '#150d0a', '#1b0e0a', '#230f0b'];
 
 function initialView(): MapView {
   return clampView({ cx: gameState.playerPos.x, cz: gameState.playerPos.z, span: 1000 }, WORLD_HALF_EXTENT);
@@ -92,8 +98,15 @@ export function MapScreen() {
     // Area dunia
     const tl = worldToScreen(v, size, -half, -half);
     const worldPx = px(half * 2);
-    ctx.fillStyle = '#0c0a09';
+    ctx.fillStyle = TIER_BG[MAX_TIER];
     ctx.fillRect(tl.x, tl.y, worldPx, worldPx);
+    const spawnS = worldToScreen(v, size, SPAWN_POINT.x, SPAWN_POINT.z);
+    for (let i = TIER_RADII.length - 1; i >= 0; i--) {
+      ctx.fillStyle = TIER_BG[i];
+      ctx.beginPath();
+      ctx.arc(spawnS.x, spawnS.y, px(TIER_RADII[i]), 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Grid adaptif
     const step = gridStep(v.span, size);
@@ -136,6 +149,36 @@ export function MapScreen() {
     ctx.strokeStyle = '#7c2d12';
     ctx.lineWidth = 2;
     ctx.strokeRect(tl.x, tl.y, worldPx, worldPx);
+
+    // Cincin tingkat bahaya + nama wilayah (saat zoom keluar)
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = 'rgba(180,83,9,0.35)';
+    ctx.lineWidth = 1;
+    for (const r of TIER_RADII) {
+      ctx.beginPath();
+      ctx.arc(spawnS.x, spawnS.y, px(r), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    if (v.span > LABEL_MAX_SPAN) {
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= MAX_TIER; i++) {
+        const inner = i === 0 ? 0 : TIER_RADII[i - 1];
+        const outer = i < MAX_TIER ? TIER_RADII[i] : TIER_RADII[MAX_TIER - 1] + 170;
+        const mid = i === 0 ? 0 : (inner + outer) / 2;
+        const lp = worldToScreen(v, size, SPAWN_POINT.x, SPAWN_POINT.z - mid - (i === 0 ? 0 : 0));
+        if (lp.x < 20 || lp.y < 8 || lp.x > size - 20 || lp.y > size - 8) continue;
+        const text = `${t(`regions.tier.${i}`)} · ${t('regions.danger')} ${dangerLevel(i)}`;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(10,8,7,0.9)';
+        ctx.strokeText(text, lp.x, lp.y + (i === 0 ? 16 : 0));
+        ctx.fillStyle = i >= 3 ? '#fca5a5' : '#a8a29e';
+        ctx.fillText(text, lp.x, lp.y + (i === 0 ? 16 : 0));
+      }
+      ctx.textAlign = 'start';
+    }
 
     // Titik penting
     ctx.font = '600 11px system-ui, sans-serif';
@@ -440,6 +483,9 @@ export function MapScreen() {
         : t('map.unknownPoi')
     : '';
 
+  const myRegion = getRegionAt(gameState.playerPos.x, gameState.playerPos.z);
+  const selRegion = selected ? getRegionAt(selected.x, selected.z) : null;
+
   const iconBtn =
     'flex h-10 w-10 items-center justify-center rounded-lg border border-stone-700 bg-stone-900/90 text-stone-200 hover:bg-stone-800 active:bg-stone-700';
 
@@ -512,6 +558,12 @@ export function MapScreen() {
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 <span>{t('map.poi')} ({gameState.discoveredPois.length}/{WORLD_POIS.length})</span>
               </div>
+              <div className="text-stone-300">
+                {t('regions.current')}: <span className="font-semibold text-stone-100">{regionLabel(myRegion, t)}</span>{' '}
+                <span className={myRegion.tier >= 3 ? 'text-red-300' : 'text-stone-400'}>
+                  · {t('regions.danger')} {dangerLevel(myRegion.tier)}/{MAX_TIER + 1}
+                </span>
+              </div>
               <div className="text-stone-400">
                 {t('map.discoveredChunks')}: <span className="font-mono-tabular text-stone-200">{gameState.discoveredChunks.length}</span>
               </div>
@@ -526,6 +578,11 @@ export function MapScreen() {
                   {selected.type === 'poi' && !selected.discovered ? (
                     <div className="text-[11px] text-stone-400">{t('map.unknownPoiHint')}</div>
                   ) : null}
+                  {selRegion && (
+                    <div className="text-[11px] text-stone-400">
+                      {regionLabel(selRegion, t)} · {t('regions.danger')} {dangerLevel(selRegion.tier)}/{MAX_TIER + 1}
+                    </div>
+                  )}
                   <div className="text-[11px] text-stone-400">
                     {Math.round(selected.x)}m, {Math.round(selected.z)}m · {t('map.distance')}{' '}
                     <span className="font-mono-tabular text-stone-200">{formatDistance(selDist)}</span>

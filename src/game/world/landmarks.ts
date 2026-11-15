@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { WORLD_POIS } from './biomes';
+import type { PoiKind } from './poiGen';
 import { LANDMARK_SIZE, placeSilhouette } from './landmarkMath';
 
 interface Entry {
-  kind: (typeof WORLD_POIS)[number]['kind'];
+  kind: PoiKind;
   x: number;
   z: number;
   body: THREE.Mesh;
@@ -26,6 +27,7 @@ export class LandmarkSilhouettes {
   constructor(scene: THREE.Scene) {
     this.group.renderOrder = -5;
     for (const poi of WORLD_POIS) {
+      if (!LANDMARK_SIZE[poi.kind]) continue;
       const geo = poi.kind === 'geyser' ? this.column : this.cone;
       const bodyMat = new THREE.MeshBasicMaterial({ color: '#2a120c', fog: false, transparent: true, depthWrite: false });
       const body = new THREE.Mesh(geo, bodyMat);
@@ -60,7 +62,7 @@ export class LandmarkSilhouettes {
         if (e.tip) e.tip.visible = false;
         continue;
       }
-      const size = LANDMARK_SIZE[e.kind];
+      const size = LANDMARK_SIZE[e.kind]!;
       const k = p.k;
       // Titik dasar di ketinggian tanah ~0 diproyeksikan pada garis pandang kamera.
       const baseY = center.y * (1 - k);

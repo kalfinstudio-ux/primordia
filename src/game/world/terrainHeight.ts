@@ -55,6 +55,7 @@ export function sampleWorldHeight(noise: Noise2D, x: number, z: number): number 
   // Regional POIs across the 4km world
   for (const poi of WORLD_POIS) {
     if (poi.id === 'poi_volcano_main' || poi.id === 'poi_crystal_east') continue;
+    if (Math.abs(x - poi.x) > 54 || Math.abs(z - poi.z) > 54) continue;
     const d = distance2D(x, z, poi.x, poi.z);
     if (poi.kind === 'volcano' && d < 52) {
       h += (1 - smoothstep(6, 52, d)) * 26 - (1 - smoothstep(2, 10, d)) * 11;

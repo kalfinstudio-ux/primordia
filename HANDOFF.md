@@ -4,6 +4,22 @@ Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia 
 Terakhir diperbarui: 15 November 2026 (v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
+## 0f. Perubahan v19 — Peta langkah 2+3: titik penting dari generator & wilayah bernama (15 Nov 2026) — BELUM diuji di browser
+
+- **Generator POI** (`world/poiGen.ts`): grid berjitter 256 m, deterministik, maks 36 titik tambahan (total 48 = 12 buatan tangan + 36). Jenis bergantung tingkat bahaya (dekat spawn: geyser/mata air/kawah; jauh: gunung api/tabung lava/meteor). Jarak min 170 m antar titik, bebas 220 m dari spawn.
+- **Seed tata letak TETAP** (`LAYOUT_SEED`), bukan seed pemain: semua pemain/ruang multiplayer melihat titik yang sama. Menjadikannya bergantung seed = langkah 4.
+- **Jenis baru** `lava_tube` (Tabung Lava) dan `hot_spring` (Mata Air Panas): untuk saat ini HANYA memengaruhi biome (volcanic_ridge r20 / geyser_basin r20), belum ada medan, prop, atau loot. Jenis `supply_cache` sengaja belum dibuat (butuh loot).
+- **Wilayah bernama & bahaya** (`world/regions.ts`): 5 tingkat menurut jarak dari spawn (350/800/1400/2000 m) × 8 arah. Muncul di legenda peta, kartu info, cincin & latar peta (zoom keluar), dan toast saat memasuki wilayah (jeda 15 dtk). Tingkat bahaya SAAT INI HANYA INFORMASI; belum mengubah angka survival (itu tugas `balance.ts`, perlu uji main dulu).
+- Optimasi: `getBiomeAt` memakai `nearPoiKind` (tanpa akar kuadrat, per jenis); loop POI di `terrainHeight` menolak cepat POI yang jauh. Siluet hanya untuk volcano/geyser/obsidian; jarak maks siluet 1400 m.
+- Tes baru `poiRegions.test.ts` (7 tes). i18n: `poiNames.*`, `regions.*`.
+
+### Cek manual v19
+1. Peta zoom keluar: cincin dan nama wilayah terlihat; zoom masuk: label titik muncul. Jumlah titik "x/48" di legenda.
+2. Jalan melintasi batas wilayah: toast muncul, tidak spam di perbatasan.
+3. Dekati titik baru: terdeteksi (≤42 m), medan geyser/kawah/obsidian terbentuk di titik hasil generator.
+4. FPS tidak turun dibanding v18 (terutama saat chunk baru dimuat).
+5. Muat save lama: tidak error, titik lama tetap tertemu.
+
 ## 0e. Perubahan v18 — Peta langkah 1: atmosfer biome, siluet landmark jauh, peta interaktif (15 Nov 2026) — BELUM diuji di browser
 
 - **Atmosfer per biome** (`data/atmosphere.ts`, `world/sky.ts`): kabut dan warna horizon/langit bergeser halus (±2-3 dtk) mengikuti biome pemain; biome dicek 2x/detik di `SceneManager`.

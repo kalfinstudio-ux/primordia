@@ -11,6 +11,7 @@ import { eventBus } from '../core/eventBus';
 import { TerrainSystem } from '../world/terrain';
 import { SkySystem } from '../world/sky';
 import { LandmarkSilhouettes } from '../world/landmarks';
+import { dangerLevel, getRegionAt, regionLabel } from '../world/regions';
 import { WaterSystem } from '../world/water';
 import { LavaSystem } from '../world/lava';
 import { VolcanoSystem } from '../world/volcano';
@@ -62,6 +63,8 @@ export class SceneManager {
   private sky!: SkySystem;
   private landmarks!: LandmarkSilhouettes;
   private biomeTimer = 0;
+  private lastRegionKey = '';
+  private lastRegionToastMs = 0;
   private water!: WaterSystem;
   private lava!: LavaSystem;
   private volcano!: VolcanoSystem;
@@ -420,6 +423,18 @@ export class SceneManager {
       if (this.biomeTimer <= 0) {
         this.biomeTimer = 0.5;
         this.sky.setBiome(getBiomeAt(pos.x, pos.z, this.terrain.groundHeightAt(pos.x, pos.z)).id);
+        const region = getRegionAt(pos.x, pos.z);
+        if (region.key !== this.lastRegionKey) {
+          const nowMs = performance.now();
+          if (this.lastRegionKey && nowMs - this.lastRegionToastMs > 15000) {
+            this.lastRegionToastMs = nowMs;
+            eventBus.emit('toast:show', {
+              text: `${t('regions.entered')} ${regionLabel(region, t)} · ${t('regions.danger')} ${dangerLevel(region.tier)}/5`,
+              type: region.tier >= 3 ? 'warn' : 'info',
+            });
+          }
+          this.lastRegionKey = region.key;
+        }
       }
       this.sky.update(dt, this.engine.scene, pos, this.weather.currentWeather);
       this.landmarks.update(pos, this.sky.horizonColor);

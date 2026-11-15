@@ -1185,5 +1185,32 @@
       "owner": "Operator: {owner}",
       "contact": "Contact: {contact}"
     }
+  },
+  "poiNames": {
+    "lava_tube": "Lava Tube",
+    "hot_spring": "Hot Spring"
+  },
+  "regions": {
+    "tier": {
+      "0": "Starting Zone",
+      "1": "Frontier Plains",
+      "2": "Restless Expanse",
+      "3": "Barren Reach",
+      "4": "Hellrim"
+    },
+    "dir": {
+      "n": "North",
+      "ne": "Northeast",
+      "e": "East",
+      "se": "Southeast",
+      "s": "South",
+      "sw": "Southwest",
+      "w": "West",
+      "nw": "Northwest"
+    },
+    "format": "{dir} {tier}",
+    "danger": "Danger",
+    "entered": "Entering",
+    "current": "Region"
   }
 }

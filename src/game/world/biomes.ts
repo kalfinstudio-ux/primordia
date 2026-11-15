@@ -1,5 +1,8 @@
-import { WATER_LEVEL } from '../config';
+import { WATER_LEVEL, WORLD_HALF_EXTENT } from '../config';
 import { distance2D } from '../utils/math';
+import { generatePois, type PoiKind, type WorldPoi } from './poiGen';
+
+export type { PoiKind, WorldPoi };
 
 export type BiomeId =
   | 'shallow_ocean'
@@ -26,21 +29,49 @@ export interface BiomeSample {
 export const VOLCANO_MAIN = { x: 0, z: -48 };
 export const CRYSTAL_CRATER = { x: 38, z: -22 };
 
-// Regional landmark POIs distributed across the 4km x 4km world (-2048..+2048)
-export const WORLD_POIS = [
-  { id: 'poi_volcano_main', kind: 'volcano' as const, x: 0, z: -48, labelKey: 'biomes.volcanic_ridge' },
-  { id: 'poi_crystal_east', kind: 'crater' as const, x: 38, z: -22, labelKey: 'biomes.crystal_crater' },
-  { id: 'poi_geyser_nw', kind: 'geyser' as const, x: -92, z: -64, labelKey: 'biomes.geyser_basin' },
-  { id: 'poi_obsidian_ne', kind: 'obsidian_crevasse' as const, x: 145, z: -135, labelKey: 'biomes.obsidian_fields' },
-  { id: 'poi_meteor_sw', kind: 'meteor_site' as const, x: -180, z: 140, labelKey: 'biomes.meteor_impact' },
-  { id: 'poi_geyser_far_e', kind: 'geyser' as const, x: 320, z: 85, labelKey: 'biomes.geyser_basin' },
-  { id: 'poi_crater_far_n', kind: 'crater' as const, x: -240, z: -420, labelKey: 'biomes.crystal_crater' },
-  { id: 'poi_meteor_far_se', kind: 'meteor_site' as const, x: 480, z: 390, labelKey: 'biomes.meteor_impact' },
-  { id: 'poi_volcano_far_w', kind: 'volcano' as const, x: -640, z: -120, labelKey: 'biomes.volcanic_ridge' },
-  { id: 'poi_obsidian_far_s', kind: 'obsidian_crevasse' as const, x: 110, z: 540, labelKey: 'biomes.obsidian_fields' },
-  { id: 'poi_geyser_deep_n', kind: 'geyser' as const, x: 520, z: -680, labelKey: 'biomes.geyser_basin' },
-  { id: 'poi_meteor_deep_nw', kind: 'meteor_site' as const, x: -860, z: -780, labelKey: 'biomes.meteor_impact' },
+// Titik penting buatan tangan (inti dunia, tidak berubah)
+export const HANDCRAFTED_POIS: WorldPoi[] = [
+  { id: 'poi_volcano_main', kind: 'volcano', x: 0, z: -48, labelKey: 'biomes.volcanic_ridge' },
+  { id: 'poi_crystal_east', kind: 'crater', x: 38, z: -22, labelKey: 'biomes.crystal_crater' },
+  { id: 'poi_geyser_nw', kind: 'geyser', x: -92, z: -64, labelKey: 'biomes.geyser_basin' },
+  { id: 'poi_obsidian_ne', kind: 'obsidian_crevasse', x: 145, z: -135, labelKey: 'biomes.obsidian_fields' },
+  { id: 'poi_meteor_sw', kind: 'meteor_site', x: -180, z: 140, labelKey: 'biomes.meteor_impact' },
+  { id: 'poi_geyser_far_e', kind: 'geyser', x: 320, z: 85, labelKey: 'biomes.geyser_basin' },
+  { id: 'poi_crater_far_n', kind: 'crater', x: -240, z: -420, labelKey: 'biomes.crystal_crater' },
+  { id: 'poi_meteor_far_se', kind: 'meteor_site', x: 480, z: 390, labelKey: 'biomes.meteor_impact' },
+  { id: 'poi_volcano_far_w', kind: 'volcano', x: -640, z: -120, labelKey: 'biomes.volcanic_ridge' },
+  { id: 'poi_obsidian_far_s', kind: 'obsidian_crevasse', x: 110, z: 540, labelKey: 'biomes.obsidian_fields' },
+  { id: 'poi_geyser_deep_n', kind: 'geyser', x: 520, z: -680, labelKey: 'biomes.geyser_basin' },
+  { id: 'poi_meteor_deep_nw', kind: 'meteor_site', x: -860, z: -780, labelKey: 'biomes.meteor_impact' },
 ];
+
+/** Titik penting = buatan tangan + generator deterministik (grid berjitter, tata letak tetap). */
+export const WORLD_POIS: WorldPoi[] = [
+  ...HANDCRAFTED_POIS,
+  ...generatePois(HANDCRAFTED_POIS, WORLD_HALF_EXTENT),
+];
+
+const POIS_BY_KIND: Record<PoiKind, WorldPoi[]> = {
+  volcano: [],
+  crater: [],
+  geyser: [],
+  obsidian_crevasse: [],
+  meteor_site: [],
+  lava_tube: [],
+  hot_spring: [],
+};
+for (const p of WORLD_POIS) POIS_BY_KIND[p.kind].push(p);
+
+/** Cepat (tanpa akar kuadrat): apakah (x,z) dalam radius r dari POI berjenis kind. */
+function nearPoiKind(kind: PoiKind, x: number, z: number, r: number): boolean {
+  const r2 = r * r;
+  for (const p of POIS_BY_KIND[kind]) {
+    const dx = x - p.x;
+    const dz = z - p.z;
+    if (dx * dx + dz * dz < r2) return true;
+  }
+  return false;
+}
 
 export function getLavaRiverCenterX(z: number): number {
   return -14 + Math.sin(z * 0.075) * 10 - (z + 48) * 0.25;
@@ -84,7 +115,7 @@ export function getBiomeAt(x: number, z: number, height: number): BiomeSample {
   }
 
   // Starter Crystal Crater & Regional Craters
-  const nearCraterPoi = WORLD_POIS.some((p) => p.kind === 'crater' && distance2D(x, z, p.x, p.z) < 22);
+  const nearCraterPoi = nearPoiKind('crater', x, z, 22);
   if (craterDist < 17 || nearCraterPoi) {
     return {
       id: 'crystal_crater',
@@ -109,7 +140,7 @@ export function getBiomeAt(x: number, z: number, height: number): BiomeSample {
     };
   }
 
-  const nearVolcanoPoi = WORLD_POIS.some((p) => p.kind === 'volcano' && distance2D(x, z, p.x, p.z) < 34);
+  const nearVolcanoPoi = nearPoiKind('volcano', x, z, 34) || nearPoiKind('lava_tube', x, z, 20);
   if (volcanoDist < 26 || nearVolcanoPoi || height > 10.5) {
     return {
       id: 'volcanic_ridge',
@@ -122,7 +153,7 @@ export function getBiomeAt(x: number, z: number, height: number): BiomeSample {
     };
   }
 
-  const nearMeteorPoi = WORLD_POIS.some((p) => p.kind === 'meteor_site' && distance2D(x, z, p.x, p.z) < 34);
+  const nearMeteorPoi = nearPoiKind('meteor_site', x, z, 34);
   if (nearMeteorPoi) {
     return {
       id: 'meteor_impact',
@@ -135,7 +166,7 @@ export function getBiomeAt(x: number, z: number, height: number): BiomeSample {
     };
   }
 
-  const nearGeyserPoi = WORLD_POIS.some((p) => p.kind === 'geyser' && distance2D(x, z, p.x, p.z) < 28);
+  const nearGeyserPoi = nearPoiKind('geyser', x, z, 28) || nearPoiKind('hot_spring', x, z, 20);
   if (nearGeyserPoi) {
     return {
       id: 'geyser_basin',
@@ -148,7 +179,7 @@ export function getBiomeAt(x: number, z: number, height: number): BiomeSample {
     };
   }
 
-  const nearObsidianPoi = WORLD_POIS.some((p) => p.kind === 'obsidian_crevasse' && distance2D(x, z, p.x, p.z) < 34);
+  const nearObsidianPoi = nearPoiKind('obsidian_crevasse', x, z, 34);
   const heat = macroSignal(x, z, 0.0042, 1.3);
   const sulfur = macroSignal(x, z, 0.0038, -2.1);
 

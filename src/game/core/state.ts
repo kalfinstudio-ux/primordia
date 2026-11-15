@@ -82,7 +82,7 @@ export interface PlacedStructure {
 
 export interface DiscoveredPoi {
   id: string;
-  kind: 'volcano' | 'geyser' | 'crater' | 'obsidian_crevasse' | 'meteor_site' | 'water_spring';
+  kind: 'volcano' | 'geyser' | 'crater' | 'obsidian_crevasse' | 'meteor_site' | 'water_spring' | 'lava_tube' | 'hot_spring';
   x: number;
   z: number;
   labelKey: string;

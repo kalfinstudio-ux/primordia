@@ -36,6 +36,8 @@ test('proyeksi siluet: pada garis pandang & jarak bidang tetap', () => {
   assert.equal(placeSilhouette(10, 10, 10, 10).visible, false);
 });
 
-test('ukuran landmark ada untuk semua jenis POI', () => {
-  for (const poi of WORLD_POIS) assert.ok(LANDMARK_SIZE[poi.kind], poi.kind);
+test('siluet hanya untuk jenis tinggi, dan ada minimal satu landmark', () => {
+  const withSil = WORLD_POIS.filter((p) => LANDMARK_SIZE[p.kind]);
+  assert.ok(withSil.length >= 3);
+  assert.equal(LANDMARK_SIZE.hot_spring, undefined);
 });
