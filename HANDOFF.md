@@ -4,6 +4,33 @@ Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia 
 Terakhir diperbarui: 15 November 2026 (v23: pilihan akhir Bruk; v22: Bruk NPC tingkat 1, kepercayaan, dialog HUD; v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
+## 0l. Perubahan v24 — Bruk tingkat 2: wujud 3D di dunia (15 Nov 2026) — SEDANG DIKERJAKAN
+
+**Status tahap:** M1 selesai (model + pratinjau, BELUM dilihat di three.js) · M2 selesai · M3, M4, M5 belum.
+
+### M1 — Model dan pratinjau (SELESAI; model dinilai lewat render buatan sendiri, BUKAN three.js/browser)
+- **Keputusan jalur: .glb dibuat skrip Python (numpy saja)**, bukan geometri dari kode TS. Alasan: pola yang sama sudah dipakai `make_character.py` (tanpa Blender/internet), hasilnya bisa diperiksa tanpa menjalankan game, dan anggaran ukuran/segitiga bisa dijaga oleh tes CI. Biayanya: satu berkas ±215 KB yang dimuat sekali lewat `GLTFLoader` (jalur sudah ada untuk karakter).
+- Baru: `tools/make_bruk.py` (pembangun + pratinjau), `tools/dump-bruk-poses.ts` (pose dari M2 untuk pratinjau), `public/play/models/primordia_bruk.glb`, `src/game/brukAsset.test.ts` (gerbang aset, 6 tes).
+- Hasil: **2.871 segitiga** (anggaran 3.000), **214,7 KB** (anggaran 500 KB), tanpa tekstur/kulit/animasi, flat-shaded, tinggi **3,32 m** (ujung tanduk; manusia 1,8 m), lebar 3,04 m. Tinggal ±130 segitiga headroom.
+- Bentuk: golem basal bungkuk, kepala balok lebar di depan-atas dada, dua tanduk kristal toska, SATU mata amber hidup (pupil celah) + mata kiri mati bergores, punggung hidung bersudut (tanpa moncong/lubang hidung; profil samping berupa bidang datar), taring gading, bongkah emas di pipi (dari maskot), duri basalt di punuk/bahu untuk siluet jauh, tangan besar bercakar, retakan lava ditempel ke permukaan lewat raycast.
+- **Kontrak untuk M3** (nama node/material tetap):
+  - Node: `Bruk > Hips > {LegL, LegR, Torso}`; `Torso > {Head > Eye, ArmL, ArmR}`. Semua pose istirahat = rotasi nol, pivot di pinggul/leher/bahu.
+  - Pemetaan pose → node: `Bruk.rotation.y = yaw`; `Torso.rotation.x = lean`; `Head.rotation.y = headYaw`; `Eye.scale.y = eyeOpen`; `ArmL.rotation = (-0.9·arms, 0, +0.4·arms)`, `ArmR.rotation = (-0.9·arms, 0, -0.4·arms)`; `crouch` menurunkan `Hips` (±0.4 m, tuning di M3); `back` menggeser `Bruk` ke belakang searah hadap; `sit` memutar `LegL/LegR.rotation.x` ke ±-1.4 dan menurunkan `Hips`.
+  - Material (pakai SATU set bersama, `markShared`): `Lava.emissive = crackColor`, `emissiveIntensity = glow`; `Eye.emissive = eyeColor`, `emissiveIntensity = eyeGlow`. Material lain tetap. Clone material hanya sekali saat memuat.
+  - Skala model sudah 1:1 meter. Arah hadap +Z.
+- Pratinjau: `npx tsx tools/dump-bruk-poses.ts > /tmp/poses.json && python3 tools/make_bruk.py --preview /tmp/prev --poses /tmp/poses.json` (butuh numpy, PIL, scipy). Menghasilkan lembar depan/serong/belakang/samping/"ingame" untuk lima tingkat. **Pratinjau ini rasterizer sendiri (Lambert + bloom sederhana), bukan three.js**: warna, kilau, dan cahaya emissive di game akan berbeda (tanpa bloom, PBR).
+- Yang dinilai baik: siluet terbaca dari jauh (tanduk + bahu lebar + wajah menyala), lima tingkat jelas berbeda, tingkat 0 membelakangi pemain dan dingin, tingkat 4 hangat dengan tangan terbuka, tidak terbaca seperti babi.
+- **Kekurangan yang diketahui (jangan disembunyikan):** tangan dan kaki masih kasar/kotak; retakan lava tipis dan agak seperti coretan; mulut paling menyala di tingkat 3–4 (mungkin perlu diredam di M4); punuk dari belakang agak datar; di sudut serong tingkat 1 profil taring bisa sedikit terbaca "serigala"; bentuk akhir di game belum dilihat siapa pun.
+
+### M2 — Logika perilaku murni (SELESAI, teruji)
+- Baru: `src/game/data/brukBehavior.ts` (tanpa import three; hanya `utils/math`) dan `src/game/brukBehavior.test.ts` (30 tes).
+- API: `brukPose(input, out)` → pose TARGET (`mode, yaw, headYaw, lean, glow, eyeGlow, eyeOpen, crackColor, eyeColor, breath, arms, crouch, back, sit, guard`); `smoothPose(cur, tgt, dt)` menghaluskan pose yang dirender (di tempat, tanpa alokasi); `smoothLevel(cur, target, dt)` menghaluskan tingkat 0..4 (±95% dalam 5 detik); `brukUpdateInterval(dist, onScreen, lowGfx)` untuk throttle/cull (>120 m atau di luar layar = lewati); `brukSitSpot` / `brukGuardSpot` untuk posisi duduk/berjaga.
+- Mode & prioritas: guard > recoil > sit > watch > idle. `recoil` butuh `sinceFirstFire` (detik sejak api pertama dipasang SAAT sesi ini; `null` untuk save yang dimuat → tidak ada recoil). `sit` butuh momen `fire_third` + ada api. `guard` butuh badai + pemain di shelter + arah pintu.
+- Konvensi sudut: yaw 0 = menghadap +Z, bearing = `atan2(dx, dz)` (sama dengan `controller.ts`).
+- Tidak ada field save baru. Tidak ada perubahan peta/balance/SQL/multiplayer.
+- Tes: `tsx --test src/game/brukBehavior.test.ts` 30/30 lulus; tipe strict file logika bersih. Seluruh `src/game/*.test.ts`: 170 lulus, 3 gagal (`audit`, `balance`, `stage2`) HANYA karena `@supabase/supabase-js` tidak terpasang di lingkungan ini (terjadi juga tanpa file baru); jalankan `npm test` di Codespace untuk angka resmi.
+- **Belum dijalankan:** `npm run lint`, `npm run build`, apa pun di browser.
+
 ## 0k. Perubahan v23 — Pilihan akhir Bruk: lepaskan atau tahan waktu (15 Nov 2026) — logika teruji (tsx), UI BELUM diuji di browser
 
 Dikerjakan di atas repo terbaru (sudah memuat v22 Bruk + Shelter). `npm test` (dengan `@supabase/supabase-js` di-stub sementara) **178/178 lulus** (+7 tes baru di `bruk.test.ts`). `npm run lint`/`build` belum dijalankan untuk v23: jalankan di Codespace (file `.tsx` baru/diubah: `VictoryModal.tsx`).
