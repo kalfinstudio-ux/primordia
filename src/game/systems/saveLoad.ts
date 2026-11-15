@@ -1,4 +1,11 @@
-import { sanitizeBrukChoice, sanitizeBrukMoments, type BrukChoice } from '../data/bruk';
+import {
+  sanitizeBrukChoice,
+  sanitizeBrukMemory,
+  sanitizeBrukMoments,
+  type BrukChoice,
+  type BrukMemory,
+} from '../data/bruk';
+import { sanitizeKilledFauna } from '../data/fauna';
 import { buildAwayReport, resolveAwayWindow, sanitizeBornAt } from '../data/eden';
 import { fetchAwaySeconds, startPresenceHeartbeat } from '../net/presence';
 import { setAwayReport } from './awayReport';
@@ -39,6 +46,8 @@ export interface SaveData {
   journalUnlocked: string[];
   brukMoments?: string[];
   brukChoice?: BrukChoice | null;
+  brukMemory?: BrukMemory;
+  killedFauna?: Record<string, Record<string, number>>;
   campaignComplete: boolean;
   waterCollectedCount: number;
   crystalsExtractedCount: number;
@@ -143,6 +152,8 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     journalUnlocked: Array.isArray(raw.journalUnlocked) ? (raw.journalUnlocked as string[]) : ['j_basalt'],
     brukMoments: sanitizeBrukMoments(raw.brukMoments),
     brukChoice: sanitizeBrukChoice(raw.brukChoice),
+    brukMemory: sanitizeBrukMemory(raw.brukMemory),
+    killedFauna: sanitizeKilledFauna(raw.killedFauna),
     campaignComplete: Boolean(raw.campaignComplete),
     waterCollectedCount: Number(raw.waterCollectedCount) || 0,
     crystalsExtractedCount: Number(raw.crystalsExtractedCount) || 0,
@@ -189,6 +200,8 @@ export function buildCurrentSaveSnapshot(): SaveData {
     journalUnlocked: [...gameState.journalUnlocked],
     brukMoments: [...gameState.brukMoments],
     brukChoice: gameState.brukChoice,
+    brukMemory: { ...gameState.brukMemory },
+    killedFauna: sanitizeKilledFauna(gameState.killedFauna),
     campaignComplete: gameState.campaignComplete,
     waterCollectedCount: gameState.waterCollectedCount,
     crystalsExtractedCount: gameState.crystalsExtractedCount,
@@ -340,6 +353,8 @@ export function applySaveDataToState(raw: SaveData): void {
   gameState.journalUnlocked = [...data.journalUnlocked];
   gameState.brukMoments = sanitizeBrukMoments(data.brukMoments);
   gameState.brukChoice = sanitizeBrukChoice(data.brukChoice);
+  gameState.brukMemory = sanitizeBrukMemory(data.brukMemory);
+  gameState.killedFauna = sanitizeKilledFauna(data.killedFauna);
   gameState.campaignComplete = data.campaignComplete;
   gameState.waterCollectedCount = data.waterCollectedCount;
   gameState.crystalsExtractedCount = data.crystalsExtractedCount;

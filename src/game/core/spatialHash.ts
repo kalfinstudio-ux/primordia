@@ -72,6 +72,31 @@ export class SpatialHashGrid {
     }
     return results;
   }
+
+  /** Zero-allocation radius query writing matching colliders into caller-owned buffer. */
+  queryRadiusInto(x: number, z: number, radius: number, out: SpatialCollider[]): number {
+    out.length = 0;
+    const minX = Math.floor((x - radius) / this.cellSize);
+    const maxX = Math.floor((x + radius) / this.cellSize);
+    const minZ = Math.floor((z - radius) / this.cellSize);
+    const maxZ = Math.floor((z + radius) / this.cellSize);
+    for (let cx = minX; cx <= maxX; cx++) {
+      for (let cz = minZ; cz <= maxZ; cz++) {
+        const bucket = this.buckets.get(this.cellKey(cx, cz));
+        if (!bucket) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          const c = bucket[i];
+          const dx = c.x - x;
+          const dz = c.z - z;
+          const rSum = radius + c.radius;
+          if (dx * dx + dz * dz <= rSum * rSum) {
+            out.push(c);
+          }
+        }
+      }
+    }
+    return out.length;
+  }
 }
 
 export function resolveCapsuleObstacles(

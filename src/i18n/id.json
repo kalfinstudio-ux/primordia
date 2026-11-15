@@ -175,6 +175,8 @@
     "musicVol": "Musik & Drone",
     "sfxVol": "Efek Suara",
     "ambientVol": "Ambien Alam",
+    "spatialEnvVol": "Suara Lingkungan 3D",
+    "indoorMufflingVol": "Peredam Dalam Ruangan",
     "sensitivity": "Sensitivitas Kamera",
     "joystickSize": "Ukuran Joystick Sentuh",
     "hudScale": "Skala HUD",
@@ -286,7 +288,8 @@
       "seed_pool": "Tanam Benih Kehidupan",
       "rest_shelter": "Istirahat & Tidur di Shelter",
       "rest_fresh": "Kamu sudah cukup segar untuk melanjutkan penjelajahan.",
-      "rest_slept": "Beristirahat di dalam Shelter — energi dan suhu tubuh pulih."
+      "rest_slept": "Beristirahat di dalam Shelter — energi dan suhu tubuh pulih.",
+      "talk_bruk": "Bicara dengan Bruk"
     },
     "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas · B Bangun · M Peta · J Jurnal · F3 Debug",
     "pauseBtn": "Jeda",
@@ -1319,6 +1322,65 @@
       "level2": "Mata ambar Bruk sedikit melunak melihat ketahananmu.",
       "level3": "Bruk mulai mempercayaimu menjaga keseimbangan tanah purba.",
       "level4": "Penjaga Basal berdiri di sisimu sebagai saksi fajar baru."
+    },
+    "stormSanctuary": "Bruk menahan hantaman badai sejenak di sisimu.",
+    "hintWaypointToast": "Bruk menandai jejak sumber daya di petamu.",
+    "talk": {
+      "violation": {
+        "0": "Kau memecah urat kawah tanpa pertimbangan. Mundurlah sebelum batu ini mengingat.",
+        "1": "Kristal itu menahan lereng tetap utuh. Ambil seperlunya saja, atau biarkan tetap diam.",
+        "2": "Setiap pecahan yang kau cabut bergema di bawah kakiku. Jangan anggap diamku sebagai izin."
+      },
+      "injured": {
+        "0": "Darahmu menetes ke basal dingin. Rawat lukamu dan cari shelter sebelum angin menghabiskan sisanya.",
+        "1": "Daging mudah robek di atas batu muda. Beristirahatlah di dekat api—jangan sia-siakan nafasmu di sini.",
+        "2": "Napasmu gemetar. Bahkan batu pun bertahan lebih lama bila tahu kapan berhenti."
+      },
+      "storm": {
+        "0": "Langit berubah menjadi abu dan taring. Tetaplah di balik dinding, atau biarkan bayanganku memecah angin.",
+        "1": "Badai dari kerak yang mendingin. Jaga segel helmmu dan tunggu amarahnya reda.",
+        "2": "Abu membutakan, asam menggigit. Jangan pergi jauh selagi cakrawala terbakar."
+      },
+      "fire_out": {
+        "0": "Tak ada bara menyala di tepi lereng. Batu dingin tak menyambut siapa pun tanpa cahaya.",
+        "1": "Tungku apimu sudah padam menjadi abu. Menyalakan api tanda kau masih berniat bertahan.",
+        "2": "Hanya angin dingin melintasi cekungan. Nyalakan api lagi bila malam mulai turun."
+      },
+      "long_return": {
+        "0": "Kau menghilang cukup lama hingga abu mengendap dua kali. Masih bernapas rupanya.",
+        "1": "Kawah mencatat hari-hari sunyi. Sedikit yang kembali setelah celah luar menelan jejaknya.",
+        "2": "Kembali dari debu jauh. Batu tak bergeser, namun udara mengingat kepergianmu."
+      },
+      "night": {
+        "0": "Malam mendinginkan kerak, meski retakan dalam tak pernah tidur. Perhatikan tiap langkahmu.",
+        "1": "Dalam gelap, hanya bara api dan mata ambar yang menandai apa yang bertahan.",
+        "2": "Bintang tertutup jelaga. Beristirahatlah sampai fajar membersihkan celah uap."
+      },
+      "trust_0": {
+        "0": "Aku sudah ada sebelum kerak ini membeku. Bicaralah seperlunya dan melangkahlah pelan.",
+        "1": "Satu lagi pembawa percikan di atas abu. Buktikan ketahananmu sebelum meminta apa pun dariku.",
+        "2": "Jaga jarakmu dari jantung rim. Dengarkan celah uap; mereka bicara lebih jujur dariku."
+      },
+      "trust_1": {
+        "0": "Langkahmu mulai mantap di atas terak batu. Namun Bumi awal tak mengampuni kecerobohan.",
+        "1": "Kau menjaga persediaan air dan beban tasmu. Begitulah batu menilai siapa yang bertahan.",
+        "2": "Jangan berlama-lama di tepi sungai lava saat angin berbalik. Aku tidak akan menarikmu keluar."
+      },
+      "trust_2": {
+        "0": "Kau melewati siklus badai pertama. Lereng ini mulai mengenali irama beliungmu.",
+        "1": "Ambil kristal hanya di tempat kawah memberikannya, dan sisakan yang lain. Keseimbangan menjaga kita.",
+        "2": "Ada hangat dari tungkumu yang bukan berasal dari magma. Asing, namun tidak menolak."
+      },
+      "trust_3": {
+        "0": "Saat badai abu naik, berdirilah dekat batuku. Untuk beberapa napas, angin akan membelah di sekitar kita.",
+        "1": "Jarang ada makhluk tanah liat yang mendapat kesabaran basal. Kau mulai mendapatkannya.",
+        "2": "Lihat petamu—aku masih mengingat di mana urat mineral kaya tertidur."
+      },
+      "trust_4": {
+        "0": "Saat waktu akhirnya bergerak lagi, batu akan mengingat siapa yang menjaga fajar sunyinya.",
+        "1": "Berdirilah di sisiku selama kau mau. Penjaga pun lelah mengawasi sendirian.",
+        "2": "Benih menunggu di air hangat, dan jalanmu sudah terbuka. Kapan pun kau memilih, aku menjadi saksi."
+      }
     },
     "choice": {
       "release": {

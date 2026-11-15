@@ -16,6 +16,7 @@ export class SurvivalSystem {
   currentBiomeId: BiomeId = 'black_basalt_plains';
   currentSurface: 'basalt' | 'ash' | 'water' | 'crystal' | 'obsidian' | 'sulfur' = 'basalt';
   nearWater = false;
+  inShelter = false;
   cleanAir: CleanAirTarget | null = null;
   private cleanAirTimer = 0;
   private lowOxygenWarned = false;
@@ -39,9 +40,11 @@ export class SurvivalSystem {
     this.currentSurface = biome.surfaceType;
     this.nearWater = biome.nearWater;
 
-    const inShelter = gameState.placedStructures.some(
-      (s) => (s.type === 'basic_shelter' || s.type === 'roof_panel') && distance2D(px, pz, s.x, s.z) < 4.5
-    );
+    const inShelter =
+      gameState.placedStructures.some(
+        (s) => (s.type === 'basic_shelter' || s.type === 'roof_panel') && distance2D(px, pz, s.x, s.z) < 4.5
+      ) || Boolean(gameState.stormSanctuaryActive);
+    this.inShelter = inShelter;
     const nearCampfire = gameState.placedStructures.some(
       (s) => s.type === 'campfire_kit' && distance2D(px, pz, s.x, s.z) < 6.0
     );

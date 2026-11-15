@@ -1,7 +1,7 @@
 /**
  * Bruk tingkat 2 (M3) — logika MURNI penempatan & konteks dunia (tanpa three), dites di brukWorld.test.ts.
  * `world/brukBody.ts` memakai ini untuk: memilih rumah di rim kawah, melacak api pertama yang DISAKSIKAN,
- * memilih tempat duduk/berjaga, dan melangkah menuju tempat itu.
+ * memilih tempat duduk/berjaga/patroli/mengembara/menyelidiki/menghindar lava, dan melangkah menuju tempat itu.
  */
 import type { WeatherType } from '../config';
 import { shelterDoorWorld } from '../world/shelterLayout';
@@ -123,19 +123,79 @@ export function shelterDoorFacing(s: ShelterPos): number {
   return bearingTo(s.x, s.z, d.x, d.z);
 }
 
+/** Deterministic patrol point along outer rim arc around crater/home. */
+export function brukPatrolSpot(
+  home: { x: number; z: number },
+  crater: { x: number; z: number },
+  timeSec: number,
+  seed: number,
+  out: BrukSpot = { x: 0, z: 0 }
+): BrukSpot {
+  const baseAngle = bearingTo(crater.x, crater.z, home.x, home.z);
+  const homeRadius = Math.max(15, Math.hypot(home.x - crater.x, home.z - crater.z));
+  const arc = Math.sin(timeSec * 0.14 + (seed % 97) * 0.1) * 0.72;
+  const angle = baseAngle + arc;
+  out.x = crater.x + Math.sin(angle) * homeRadius;
+  out.z = crater.z + Math.cos(angle) * homeRadius;
+  return out;
+}
+
+/** Deterministic calm wander point within ~7 m of home. */
+export function brukWanderSpot(
+  home: { x: number; z: number },
+  timeSec: number,
+  seed: number,
+  out: BrukSpot = { x: 0, z: 0 }
+): BrukSpot {
+  const bucket = Math.floor(Math.max(0, timeSec) / 14);
+  const a = ((bucket * 2.39996 + (seed % 53) * 0.37) % (Math.PI * 2));
+  const r = 4.0 + ((bucket * 7 + seed) % 5) * 0.9;
+  out.x = home.x + Math.sin(a) * r;
+  out.z = home.z + Math.cos(a) * r;
+  return out;
+}
+
 export interface TargetSpotInput {
   mode: BrukMode;
   home: { x: number; z: number };
   fire: { x: number; z: number } | null;
   shelter: ShelterPos | null;
   guardFacing: number | null;
+  crater?: { x: number; z: number };
+  timeSec?: number;
+  seed?: number;
+  investigateTarget?: { x: number; z: number } | null;
+  fleeFromLavaTarget?: { x: number; z: number } | null;
 }
 
-/** Posisi yang dituju Bruk menurut mode pose: duduk di dekat api, berjaga di pintu shelter, atau rumah. */
+/** Posisi yang dituju Bruk menurut mode pose: duduk, berjaga, patroli, mengembara, menyelidiki, menghindar lava, atau rumah. */
 export function brukTargetSpot(inp: TargetSpotInput, out: BrukSpot = { x: 0, z: 0 }): BrukSpot {
   if (inp.mode === 'sit' && inp.fire) return brukSitSpot(inp.home.x, inp.home.z, inp.fire.x, inp.fire.z, BRUK_SIT_RADIUS, out);
   if (inp.mode === 'guard' && inp.shelter && inp.guardFacing !== null) {
     return brukGuardSpot(inp.shelter.x, inp.shelter.z, inp.guardFacing, BRUK_GUARD_RADIUS, out);
+  }
+  if (inp.mode === 'investigate' && inp.investigateTarget) {
+    // Approach within ~4.5 m of disturbance without standing directly on it
+    const dx = inp.home.x - inp.investigateTarget.x;
+    const dz = inp.home.z - inp.investigateTarget.z;
+    const len = Math.hypot(dx, dz) || 1;
+    out.x = inp.investigateTarget.x + (dx / len) * 4.5;
+    out.z = inp.investigateTarget.z + (dz / len) * 4.5;
+    return out;
+  }
+  if (inp.mode === 'flee_lava' && inp.fleeFromLavaTarget) {
+    out.x = inp.fleeFromLavaTarget.x;
+    out.z = inp.fleeFromLavaTarget.z;
+    return out;
+  }
+  if (inp.mode === 'patrol' && inp.crater) {
+    return brukPatrolSpot(inp.home, inp.crater, inp.timeSec ?? 0, inp.seed ?? 1, out);
+  }
+  if (inp.mode === 'wander') {
+    return brukWanderSpot(inp.home, inp.timeSec ?? 0, inp.seed ?? 1, out);
+  }
+  if (inp.mode === 'rest' && inp.fire) {
+    return brukSitSpot(inp.home.x, inp.home.z, inp.fire.x, inp.fire.z, BRUK_SIT_RADIUS + 0.8, out);
   }
   out.x = inp.home.x;
   out.z = inp.home.z;

@@ -75,6 +75,7 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     target.depleted = true;
     target.mesh.visible = false;
     chunks.spatialHash.remove(`col_${target.id}`);
+    eventBus.emit('crystal:mined', { id: target.id, x: target.x, z: target.z });
     eventBus.emit('audio:sfx', 'crystal');
     eventBus.emit('toast:show', { text: `+1 ${t('items.primordial_crystal.name')}`, type: 'success' });
   } else if (target.kind === 'water') {

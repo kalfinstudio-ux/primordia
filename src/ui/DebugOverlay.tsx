@@ -19,6 +19,11 @@ export function DebugOverlay({ debug }: { debug: DebugTelemetry }) {
           {debug.weatherBlend || 'steady'}
         </div>
       )}
+      {typeof debug.faunaCount === 'number' && (
+        <div data-testid="debug-fauna-row">
+          Fauna: {debug.faunaCount} · AI: {(debug.faunaAiMs ?? 0).toFixed(2)}ms · {debug.faunaBuckets || '-'}
+        </div>
+      )}
       <div className="text-[10px] text-stone-400">
         FPS method: 1s sample count / elapsed · Low cap: ≤60 ptcl, 0 splash/fog
       </div>

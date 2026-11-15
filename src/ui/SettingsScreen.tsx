@@ -188,31 +188,36 @@ export function SettingsScreen() {
             <div className="space-y-4">
               {(
                 [
-                  ['master', 'masterVol'],
-                  ['music', 'musicVol'],
-                  ['sfx', 'sfxVol'],
-                  ['ambient', 'ambientVol'],
+                  ['master', 'masterVol', 0.7],
+                  ['music', 'musicVol', 0.45],
+                  ['sfx', 'sfxVol', 0.75],
+                  ['ambient', 'ambientVol', 0.6],
+                  ['spatialEnv', 'spatialEnvVol', 1.0],
+                  ['indoorMuffling', 'indoorMufflingVol', 1.0],
                 ] as const
-              ).map(([field, labelKey]) => (
-                <div key={field}>
-                  <div className="flex justify-between text-sm text-stone-300">
-                    <label htmlFor={`vol-${field}`}>{t(`settings.${labelKey}`)}</label>
-                    <span className="font-mono-tabular">{Math.round(draft.audio[field] * 100)}%</span>
+              ).map(([field, labelKey, fallback]) => {
+                const val = draft.audio[field] ?? fallback;
+                return (
+                  <div key={field}>
+                    <div className="flex justify-between text-sm text-stone-300">
+                      <label htmlFor={`vol-${field}`}>{t(`settings.${labelKey}`)}</label>
+                      <span className="font-mono-tabular">{Math.round(val * 100)}%</span>
+                    </div>
+                    <input
+                      id={`vol-${field}`}
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={val}
+                      onChange={(e) =>
+                        applyAndSave({ ...draft, audio: { ...draft.audio, [field]: Number(e.target.value) } })
+                      }
+                      className="mt-2 w-full accent-orange-600"
+                    />
                   </div>
-                  <input
-                    id={`vol-${field}`}
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={draft.audio[field]}
-                    onChange={(e) =>
-                      applyAndSave({ ...draft, audio: { ...draft.audio, [field]: Number(e.target.value) } })
-                    }
-                    className="mt-2 w-full accent-orange-600"
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

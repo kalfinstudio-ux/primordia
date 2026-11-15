@@ -154,6 +154,33 @@ export const BALANCE = {
     vitals: { health: 100, stamina: 100, temperature: 37.0, oxygen: 100, water: 85, fatigue: 100, radiationCap: 20 },
     offsetFromShelterM: 2.5,
   },
+
+  bruk: {
+    talkRangeM: 4.0,
+    talkFacingMinDot: 0.42,
+    longAbsenceSec: 180,
+    perceptionRadiusM: 52,
+    crystalViolationRadiusM: 48,
+    stormSanctuaryRadiusM: 8.5,
+    stormSanctuaryMinLevel: 3,
+    stormSanctuaryDurationSec: { 3: 10, 4: 14 } as Record<number, number>,
+    stormSanctuaryCooldownSec: 45,
+    hintMinPlaytimeGapSec: 20,
+  },
+
+  fauna: {
+    minSpawnDistM: 15,
+    chunkPopCap: 4,
+    capOvershootPct: 0.25,
+    boidMaxNeighbors: 7,
+    boidRadiusM: 12,
+    respawnDelaySec: 420,
+    maxActiveFauna: 96,
+    maxSlopeDeg: 32,
+    pitDepthLimitM: 2.2,
+    minLavaClearanceM: 5.5,
+    waterClearanceM: 0.22,
+  },
 } as const;
 
 export function getDifficultyMultiplier(diff: DifficultyLevel): number {

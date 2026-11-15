@@ -175,6 +175,8 @@
     "musicVol": "Music & Drone",
     "sfxVol": "Sound Effects",
     "ambientVol": "World Ambience",
+    "spatialEnvVol": "3D Environmental Sound",
+    "indoorMufflingVol": "Indoor Muffling",
     "sensitivity": "Camera Sensitivity",
     "joystickSize": "Touch Joystick Size",
     "hudScale": "HUD Scale",
@@ -286,7 +288,8 @@
       "seed_pool": "Deposit Seed of Life",
       "rest_shelter": "Rest & Sleep in Shelter",
       "rest_fresh": "You are already well-rested.",
-      "rest_slept": "Rested inside your Shelter — fatigue and warmth restored."
+      "rest_slept": "Rested inside your Shelter — fatigue and warmth restored.",
+      "talk_bruk": "Talk to Bruk"
     },
     "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",
@@ -1319,6 +1322,65 @@
       "level2": "Bruk’s amber eye softens slightly at your resilience.",
       "level3": "The warden begins to trust you with the balance of early Earth.",
       "level4": "The Basalt Warden stands beside you as witness to a new dawn."
+    },
+    "stormSanctuary": "Bruk shields you briefly from the raging storm.",
+    "hintWaypointToast": "Bruk marked a resource trail on your map.",
+    "talk": {
+      "violation": {
+        "0": "You crack the crater’s veins without care. Step back before the stone remembers.",
+        "1": "Those crystals hold the ridge together. Take only what you must, or leave them.",
+        "2": "Every shard you break echoes beneath my feet. Do not mistake stillness for consent."
+      },
+      "injured": {
+        "0": "You bleed onto cold basalt. Tend your suit and find shelter before the wind takes the rest.",
+        "1": "Flesh tears easily on young stone. Rest by a hearth—do not throw your pulse away here.",
+        "2": "Your breath shakes. Even stone endures longer when it yields for an hour."
+      },
+      "storm": {
+        "0": "The sky turns teeth and ash. Stay close to walls that hold, or let my shadow break the wind.",
+        "1": "A gale born of cooling crust. Keep your visor sealed and wait out its fury.",
+        "2": "Ash blinds, acid bites. Do not wander far while the horizon burns."
+      },
+      "fire_out": {
+        "0": "No ember burns near the ridge. Cold stone welcomes nothing without light.",
+        "1": "Your hearth has died to dark ash. Kindling a flame shows you still mean to stay.",
+        "2": "Only cold wind crosses the basin. Light another fire if night draws near."
+      },
+      "long_return": {
+        "0": "You have been gone long enough for ash to settle twice. Still breathing, then.",
+        "1": "The crater kept count of silent days. Few return once the outer vents swallow their tracks.",
+        "2": "Back from the far dust. The stone did not move, yet the air remembers your absence."
+      },
+      "night": {
+        "0": "Night cools the crust, though the deep rift never sleeps. Watch where you place each step.",
+        "1": "In the dark, only ember and amber eye mark what endures. Keep your fire close.",
+        "2": "The stars are choked behind soot. Rest until dawn clears the upper vents."
+      },
+      "trust_0": {
+        "0": "I was here before the crust cooled. Speak little and tread lightly.",
+        "1": "Another spark-bearer passing through ash. Prove your weight before asking anything of me.",
+        "2": "Keep your distance from the rim’s heart. Watch the vents; they speak louder than I."
+      },
+      "trust_1": {
+        "0": "Your steps grow steadier on the slag. Still, early Earth forgives no carelessness.",
+        "1": "You watch the springs and keep a pack full. That is how stone decides who stays.",
+        "2": "Do not linger near the lava shelf when wind shifts east. I will not pull you out."
+      },
+      "trust_2": {
+        "0": "You have lasted past the first harsh cycles. The ridge knows the rhythm of your pick.",
+        "1": "Seek crystal only where the crater offers it, and spare the rest. Balance keeps us both.",
+        "2": "There is warmth in your hearth that does not belong to magma. Strange, yet welcome."
+      },
+      "trust_3": {
+        "0": "When ash storms rise, stand near my stone. For a few breaths, the wind will part around us.",
+        "1": "Few creatures born of soft clay earn the patience of basalt. You have earned mine.",
+        "2": "Look east and north on your map—I still remember where the richer veins sleep."
+      },
+      "trust_4": {
+        "0": "When time finally moves again, stone will remember who tended its first quiet dawn.",
+        "1": "Stand beside me as long as you wish. Even a guardian grows weary of watching alone.",
+        "2": "The Seed waits in warm water, and your path is clear. Whenever you choose, I am witness."
+      }
     },
     "choice": {
       "release": {

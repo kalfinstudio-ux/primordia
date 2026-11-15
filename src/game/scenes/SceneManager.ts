@@ -31,9 +31,10 @@ import { MeteorSystem } from '../world/meteors';
 import { ChunkManager } from '../world/chunkManager';
 import { RemotePlayersSystem } from '../world/remotePlayers';
 import { BrukBody } from '../world/brukBody';
+import { FaunaSystem } from '../world/faunaSystem';
 import { multiplayer } from '../net/multiplayer';
 import type { AnimState } from '../net/multiplayerProtocol';
-import { VOLCANO_MAIN, getBiomeAt } from '../world/biomes';
+import { VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getLavaRiverCenterX } from '../world/biomes';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
 import { tryLoadExplorerGlb, type GlbExplorerHandle } from '../player/glbCharacter';
 import { currentPlayerModelUrl } from '../utils/assetPrefs';
@@ -63,9 +64,13 @@ import { pickQuestGuide } from '../systems/questGuide';
 import { BALANCE } from '../data/balance';
 import { distance2D } from '../utils/math';
 import { audioSystem } from '../systems/audio';
+import type { SpatialAmbientKind } from '../data/audioMath';
 import { t } from '../utils/i18n';
 
 const _worldCenter = new THREE.Vector3(0, 0, 0);
+const _camPos = new THREE.Vector3();
+const _camFwd = new THREE.Vector3();
+const _camUp = new THREE.Vector3();
 
 export class SceneManager {
   private engine: Engine;
@@ -87,6 +92,7 @@ export class SceneManager {
   private chunks!: ChunkManager;
   private remotePlayers!: RemotePlayersSystem;
   private brukBody!: BrukBody;
+  private fauna!: FaunaSystem;
   private buildingGhost!: BuildingGhostSystem;
   private character!: CharacterRig;
   private glbHandle: GlbExplorerHandle | null = null;
@@ -111,8 +117,16 @@ export class SceneManager {
   private ready = false;
   private appliedEdenSeed = '';
   private appliedYear = 0;
+  private appliedEraYear = 1;
+  private currentWaterLevel = WATER_LEVEL;
   private lastClockMs = 0;
   private edenCheckTimer = 0;
+  private audioSpatialAccum = 0;
+  private readonly spatialSrcBuf: Array<{ kind: SpatialAmbientKind; x: number; y: number; z: number; distance: number }> = [];
+  private readonly spatialSlotLava = { kind: 'lava' as const, x: 0, y: 0, z: 0, distance: 999 };
+  private readonly spatialSlotGeyser = { kind: 'geyser' as const, x: 0, y: 0, z: 0, distance: 999 };
+  private readonly spatialSlotWater = { kind: 'water' as const, x: 0, y: 0, z: 0, distance: 999 };
+  private readonly spatialSlotCampfire = { kind: 'campfire' as const, x: 0, y: 0, z: 0, distance: 999 };
   private unsubs: Array<() => void> = [];
 
   constructor(container: HTMLElement) {
@@ -125,7 +139,8 @@ export class SceneManager {
         audioSystem.playSfx('jump');
       },
       onLand: () => this.animator.triggerLand(),
-      onFootstep: () => audioSystem.playFootstep(this.survival.currentSurface),
+      onFootstep: () =>
+        audioSystem.playFootstep(this.survival.currentSurface, this.controller.lastHorizontalSpeed, gameState.wetness),
     });
 
     this.loop = new GameLoop(this.engine.renderer, {
@@ -194,6 +209,8 @@ export class SceneManager {
     this.remotePlayers = new RemotePlayersSystem(this.engine.scene, this.assets.contactShadowTexture);
     this.brukBody = new BrukBody(this.engine.scene, this.spatialHash);
     void this.brukBody.load();
+    this.fauna = new FaunaSystem(this.engine.scene, this.spatialHash);
+    this.fauna.group.visible = false;
 
     this.character = createExplorerCharacter(gameState.avatar, this.assets.contactShadowTexture);
     this.character.root.visible = false;
@@ -241,9 +258,11 @@ export class SceneManager {
 
     this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed, nowDate);
     this.appliedYear = nowDate.getUTCFullYear();
+    this.appliedEraYear = getWorldAge(nowDate).eraYear;
     this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
     this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
     const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
+    this.currentWaterLevel = waterY;
     this.water.setLevel(waterY);
 
     if (!resetPlayer) {
@@ -282,6 +301,8 @@ export class SceneManager {
     this.autosaveAccum = 0;
     this.bruk.reset();
     this.brukBody.reset(this.terrain);
+    this.fauna.group.visible = true;
+    this.fauna.reset(this.appliedEdenSeed, this.appliedEraYear, this.currentWaterLevel, this.terrain, sx, sz);
     multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed, nowDate));
     this.emitHudSnapshot();
     this.engine.render();
@@ -303,6 +324,8 @@ export class SceneManager {
     if (!this.ready) return;
     this.character.root.visible = false;
     this.brukBody.setVisible(false);
+    this.fauna.group.visible = false;
+    audioSystem.leaveWorld();
     multiplayer.leave();
     this.remotePlayers.clear();
     this.camRig.updateMenuFlyover(0, this.engine.camera);
@@ -433,7 +456,7 @@ export class SceneManager {
       this.weather.currentWeather
     );
     tickStructures(fixedDt, this.weather.currentWeather);
-    this.bruk.update(fixedDt, this.weather.currentWeather);
+    this.bruk.update(fixedDt, this.weather.currentWeather, this.brukBody.getWorldPos());
   }
 
   private renderFrame(alpha: number, dt: number, elapsed: number): void {
@@ -488,6 +511,7 @@ export class SceneManager {
         if (next !== this.appliedEdenSeed) {
           this.appliedEdenSeed = next;
           const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
+          this.currentWaterLevel = waterY;
           this.water.setLevel(waterY);
           this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
           this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
@@ -509,6 +533,8 @@ export class SceneManager {
           if (nowDate.getUTCFullYear() !== this.appliedYear) {
             this.appliedYear = nowDate.getUTCFullYear();
             const newAge = getWorldAge(nowDate);
+            this.appliedEraYear = newAge.eraYear;
+            eventBus.emit('era:achieved', { id: `era_${newAge.eraYear}`, eraYear: newAge.eraYear });
             eventBus.emit('toast:show', { text: `⏳ ${newAge.name} (Tahun ${newAge.eraYear}) dimulai!`, type: 'info' });
           } else {
             eventBus.emit('toast:show', { text: 'Hari baru: peta berubah mengikuti waktu dunia nyata.', type: 'info' });
@@ -557,7 +583,8 @@ export class SceneManager {
         pos,
         (x, y, z, pDist) => {
           this.camRig.addTrauma(Math.max(0.15, 0.85 - pDist * 0.02));
-          audioSystem.playSfx('meteor');
+          audioSystem.scheduleMeteor(pDist, x, y, z);
+          this.brukBody.notifyDisturbance(x, z, true);
           this.survival.applyMeteorHit(pDist);
           if (Math.random() < 0.7 && y > WATER_LEVEL) {
             this.chunks.spawnMeteorCrystal(x, y, z);
@@ -586,17 +613,73 @@ export class SceneManager {
       this.character.setSootAmount(gameState.sootLevel);
       this.camRig.updateGameplay(dt, this.engine.camera, pos, this.terrain, this.spatialHash);
       this.buildingGhost.update(this.terrain);
+      const ww = this.weather.getWeights();
+      const stormW = Math.min(1, ww.ash_storm + ww.acid_rain + ww.electrical_storm + ww.meteor_shower);
+      const todNow = this.sky.getTimeOfDay();
+      const isNightNow = todNow < 0.18 || todNow > 0.78;
       this.brukBody.update(dt, elapsed, {
         playerX: pos.x,
         playerZ: pos.z,
         camera: this.engine.camera,
         weather: this.weather.currentWeather,
+        stormWeight: stormW,
+        isNight: isNightNow,
         lowGfx: gameState.settings.graphics.preset === 'low',
+        onPlayerPush: (nx, nz) => {
+          this.controller.position.x = nx;
+          this.controller.position.z = nz;
+          gameState.playerPos.x = nx;
+          gameState.playerPos.z = nz;
+        },
       });
+      this.fauna.update(
+        dt,
+        this.terrain,
+        this.engine.camera,
+        pos.x,
+        pos.z,
+        this.appliedEdenSeed || gameState.worldSeed,
+        this.appliedEraYear,
+        this.currentWaterLevel,
+        gameState.settings.graphics.preset === 'low'
+      );
 
       if (this.lastBiomeSound !== this.survival.currentBiomeId) {
         this.lastBiomeSound = this.survival.currentBiomeId;
         audioSystem.setBiomeAmbience(this.survival.currentBiomeId);
+      }
+
+      this.engine.camera.getWorldPosition(_camPos);
+      this.engine.camera.getWorldDirection(_camFwd);
+      _camUp.set(0, 1, 0).applyQuaternion(this.engine.camera.quaternion);
+      audioSystem.updateListener(
+        _camPos.x,
+        _camPos.y,
+        _camPos.z,
+        _camFwd.x,
+        _camFwd.y,
+        _camFwd.z,
+        _camUp.x,
+        _camUp.y,
+        _camUp.z
+      );
+
+      const tod = this.sky.getTimeOfDay();
+      audioSystem.setEnvironmentState({
+        inShelter: this.survival.inShelter,
+        swimming: this.controller.swimming,
+        isNight: tod < 0.18 || tod > 0.78,
+        nearWater: this.survival.nearWater,
+        surface: this.survival.currentSurface,
+        hazard: this.survival.currentHazard,
+        activeEvent: this.activeEvent.type,
+        inMeteorDanger: this.meteors.isPlayerInDangerZone(pos.x, pos.z),
+      });
+
+      this.audioSpatialAccum += dt;
+      if (this.audioSpatialAccum >= 0.2) {
+        this.audioSpatialAccum = 0;
+        this.refreshSpatialAudioSources(_camPos.x, _camPos.y, _camPos.z, pos.x, pos.z);
       }
       audioSystem.updateAmbient(dt, this.weather.getWeights(), this.survival.currentBiomeId, this.weather.getWind().strength);
 
@@ -658,10 +741,16 @@ export class SceneManager {
       if (gameState.buildModeItem) {
         this.confirmBuildPlacement();
       } else {
-        const bag = findBagInRange(gameState.deathBags, this.controller.position.x, this.controller.position.z);
-        const nearest = bag
-          ? null
-          : this.chunks.findNearestInteractable(this.controller.position.x, this.controller.position.z);
+        const px = this.controller.position.x;
+        const pz = this.controller.position.z;
+        const bag = findBagInRange(gameState.deathBags, px, pz);
+        const nearest = bag ? null : this.chunks.findNearestInteractable(px, pz);
+        const canTalkBruk = !bag && this.brukBody.isTalkable(px, pz, this.controller.yaw);
+        const brukPos = this.brukBody.getWorldPos();
+        const preferWorldObj =
+          Boolean(nearest) &&
+          (!canTalkBruk || distance2D(px, pz, nearest!.x, nearest!.z) < distance2D(px, pz, brukPos.x, brukPos.z) - 0.5);
+
         if (bag) {
           this.animator.triggerInteract('gather');
           const all = pickUpBag(bag.id);
@@ -670,6 +759,13 @@ export class SceneManager {
             text: t(all ? 'survival.bagRecovered' : 'survival.bagPartial'),
             type: all ? 'success' : 'warn',
           });
+        } else if (canTalkBruk && !preferWorldObj) {
+          const todNow = this.sky.getTimeOfDay();
+          this.bruk.talk({
+            isNight: todNow < 0.18 || todNow > 0.78,
+            weather: this.weather.currentWeather,
+          });
+          this.brukBody.notifyTalk();
         } else if (nearest) {
           this.animator.triggerInteract(actionKindFor(nearest.kind, Boolean(getBestMiningToolId())));
           performInteraction(nearest, this.chunks, this.sky);
@@ -760,11 +856,16 @@ export class SceneManager {
       hazard: this.survival.currentHazard,
       biomeId: biome.id,
       activeEvent: this.activeEvent,
-      interactTarget: bagNear
-        ? { id: bagNear.id, actionKey: 'pickup_bag' }
-        : nearest
-          ? { id: nearest.id, actionKey: nearest.actionKey }
-          : null,
+      interactTarget: (() => {
+        if (bagNear) return { id: bagNear.id, actionKey: 'pickup_bag' };
+        const canTalkBruk = this.brukBody.isTalkable(p.x, p.z, this.controller.yaw);
+        const brukPos = this.brukBody.getWorldPos();
+        const preferWorldObj =
+          Boolean(nearest) &&
+          (!canTalkBruk || distance2D(p.x, p.z, nearest!.x, nearest!.z) < distance2D(p.x, p.z, brukPos.x, brukPos.z) - 0.5);
+        if (canTalkBruk && !preferWorldObj) return { id: 'bruk_npc', actionKey: 'talk_bruk' };
+        return nearest ? { id: nearest.id, actionKey: nearest.actionKey } : null;
+      })(),
       activeQuestId: quest.activeQuestId,
       questProgressText: quest.progressText,
       questsCompletedCount: gameState.completedQuests.length,
@@ -793,30 +894,152 @@ export class SceneManager {
       questGuide: guide
         ? { kind: guide.kind, dist: Math.round(guide.dist), relDeg: relativeBearingDeg(p.x, p.z, guide.x, guide.z, headingRad) }
         : null,
-      debug: {
-        fps: this.currentFps,
-        activeChunks: this.terrain.getActiveChunkCount(),
-        pendingChunks: this.terrain.getPendingChunkCount(),
-        drawCalls: this.engine.renderer.info.render.calls,
-        playerX: p.x,
-        playerY: p.y,
-        playerZ: p.z,
-        biomeId: biome.id,
-        hazard: this.survival.currentHazard,
-        wetness: gameState.wetness,
-        windSpeed: this.weather.getWind().strength,
-        weatherBlend: this.weather.getBlendSummary(),
-      },
+      debug: (() => {
+        const fTel = this.fauna.getTelemetry();
+        return {
+          fps: this.currentFps,
+          activeChunks: this.terrain.getActiveChunkCount(),
+          pendingChunks: this.terrain.getPendingChunkCount(),
+          drawCalls: this.engine.renderer.info.render.calls,
+          playerX: p.x,
+          playerY: p.y,
+          playerZ: p.z,
+          biomeId: biome.id,
+          hazard: this.survival.currentHazard,
+          wetness: gameState.wetness,
+          windSpeed: this.weather.getWind().strength,
+          weatherBlend: this.weather.getBlendSummary(),
+          faunaCount: fTel.activeCount,
+          faunaBuckets: fTel.bucketsSummary,
+          faunaAiMs: fTel.aiMs,
+        };
+      })(),
     };
 
     gameState.lastHudSnapshot = snap;
     eventBus.emit('hud:update', snap);
   }
 
+  private refreshSpatialAudioSources(lx: number, ly: number, lz: number, px: number, pz: number): void {
+    this.spatialSrcBuf.length = 0;
+
+    // 1. Lava (nearest point on lava river or Mount Hadean crater pool)
+    const rz = Math.max(-44, Math.min(24, pz));
+    const rx = getLavaRiverCenterX(rz);
+    const ry = Math.min(this.terrain.groundHeightAt(rx, rz), -0.4);
+    const dRiver = Math.hypot(rx - lx, ry - ly, rz - lz);
+    const dCrater = Math.hypot(VOLCANO_MAIN.x - lx, 12.2 - ly, VOLCANO_MAIN.z - lz);
+    if (dCrater < dRiver) {
+      this.spatialSlotLava.x = VOLCANO_MAIN.x;
+      this.spatialSlotLava.y = 12.2;
+      this.spatialSlotLava.z = VOLCANO_MAIN.z;
+      this.spatialSlotLava.distance = dCrater;
+    } else {
+      this.spatialSlotLava.x = rx;
+      this.spatialSlotLava.y = ry;
+      this.spatialSlotLava.z = rz;
+      this.spatialSlotLava.distance = dRiver;
+    }
+    this.spatialSrcBuf.push(this.spatialSlotLava);
+
+    // 2. Nearest geyser pool or water source from active chunks (+ geyser POI fallback)
+    let bestGeyserDist = Infinity;
+    let bestGeyserX = 0;
+    let bestGeyserY = 0;
+    let bestGeyserZ = 0;
+    let bestWaterDist = Infinity;
+    let bestWaterX = 0;
+    let bestWaterY = WATER_LEVEL;
+    let bestWaterZ = 0;
+
+    for (const item of this.chunks.interactables) {
+      if (item.depleted) continue;
+      if (item.kind === 'geyser_pool') {
+        const d = Math.hypot(item.x - lx, item.y - ly, item.z - lz);
+        if (d < bestGeyserDist) {
+          bestGeyserDist = d;
+          bestGeyserX = item.x;
+          bestGeyserY = item.y;
+          bestGeyserZ = item.z;
+        }
+      } else if (item.kind === 'water') {
+        const d = Math.hypot(item.x - lx, item.y - ly, item.z - lz);
+        if (d < bestWaterDist) {
+          bestWaterDist = d;
+          bestWaterX = item.x;
+          bestWaterY = item.y;
+          bestWaterZ = item.z;
+        }
+      }
+    }
+    if (!Number.isFinite(bestGeyserDist)) {
+      for (const poi of WORLD_POIS) {
+        if (poi.kind !== 'geyser' && poi.kind !== 'hot_spring') continue;
+        const d = Math.hypot(poi.x - lx, 0 - ly, poi.z - lz);
+        if (d < bestGeyserDist) {
+          bestGeyserDist = d;
+          bestGeyserX = poi.x;
+          bestGeyserY = this.terrain.groundHeightAt(poi.x, poi.z);
+          bestGeyserZ = poi.z;
+        }
+      }
+    }
+    if (Number.isFinite(bestGeyserDist)) {
+      this.spatialSlotGeyser.x = bestGeyserX;
+      this.spatialSlotGeyser.y = bestGeyserY;
+      this.spatialSlotGeyser.z = bestGeyserZ;
+      this.spatialSlotGeyser.distance = bestGeyserDist;
+      this.spatialSrcBuf.push(this.spatialSlotGeyser);
+    }
+
+    if (this.survival.nearWater) {
+      const shoreDist = Math.hypot(px - lx, WATER_LEVEL - ly, pz - lz);
+      if (shoreDist < bestWaterDist) {
+        bestWaterDist = shoreDist;
+        bestWaterX = px;
+        bestWaterY = WATER_LEVEL;
+        bestWaterZ = pz;
+      }
+    }
+    if (Number.isFinite(bestWaterDist)) {
+      this.spatialSlotWater.x = bestWaterX;
+      this.spatialSlotWater.y = bestWaterY;
+      this.spatialSlotWater.z = bestWaterZ;
+      this.spatialSlotWater.distance = bestWaterDist;
+      this.spatialSrcBuf.push(this.spatialSlotWater);
+    }
+
+    // 3. Nearest campfire
+    let bestCampDist = Infinity;
+    let bestCampX = 0;
+    let bestCampY = 0;
+    let bestCampZ = 0;
+    for (const s of gameState.placedStructures) {
+      if (s.type !== 'campfire_kit') continue;
+      const d = Math.hypot(s.x - lx, s.y - ly, s.z - lz);
+      if (d < bestCampDist) {
+        bestCampDist = d;
+        bestCampX = s.x;
+        bestCampY = s.y + 0.4;
+        bestCampZ = s.z;
+      }
+    }
+    if (Number.isFinite(bestCampDist)) {
+      this.spatialSlotCampfire.x = bestCampX;
+      this.spatialSlotCampfire.y = bestCampY;
+      this.spatialSlotCampfire.z = bestCampZ;
+      this.spatialSlotCampfire.distance = bestCampDist;
+      this.spatialSrcBuf.push(this.spatialSlotCampfire);
+    }
+
+    audioSystem.setSpatialSources(this.spatialSrcBuf);
+  }
+
   dispose(): void {
     this.loop.dispose();
     input.detach();
     this.unsubs.forEach((u) => u());
+    audioSystem.dispose();
     this.terrain?.dispose();
     this.sky?.dispose();
     this.landmarks?.dispose();
@@ -830,6 +1053,7 @@ export class SceneManager {
     multiplayer.leave();
     this.remotePlayers?.dispose();
     this.brukBody?.dispose();
+    this.fauna?.dispose();
     this.chunks?.dispose();
     this.engine.dispose();
   }

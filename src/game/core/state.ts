@@ -14,7 +14,7 @@ import { readStorage, writeStorage } from '../utils/storage';
 import { recommendGraphicsPreset } from '../utils/device';
 import { setLanguage } from '../utils/i18n';
 import { BALANCE } from '../data/balance';
-import type { BrukChoice } from '../data/bruk';
+import { createDefaultBrukMemory, type BrukChoice, type BrukMemory } from '../data/bruk';
 
 export interface InventorySlot {
   itemId: string;
@@ -109,6 +109,9 @@ export interface DebugTelemetry {
   wetness?: number;
   windSpeed?: number;
   weatherBlend?: string;
+  faunaCount?: number;
+  faunaBuckets?: string;
+  faunaAiMs?: number;
 }
 
 export interface HudSnapshot {
@@ -201,6 +204,12 @@ export interface RuntimeGameState {
   brukMoments: string[];
   /** Pilihan akhir bab 5 (null = belum memilih). */
   brukChoice: BrukChoice | null;
+  /** Ingatan Bruk terhadap aksi pemain (pelanggaran, hadiah, pertemuan terakhir). */
+  brukMemory: BrukMemory;
+  /** True sementara ketika Bruk trust 3–4 melindungi pemain dari badai di dekatnya. */
+  stormSanctuaryActive: boolean;
+  /** ID fauna yang terbunuh per chunk key -> waktu bermain (detik) saat terbunuh. */
+  killedFauna: Record<string, Record<string, number>>;
   activeStorageId: string | null;
   buildModeItem: StructureType | null;
   buildRotOffset: number;
@@ -297,6 +306,9 @@ export const gameState: RuntimeGameState = {
   journalUnlocked: ['j_basalt'],
   brukMoments: [],
   brukChoice: null,
+  brukMemory: createDefaultBrukMemory(),
+  stormSanctuaryActive: false,
+  killedFauna: {},
   activeStorageId: null,
   buildModeItem: null,
   buildRotOffset: 0,
@@ -381,7 +393,10 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
     gameState.journalUnlocked = ['j_basalt'];
     gameState.brukMoments = [];
     gameState.brukChoice = null;
+    gameState.brukMemory = createDefaultBrukMemory();
+    gameState.killedFauna = {};
   }
+  gameState.stormSanctuaryActive = false;
   gameState.activeStorageId = null;
   gameState.buildModeItem = null;
   gameState.buildRotOffset = 0;

@@ -56,6 +56,8 @@ export interface GameSettings {
     music: number;
     sfx: number;
     ambient: number;
+    spatialEnv: number; // 0 - 1 (3D environmental sound)
+    indoorMuffling: number; // 0 - 1 (indoor lowpass muffling)
     muted: boolean;
   };
   controls: {
@@ -93,7 +95,7 @@ export * from './data/recipes';
 export * from './data/quests';
 
 export const GAME_VERSION = '0.9.0-Archean';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const WORLD_RADIUS = 115; // Legacy starter landmark zone radius
 export const WORLD_HALF_EXTENT = 2048; // 4km x 4km open world (-2048..+2048)
 export const CHUNK_SIZE = 64;
@@ -150,6 +152,8 @@ export const DEFAULT_SETTINGS: GameSettings = {
     music: 0.45,
     sfx: 0.75,
     ambient: 0.6,
+    spatialEnv: 1.0,
+    indoorMuffling: 1.0,
     muted: false,
   },
   controls: {
