@@ -9,11 +9,13 @@ import {
   brukLevel,
   brukTrust,
   evaluateBruk,
+  sanitizeBrukChoice,
   sanitizeBrukMoments,
+  withEndingMoment,
   type BrukFacts,
 } from './data/bruk';
 
-const none: BrukFacts = { completedQuests: [], campfireCount: 0, hasShelter: false, stormSurvived: false, campaignComplete: false };
+const none: BrukFacts = { completedQuests: [], campfireCount: 0, hasShelter: false, stormSurvived: false, campaignComplete: false, brukChoice: null };
 const get = (d: unknown, key: string): unknown => key.split('.').reduce<unknown>((n, k) => (n as Record<string, unknown> | undefined)?.[k], d);
 
 test('tanpa fakta: tidak ada dialog, kepercayaan 0, tingkat 0', () => {
@@ -67,9 +69,30 @@ test('tingkat mengikuti ambang', () => {
   assert.equal(brukLevel(100), BRUK_LEVEL_THRESHOLDS.length - 1);
 });
 
-test('akhir cerita hanya saat kampanye selesai', () => {
+test('ending menunggu pilihan pemain: kampanye selesai saja tidak cukup', () => {
   const r = evaluateBruk([], { ...none, campaignComplete: true });
-  assert.ok(r.lines.includes('bruk.lines.ending'));
+  assert.ok(!r.moments.includes('ending'));
+  assert.ok(!r.lines.includes('bruk.lines.ending'));
+});
+
+test('withEndingMoment menandai ending sekali; setelahnya Bruk tidak mengulang dialog ending', () => {
+  const m = withEndingMoment(['first_fire']);
+  assert.deepEqual(m, ['first_fire', 'ending']);
+  assert.deepEqual(withEndingMoment(m), m);
+  const r = evaluateBruk(m, { ...none, campaignComplete: true, brukChoice: 'release' });
+  assert.ok(!r.lines.includes('bruk.lines.ending'));
+});
+
+test('sanitizeBrukChoice hanya menerima release/hold', () => {
+  assert.equal(sanitizeBrukChoice('release'), 'release');
+  assert.equal(sanitizeBrukChoice('hold'), 'hold');
+  assert.equal(sanitizeBrukChoice('xxx'), null);
+  assert.equal(sanitizeBrukChoice(undefined), null);
+});
+
+test('kepercayaan penuh hanya dengan ending', () => {
+  const noEnding = BRUK_MOMENTS.filter((m) => m.id !== 'ending').map((m) => m.id);
+  assert.ok(brukTrust(noEnding, 22) <= BRUK_MAX_TRUST);
 });
 
 test('sanitizeBrukMoments membuang id tak dikenal, duplikat, dan bukan-string', () => {
@@ -83,6 +106,10 @@ test('i18n: tiap momen dan petunjuk tingkat ada di id & en, tidak kosong', () =>
     'bruk.hintLabel',
     ...BRUK_MOMENTS.map((m) => `bruk.lines.${m.id}`),
     ...BRUK_LEVEL_THRESHOLDS.slice(1).map((_, i) => `bruk.hints.level${i + 1}`),
+    'bruk.choice.release.label',
+    'bruk.choice.release.reply',
+    'bruk.choice.hold.label',
+    'bruk.choice.hold.reply',
   ];
   for (const k of keys) {
     for (const [name, dict] of [['id', idDict], ['en', enDict]] as const) {

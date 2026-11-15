@@ -1223,13 +1223,23 @@
       "chapter_2": "Iron and obsidian. This world once had only fire. Now it has your hands. I do not yet know if that is better.",
       "chapter_3": "You forge, and something hisses in the embers like a voice I forgot long ago. Do not stop. I am not ready to remember it.",
       "chapter_4": "I hold back your years so someone has time to plant. Every day you live is a day I stole from the earth. I do not regret it. Not yet.",
-      "ending": "The seed is planted. Time moves again, and I let you go. You will age, then go out. I stay here and remember everything. That is the price, and I pay it."
+      "ending": "The seed is planted. Time can move again, or I can hold it once more. I am too tired to decide. You decide."
     },
     "hints": {
       "level1": "Water is not far from where you woke. Follow the steam.",
       "level2": "Crystals lie inside craters and at meteor sites. Look for red rings on the ground.",
       "level3": "Obsidian sits in black fissures near the volcano. Bring a gas filter.",
       "level4": "A roof shields nearby structures from storms. Raise your workbench beneath it."
+    },
+    "choice": {
+      "release": {
+        "label": "Release time",
+        "reply": "Very well. You will age, then go out. I stay here and remember everything. That is the price, and I pay it."
+      },
+      "hold": {
+        "label": "Hold time",
+        "reply": "You chose me. Then you will not age, and this world will not move on. I do not know if that is a gift or a curse. Stay."
+      }
     }
   }
 }

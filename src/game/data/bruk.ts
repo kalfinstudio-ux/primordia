@@ -19,6 +19,9 @@ export const BRUK_LEVEL_THRESHOLDS = [0, 10, 30, 55, 80] as const;
 /** Detik berlindung di shelter selama badai agar dihitung "selamat dari badai". */
 export const BRUK_STORM_SHELTER_SEC = 25;
 
+/** Pilihan akhir bab 5: Bruk melepas waktu (Adam & Hawa menua) atau menahannya lagi. */
+export type BrukChoice = 'release' | 'hold';
+
 export type BrukMomentId =
   | 'first_fire'
   | 'first_shelter'
@@ -64,6 +67,8 @@ export interface BrukFacts {
   /** Sudah bertahan satu badai di dalam shelter (dihitung oleh systems/bruk.ts). */
   stormSurvived: boolean;
   campaignComplete: boolean;
+  /** Pilihan akhir; `ending` baru terpenuhi setelah pemain memilih. */
+  brukChoice: BrukChoice | null;
 }
 
 export function isMomentMet(id: BrukMomentId, f: BrukFacts): boolean {
@@ -72,7 +77,7 @@ export function isMomentMet(id: BrukMomentId, f: BrukFacts): boolean {
     case 'fire_third': return f.campfireCount >= 3;
     case 'first_shelter': return f.hasShelter;
     case 'storm_survived': return f.stormSurvived;
-    case 'ending': return f.campaignComplete;
+    case 'ending': return f.campaignComplete && f.brukChoice !== null;
     default: {
       const lastQ = Object.keys(CHAPTER_LAST_QUEST).find((q) => CHAPTER_LAST_QUEST[q] === id);
       return !!lastQ && f.completedQuests.includes(lastQ);
@@ -126,6 +131,15 @@ export function evaluateBruk(prevMoments: readonly string[], facts: BrukFacts): 
   // Petunjuk hanya saat tingkat benar-benar naik karena momen baru (bukan sekadar memuat save lama).
   if (fresh.length > 0 && level > prevLevelBase && level >= 1) lines.push(`bruk.hints.level${level}`);
   return { moments, lines, trust, level };
+}
+
+export function sanitizeBrukChoice(raw: unknown): BrukChoice | null {
+  return raw === 'release' || raw === 'hold' ? raw : null;
+}
+
+/** Tandai momen `ending` saat pemain memilih (dipanggil dari layar kemenangan). */
+export function withEndingMoment(moments: readonly string[]): string[] {
+  return moments.includes('ending') ? [...moments] : [...moments, 'ending'];
 }
 
 /** Rapikan daftar momen dari save: hanya id dikenal, tanpa duplikat. */

@@ -1,8 +1,42 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v22: Bruk NPC tingkat 1, kepercayaan, dialog HUD; v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v23: pilihan akhir Bruk; v22: Bruk NPC tingkat 1, kepercayaan, dialog HUD; v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0k. Perubahan v23 — Pilihan akhir Bruk: lepaskan atau tahan waktu (15 Nov 2026) — logika teruji (tsx), UI BELUM diuji di browser
+
+Dikerjakan di atas repo terbaru (sudah memuat v22 Bruk + Shelter). `npm test` (dengan `@supabase/supabase-js` di-stub sementara) **178/178 lulus** (+7 tes baru di `bruk.test.ts`). `npm run lint`/`build` belum dijalankan untuk v23: jalankan di Codespace (file `.tsx` baru/diubah: `VictoryModal.tsx`).
+
+### Keputusan
+- Bab 5 berakhir dengan **pilihan pemain**, nada tetap BERAT. Bruk terlalu lelah memutuskan, jadi pemain yang memutuskan: **Lepaskan waktu** (Adam & Hawa akan menua lalu padam; Bruk mengingat sendirian) atau **Tahan waktu** (mereka tak menua, dunia tak beranjak; "hadiah atau kutukan, aku tidak tahu").
+
+### Yang berubah
+- `data/bruk.ts`: tipe `BrukChoice`, `sanitizeBrukChoice()`, `withEndingMoment()`; `BrukFacts.brukChoice`; momen `ending` kini terpenuhi hanya bila kampanye selesai DAN pilihan sudah dibuat.
+- `core/state.ts`: `gameState.brukChoice` (null = belum memilih). Dikosongkan di permainan baru, dipertahankan di New Game+ (Bruk ingat).
+- Save: `brukChoice` di `SaveData` (opsional, save lama aman), disanitasi saat memuat, ikut cloud (`world_state.brukChoice`, tanpa SQL baru).
+- `systems/bruk.ts`: `chooseBrukEnding(choice)` menyimpan pilihan, menandai momen `ending`, lalu `saveGame()`. Bila memuat save dengan kampanye selesai tapi belum memilih (mis. app ditutup di layar kemenangan), `BrukSystem` membuka lagi layar kemenangan.
+- `ui/VictoryModal.tsx`: sebelum memilih hanya ada dialog Bruk + 2 tombol (tombol Lanjutkan/New Game+/Menu Utama disembunyikan); setelah memilih tampil balasan Bruk lalu layar kemenangan lama.
+- i18n: `bruk.lines.ending` ditulis ulang jadi pertanyaan; baru `bruk.choice.{release,hold}.{label,reply}` (id & en).
+
+### Belum dikerjakan / diketahui
+- **Pilihan belum mengubah mekanik apa pun.** Umur abadi tetap berjalan di kedua pilihan. Ide konsekuensi nyata (butuh keputusan pemilik): "Lepaskan" → Bruk makin pendiam dan dunia berubah musim lebih jelas; "Tahan" → Bruk sesekali bicara soal dunia yang membeku. Hanya teks dulu.
+- Setelah memilih, dialog HUD Bruk tidak membedakan pilihan (belum ada baris lanjutan).
+- Kata "kalian" di balasan merujuk Adam & Hawa; pastikan terasa benar untuk pemain yang memakai satu karakter.
+- Layar kemenangan lama (skor, leaderboard) tidak diubah; skor tetap dikirim saat layar dibuka.
+
+### Cek manual v23
+- [ ] Selesaikan kampanye (atau set `campaignComplete` lewat save yang sudah di akhir): layar kemenangan menampilkan dialog Bruk + dua tombol saja.
+- [ ] Pilih "Lepaskan waktu": balasan Bruk tampil, lalu skor dan tiga tombol lama. Ulangi di save lain dengan "Tahan waktu".
+- [ ] Simpan, tutup, muat: pilihan tidak ditanyakan lagi; layar kemenangan tidak muncul sendiri.
+- [ ] Tutup app saat dialog pilihan masih terbuka, muat lagi: layar kemenangan muncul kembali sampai memilih.
+- [ ] HP 390×844 dan 844×390: tombol terjangkau tanpa menggulir; teks terbaca.
+- [ ] New Game+: pilihan lama dipertahankan, tidak ditanya lagi sampai kampanye baru selesai.
+
+### Langkah berikutnya yang disarankan
+1. Konsekuensi mekanik/atmosfer untuk tiap pilihan (butuh keputusan pemilik).
+2. Hadiah mekanik per tingkat kepercayaan (setelah simulasi keseimbangan).
+3. Tingkat 2: model 3D Bruk di kawah pertama.
 
 ## 0j. Perubahan v22 — Bruk jadi NPC tingkat 1: suara, kepercayaan, dialog HUD (15 Nov 2026) — logika teruji (tsx), UI BELUM diuji di browser
 

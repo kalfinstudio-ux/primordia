@@ -1,7 +1,8 @@
 import { type WeatherType } from '../config';
 import { eventBus } from '../core/eventBus';
-import { gameState } from '../core/state';
-import { BRUK_STORM_SHELTER_SEC, evaluateBruk, type BrukFacts } from '../data/bruk';
+import { gameState, setScreen } from '../core/state';
+import { BRUK_STORM_SHELTER_SEC, evaluateBruk, withEndingMoment, type BrukChoice, type BrukFacts } from '../data/bruk';
+import { saveGame } from './saveLoad';
 import { distance2D } from '../utils/math';
 
 const STORMS: ReadonlySet<WeatherType> = new Set<WeatherType>(['ash_storm', 'acid_rain', 'electrical_storm', 'meteor_shower']);
@@ -58,7 +59,13 @@ export class BrukSystem {
       hasShelter: gameState.placedStructures.some((s) => s.type === 'basic_shelter'),
       stormSurvived: this.stormSurvived || gameState.brukMoments.includes('storm_survived'),
       campaignComplete: gameState.campaignComplete,
+      brukChoice: gameState.brukChoice,
     };
+    // Kampanye selesai tetapi pemain belum memilih (mis. app ditutup di layar kemenangan): tanyakan lagi.
+    if (gameState.campaignComplete && gameState.brukChoice === null) {
+      setScreen('victory');
+      return;
+    }
     const res = evaluateBruk(gameState.brukMoments, facts);
     if (res.moments.length !== gameState.brukMoments.length) {
       gameState.brukMoments = res.moments;
@@ -67,4 +74,12 @@ export class BrukSystem {
       }
     }
   }
+}
+
+/** Dipanggil layar kemenangan saat pemain memilih nasib waktu. Menyimpan pilihan dan menandai momen `ending`. */
+export function chooseBrukEnding(choice: BrukChoice): void {
+  if (gameState.brukChoice !== null) return;
+  gameState.brukChoice = choice;
+  gameState.brukMoments = withEndingMoment(gameState.brukMoments);
+  saveGame();
 }

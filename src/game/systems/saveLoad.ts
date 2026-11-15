@@ -1,4 +1,4 @@
-import { sanitizeBrukMoments } from '../data/bruk';
+import { sanitizeBrukChoice, sanitizeBrukMoments, type BrukChoice } from '../data/bruk';
 import { buildAwayReport, resolveAwayWindow, sanitizeBornAt } from '../data/eden';
 import { fetchAwaySeconds, startPresenceHeartbeat } from '../net/presence';
 import { setAwayReport } from './awayReport';
@@ -38,6 +38,7 @@ export interface SaveData {
   wisdomPerks?: string[];
   journalUnlocked: string[];
   brukMoments?: string[];
+  brukChoice?: BrukChoice | null;
   campaignComplete: boolean;
   waterCollectedCount: number;
   crystalsExtractedCount: number;
@@ -140,6 +141,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     wisdomPerks: Array.isArray(raw.wisdomPerks) ? (raw.wisdomPerks as string[]) : [],
     journalUnlocked: Array.isArray(raw.journalUnlocked) ? (raw.journalUnlocked as string[]) : ['j_basalt'],
     brukMoments: sanitizeBrukMoments(raw.brukMoments),
+    brukChoice: sanitizeBrukChoice(raw.brukChoice),
     campaignComplete: Boolean(raw.campaignComplete),
     waterCollectedCount: Number(raw.waterCollectedCount) || 0,
     crystalsExtractedCount: Number(raw.crystalsExtractedCount) || 0,
@@ -184,6 +186,7 @@ export function buildCurrentSaveSnapshot(): SaveData {
     wisdomPerks: [...gameState.wisdomPerks],
     journalUnlocked: [...gameState.journalUnlocked],
     brukMoments: [...gameState.brukMoments],
+    brukChoice: gameState.brukChoice,
     campaignComplete: gameState.campaignComplete,
     waterCollectedCount: gameState.waterCollectedCount,
     crystalsExtractedCount: gameState.crystalsExtractedCount,
@@ -333,6 +336,7 @@ export function applySaveDataToState(raw: SaveData): void {
   gameState.wisdomPerks = [...(data.wisdomPerks || [])];
   gameState.journalUnlocked = [...data.journalUnlocked];
   gameState.brukMoments = sanitizeBrukMoments(data.brukMoments);
+  gameState.brukChoice = sanitizeBrukChoice(data.brukChoice);
   gameState.campaignComplete = data.campaignComplete;
   gameState.waterCollectedCount = data.waterCollectedCount;
   gameState.crystalsExtractedCount = data.crystalsExtractedCount;

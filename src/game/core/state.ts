@@ -14,6 +14,7 @@ import { readStorage, writeStorage } from '../utils/storage';
 import { recommendGraphicsPreset } from '../utils/device';
 import { setLanguage } from '../utils/i18n';
 import { BALANCE } from '../data/balance';
+import type { BrukChoice } from '../data/bruk';
 
 export interface InventorySlot {
   itemId: string;
@@ -192,6 +193,8 @@ export interface RuntimeGameState {
   journalUnlocked: string[];
   /** Momen Bruk yang sudah diucapkan (lihat data/bruk.ts). Kepercayaan dihitung dari ini + misi selesai. */
   brukMoments: string[];
+  /** Pilihan akhir bab 5 (null = belum memilih). */
+  brukChoice: BrukChoice | null;
   activeStorageId: string | null;
   buildModeItem: StructureType | null;
   buildRotOffset: number;
@@ -283,6 +286,7 @@ export const gameState: RuntimeGameState = {
   achievements: readStorage<string[]>('achievements', []),
   journalUnlocked: ['j_basalt'],
   brukMoments: [],
+  brukChoice: null,
   activeStorageId: null,
   buildModeItem: null,
   buildRotOffset: 0,
@@ -363,6 +367,7 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
     gameState.wisdomPerks = [];
     gameState.journalUnlocked = ['j_basalt'];
     gameState.brukMoments = [];
+    gameState.brukChoice = null;
   }
   gameState.activeStorageId = null;
   gameState.buildModeItem = null;

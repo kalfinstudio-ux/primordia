@@ -35,6 +35,7 @@ export async function saveToCloud(snapshot: SaveData): Promise<boolean> {
           wisdomPerks: snapshot.wisdomPerks,
           journalUnlocked: snapshot.journalUnlocked,
           brukMoments: snapshot.brukMoments,
+          brukChoice: snapshot.brukChoice,
           campaignComplete: snapshot.campaignComplete,
           waterCollectedCount: snapshot.waterCollectedCount,
           crystalsExtractedCount: snapshot.crystalsExtractedCount,

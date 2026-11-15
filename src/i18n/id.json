@@ -1223,13 +1223,23 @@
       "chapter_2": "Besi dan obsidian. Dulu bumi ini hanya punya api. Sekarang punya tanganmu. Aku belum tahu itu lebih baik.",
       "chapter_3": "Kau menempa, dan ada yang berdesis di dalam bara seperti suara yang sudah lama kulupakan. Jangan berhenti. Aku belum siap mengingatnya.",
       "chapter_4": "Aku menahan umurmu supaya ada yang sempat menanam. Tiap hari yang kau lewati adalah hari yang kucuri dari bumi. Aku tidak menyesal. Belum.",
-      "ending": "Benih sudah tertanam. Waktu bergerak lagi, dan aku melepasmu. Kau akan menua, lalu padam. Aku tetap di sini mengingat semuanya. Itu harganya, dan aku membayarnya."
+      "ending": "Benih sudah tertanam. Waktu bisa bergerak lagi, atau kutahan sekali lagi. Aku sudah terlalu lelah untuk memutuskan. Kau yang putuskan."
     },
     "hints": {
       "level1": "Mata air tak jauh dari tempatmu bangun. Ikuti uapnya.",
       "level2": "Kristal ada di dalam kawah dan di bekas meteor. Cari cincin merah di tanah.",
       "level3": "Obsidian ada di retakan hitam dekat gunung. Bawa filter gas.",
       "level4": "Atap menahan badai bagi bangunan di sekitarnya. Dirikan bengkelmu di bawahnya."
+    },
+    "choice": {
+      "release": {
+        "label": "Lepaskan waktu",
+        "reply": "Baik. Kalian akan menua, lalu padam. Aku tetap di sini dan mengingat semuanya. Itu harganya, dan aku membayarnya."
+      },
+      "hold": {
+        "label": "Tahan waktu",
+        "reply": "Kau memilih aku. Maka kalian tak akan menua, dan dunia ini tak akan beranjak. Aku tidak tahu apakah itu hadiah atau kutukan. Tinggallah."
+      }
     }
   }
 }
