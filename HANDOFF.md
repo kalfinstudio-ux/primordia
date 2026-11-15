@@ -6,7 +6,7 @@ Terakhir diperbarui: 15 November 2026 (v23: pilihan akhir Bruk; v22: Bruk NPC ti
 
 ## 0l. Perubahan v24 — Bruk tingkat 2: wujud 3D di dunia (15 Nov 2026) — SEDANG DIKERJAKAN
 
-**Status tahap:** M1 selesai (model + pratinjau, BELUM dilihat di three.js) · M2 selesai · M3, M4, M5 belum.
+**Status tahap:** M1 selesai (model + pratinjau, BELUM dilihat di three.js) · M2 selesai · M3 selesai di kode (BELUM dilihat di browser; lihat M3) · M4, M5 belum.
 
 ### M1 — Model dan pratinjau (SELESAI; model dinilai lewat render buatan sendiri, BUKAN three.js/browser)
 - **Keputusan jalur: .glb dibuat skrip Python (numpy saja)**, bukan geometri dari kode TS. Alasan: pola yang sama sudah dipakai `make_character.py` (tanpa Blender/internet), hasilnya bisa diperiksa tanpa menjalankan game, dan anggaran ukuran/segitiga bisa dijaga oleh tes CI. Biayanya: satu berkas ±215 KB yang dimuat sekali lewat `GLTFLoader` (jalur sudah ada untuk karakter).
@@ -30,6 +30,31 @@ Terakhir diperbarui: 15 November 2026 (v23: pilihan akhir Bruk; v22: Bruk NPC ti
 - Tidak ada field save baru. Tidak ada perubahan peta/balance/SQL/multiplayer.
 - Tes: `tsx --test src/game/brukBehavior.test.ts` 30/30 lulus; tipe strict file logika bersih. Seluruh `src/game/*.test.ts`: 170 lulus, 3 gagal (`audit`, `balance`, `stage2`) HANYA karena `@supabase/supabase-js` tidak terpasang di lingkungan ini (terjadi juga tanpa file baru); jalankan `npm test` di Codespace untuk angka resmi.
 - **Belum dijalankan:** `npm run lint`, `npm run build`, apa pun di browser.
+
+### M3 — Bruk muncul di dunia (SELESAI di kode; BELUM dilihat di three.js/browser)
+- Baru: `src/game/data/brukWorld.ts` (logika murni, 8 tes di `brukWorld.test.ts`), `src/game/world/brukBody.ts` (memuat `primordia_bruk.glb`, memetakan pose M2 ke node), dan 7 baris di `scenes/SceneManager.ts` (konstruksi+muat, `reset` di `enterWorld`, `setVisible(false)` di menu, `update` di frame bermain, `dispose`). Dipasang oleh `tools/apply-bruk-m3.py`.
+- **Rumah:** lereng luar Kawah Kristal, 16 m dari pusat (38, −22), titik paling landai di sisi yang menghadap spawn awal (0, 18); deterministik (tidak berpindah antar sesi). Menatap kawah saat tak ada pemain di dekatnya. Collider 1,3 m (`kind: 'poi'`, id `bruk_body`): pemain tidak bisa menembus.
+- **Tingkat** mengikuti `brukLevel(brukTrust(...))` (dihitung tiap 0,5 dtk, ditampilkan lewat `smoothLevel`). Pose (watch/recoil/sit/guard) dari `brukPose` + `smoothPose` sesuai kontrak node/material M1.
+- **Bergerak:** ke titik duduk (3,4 m dari api terdekat, bila momen `fire_third`) atau ke pintu shelter (3,6 m; badai + pemain di dalam shelter), 2,6 m/dtk, dengan ayunan kaki dan badan menghadap arah jalan; kembali ke rumah bila mode berakhir. **Recoil hanya untuk api pertama yang disaksikan** (transisi 0→1 selama sesi; save yang sudah punya api tidak memicunya).
+- **Biaya:** selang pembaruan animasi dari `brukUpdateInterval` (jauh/di luar layar/grafis rendah lebih jarang; pose menyusul sekali jalan saat kembali terlihat); disembunyikan >120 m dan di menu. Bila model gagal dimuat, game jalan terus (dialog tingkat 1 tetap bekerja).
+- **Verifikasi (jujur):** `tsx --test src/game/*.test.ts` 222/222 lulus (supabase di-stub sementara). Selain itu `BrukBody` dijalankan headless 10 skenario (tampil di tanah, tingkat naik bertahap, menoleh, recoil api pertama, duduk dekat api, berjaga saat badai, sembunyi >120 m, di luar layar, NaN, reset/dispose) memakai **three PALSU yang membaca pohon node GLB asli**. Itu menguji logika dan kontrak nama, BUKAN pemakaian API three yang sebenarnya dan BUKAN tampilan. `npm run lint`/`build` belum dijalankan.
+- **Diketahui / risiko:**
+  - Bruk berjalan lurus ke target tanpa mencari jalan: bisa menembus batu/kristal/bangunan dan melewati air dangkal; ketinggian hanya mengikuti medan.
+  - Pemain terblok tubuh Bruk, tetapi Bruk tidak terblok pemain.
+  - Tidak ada tombol E untuk bicara (dialog tetap dipicu momen, tingkat 1).
+  - Kekurangan visual M1 (tangan/kaki kotak, retakan seperti coretan, profil taring tingkat 1) belum disentuh — itu M4, setelah dilihat di browser.
+  - Frame pertama saat model muncul bisa tersendat sedikit (kompilasi shader).
+- **Cek manual M3 (Codespace/HP):**
+  - [ ] Permainan baru: jalan ke arah (38, −22) (peta/kompas); Bruk berdiri di lereng luar kawah, tidak melayang/tenggelam, menatap kawah.
+  - [ ] Dekati (<40 m): kepala menoleh; di tingkat 0 badan membelakangi. Skala ±3,3 m terasa pas (tidak menutupi kawah/kamera).
+  - [ ] Coba tembus tubuhnya: tertahan.
+  - [ ] Pasang api pertama di dekatnya (<40 m): ia mengerut dan mundur ±7 dtk lalu normal. Muat save yang sudah punya api: tidak mengerut.
+  - [ ] Naikkan kepercayaan (selesaikan misi / edit `brukMoments` di save): retakan menyala bertahap, tangan terbuka di tingkat 4. Perhatikan apakah mulut terlalu terang di tingkat 3–4.
+  - [ ] Tingkat ≥ momen `fire_third` + api: ia berjalan ke api dan duduk; kakinya tidak menembus tanah.
+  - [ ] Badai + masuk shelter: ia berjaga di dekat pintu.
+  - [ ] Grafis rendah di HP: FPS tidak turun terasa saat Bruk terlihat; menjauh >120 m menghilang.
+  - [ ] Keluar ke menu lalu Lanjutkan: Bruk tidak terduplikasi, tidak muncul di menu.
+  - [ ] Matikan jaringan / hapus `primordia_bruk.glb` sementara: game tetap jalan, konsol memberi peringatan `[Bruk] model 3D gagal dimuat`.
 
 ## 0k. Perubahan v23 — Pilihan akhir Bruk: lepaskan atau tahan waktu (15 Nov 2026) — logika teruji (tsx), UI BELUM diuji di browser
 

@@ -19,6 +19,7 @@ import { WeatherSystem } from '../world/weather';
 import { MeteorSystem } from '../world/meteors';
 import { ChunkManager } from '../world/chunkManager';
 import { RemotePlayersSystem } from '../world/remotePlayers';
+import { BrukBody } from '../world/brukBody';
 import { multiplayer } from '../net/multiplayer';
 import type { AnimState } from '../net/multiplayerProtocol';
 import { VOLCANO_MAIN, getBiomeAt } from '../world/biomes';
@@ -74,6 +75,7 @@ export class SceneManager {
   private meteors!: MeteorSystem;
   private chunks!: ChunkManager;
   private remotePlayers!: RemotePlayersSystem;
+  private brukBody!: BrukBody;
   private buildingGhost!: BuildingGhostSystem;
   private character!: CharacterRig;
   private glbHandle: GlbExplorerHandle | null = null;
@@ -174,6 +176,8 @@ export class SceneManager {
     this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash);
     this.buildingGhost = new BuildingGhostSystem(this.engine.scene, this.assets.contactShadowTexture);
     this.remotePlayers = new RemotePlayersSystem(this.engine.scene, this.assets.contactShadowTexture);
+    this.brukBody = new BrukBody(this.engine.scene, this.spatialHash);
+    void this.brukBody.load();
 
     this.character = createExplorerCharacter(gameState.avatar, this.assets.contactShadowTexture);
     this.character.root.visible = false;
@@ -217,6 +221,7 @@ export class SceneManager {
     this.camRig.updateGameplay(0.016, this.engine.camera, this.controller.position, this.terrain, this.spatialHash);
     this.autosaveAccum = 0;
     this.bruk.reset();
+    this.brukBody.reset(this.terrain);
     multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed));
     this.emitHudSnapshot();
     this.engine.render();
@@ -237,6 +242,7 @@ export class SceneManager {
   enterMenuFlyover(): void {
     if (!this.ready) return;
     this.character.root.visible = false;
+    this.brukBody.setVisible(false);
     multiplayer.leave();
     this.remotePlayers.clear();
     this.camRig.updateMenuFlyover(0, this.engine.camera);
@@ -486,6 +492,13 @@ export class SceneManager {
       this.character.setSootAmount(gameState.sootLevel);
       this.camRig.updateGameplay(dt, this.engine.camera, pos, this.terrain, this.spatialHash);
       this.buildingGhost.update(this.terrain);
+      this.brukBody.update(dt, elapsed, {
+        playerX: pos.x,
+        playerZ: pos.z,
+        camera: this.engine.camera,
+        weather: this.weather.currentWeather,
+        lowGfx: gameState.settings.graphics.preset === 'low',
+      });
 
       if (this.lastBiomeSound !== this.survival.currentBiomeId) {
         this.lastBiomeSound = this.survival.currentBiomeId;
@@ -717,6 +730,7 @@ export class SceneManager {
     this.buildingGhost?.dispose();
     multiplayer.leave();
     this.remotePlayers?.dispose();
+    this.brukBody?.dispose();
     this.chunks?.dispose();
     this.engine.dispose();
   }
