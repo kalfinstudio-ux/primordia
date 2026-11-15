@@ -12,7 +12,7 @@ import {
 } from './data/balance';
 import { stepPlayerWetness } from './data/survivalRates';
 import { createInitialVitals, gameState, resetRunState, type DeathBag } from './core/state';
-import { ITEMS, RECIPES } from './config';
+import { DEFAULT_AVATAR, ITEMS, RECIPES } from './config';
 import { computeHazardState, isSuffocating, stepVitals, type SurvivalEnvironment } from './player/stats';
 import { findNearestCleanAir, findNearestHeatSource, isCleanAirAt, pickRespawnPoint, relativeBearingDeg } from './systems/cleanAir';
 import { dropInventoryAsBag, findBagInRange, mergeBagIntoInventory, mergeSlots } from './systems/deathBag';
@@ -438,7 +438,7 @@ test('perlindungan bangkit 60 detik menahan bahaya lingkungan & resetRunState me
   assert.equal(after.health, 100, 'perlindungan bangkit 60 dtk menahan damage lingkungan');
   assert.ok(after.respawnGraceTimer < 51 && after.respawnGraceTimer > 49);
 
-  resetRunState('new-game-test', 'explorer');
+  resetRunState('new-game-test', DEFAULT_AVATAR);
   assert.ok(gameState.inventory.some((s) => s.itemId === 'campfire_kit' && s.qty >= 1));
   assert.equal(gameState.hotbarItemIds[4], 'campfire_kit');
 });
