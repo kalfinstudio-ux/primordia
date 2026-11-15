@@ -13,10 +13,9 @@ import { pushCloudSettings } from '../game/net/settingsSync';
 import { clearAllGameStorage, writeStorage } from '../game/utils/storage';
 import { eventBus } from '../game/core/eventBus';
 import { t } from '../game/utils/i18n';
-import { ExitGameButton } from './ExitGameButton';
 import { ConfirmDialog } from './ConfirmDialog';
-import { GameInfoPanel } from './GameInfoPanel';
 import { usePWAInstall } from './pwaInstall';
+import { InfoPanel } from './InfoPanel';
 
 type TabId = 'graphics' | 'audio' | 'controls' | 'gameplay' | 'language' | 'account' | 'info';
 
@@ -220,20 +219,10 @@ export function SettingsScreen() {
                 label={t('settings.joystickSize')}
                 valueText={`${Math.round(draft.controls.joystickSize * 100)}%`}
                 min={0.8}
-                max={1.8}
+                max={1.4}
                 step={0.1}
                 value={draft.controls.joystickSize}
                 onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, joystickSize: v } })}
-              />
-              <SliderRow
-                id="action-size"
-                label={t('settings.actionSize')}
-                valueText={`${Math.round((draft.controls.actionSize ?? 1.15) * 100)}%`}
-                min={0.8}
-                max={1.8}
-                step={0.05}
-                value={draft.controls.actionSize ?? 1.15}
-                onChange={(v) => applyAndSave({ ...draft, controls: { ...draft.controls, actionSize: v } })}
               />
               <SliderRow
                 id="hud-scale"
@@ -365,6 +354,8 @@ export function SettingsScreen() {
             </div>
           )}
 
+          {tab === 'info' && <InfoPanel />}
+
           {tab === 'language' && (
             <div className="space-y-3">
               <div className="text-sm font-medium text-stone-300">{t('settings.languageLabel')}</div>
@@ -391,8 +382,6 @@ export function SettingsScreen() {
               </div>
             </div>
           )}
-
-          {tab === 'info' && <GameInfoPanel showProgress={gameState.previousScreen === 'pause'} />}
 
           {tab === 'account' && (
             <div className="space-y-3">
@@ -422,14 +411,6 @@ export function SettingsScreen() {
 
               <button
                 type="button"
-                onClick={() => setScreen('assets')}
-                className="min-h-[44px] w-full rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-left text-sm font-medium text-stone-200 hover:bg-stone-800"
-              >
-                {t('menu.assets')}
-              </button>
-
-              <button
-                type="button"
                 onClick={() => {
                   gameState.onboardingDone = false;
                   writeStorage('onboarding_done', false);
@@ -455,8 +436,6 @@ export function SettingsScreen() {
               >
                 {t('settings.clearLocalData')}
               </button>
-
-              <ExitGameButton saveFirst={gameState.previousScreen === 'pause'} />
             </div>
           )}
         </div>

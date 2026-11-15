@@ -2,7 +2,7 @@
   "app": {
     "title": "PRIMORDIA",
     "subtitle": "Survive Primordial Earth",
-    "version": "Version 0.9.0-Archean"
+    "version": "Version 0.8.0-Archean"
   },
   "tips": [
     "Approach steaming shallow pools to refill water before dehydration sets in.",
@@ -24,8 +24,6 @@
     "finish": "Enter Main Menu",
     "slide1Title": "Early Earth: Hadean – Archean Eras",
     "slide1Body": "No plants, no animals, no other humans exist yet. Only bare basalt plains, steaming shallow oceans, sulfur vents, obsidian fields, meteor showers, and active volcanoes across a 4 km world.",
-    "slideBrukTitle": "Bruk, the Basalt Warden",
-    "slideBrukBody": "Before people, there was Bruk: the basalt warden who woke in the first crater. He keeps the planet's clock: the sky follows the real time, the seasons turn and the world keeps running while you are away. He chose the first two survivors, Adam and Eve, and holds their bodies back from ageing so someone has time to plant the seed of life. Bruk is no friend. He watches, scowls, then quietly helps: every mission you finish calms him a little.",
     "slide2Title": "Explorer Controls",
     "slide2Body": "Desktop: WASD move, Mouse orbit camera, Space jump, Shift sprint, E interact, I inventory, B build, M map, J journal, F3 debug. Mobile: multi-touch joystick & action buttons in portrait or landscape.",
     "slide3Title": "Survival & Tech Progression",
@@ -37,6 +35,7 @@
   "menu": {
     "continue": "Continue",
     "newGame": "New Game",
+    "loadGame": "Load Game",
     "settings": "Settings",
     "credits": "Credits",
     "account": "Account & Cloud",
@@ -47,43 +46,22 @@
     "assets": "3D Asset Gallery"
   },
   "auth": {
-    "title": "Explorer Account",
-    "subtitle": "Sign in to save your progress and continue on any device, or play offline as a guest.",
+    "title": "Account & Cloud Sync",
+    "subtitle": "Sign in with Supabase to sync saves across devices, or play fully offline as a guest.",
     "email": "Email",
     "password": "Password",
     "signIn": "Sign In",
     "signUp": "Create Account",
-    "magicLink": "Email Me a Sign-in Link",
+    "magicLink": "Send Magic Link",
     "google": "Continue with Google",
     "continueGuest": "Continue as Guest (Offline)",
     "signOut": "Sign Out",
-    "notConfigured": "Accounts are unavailable right now. You can still play as a guest.",
-    "magicSent": "Sign-in link sent. Check your inbox.",
+    "notConfigured": "Supabase is not configured in environment. Local Guest Mode is active.",
+    "magicSent": "Magic login link sent to your email.",
     "authSuccess": "Signed in successfully.",
-    "or": "or",
-    "busy": "Please wait…",
-    "signUpConfirm": "Account created. Check your email to confirm, then sign in.",
-    "errors": {
-      "generic": "Something went wrong. Please try again shortly.",
-      "unavailable": "Accounts are unavailable right now. You can still play as a guest.",
-      "invalidCredentials": "Incorrect email or password.",
-      "confirmEmail": "Email not confirmed yet. Check your inbox.",
-      "exists": "This email is already registered. Please sign in.",
-      "weakPassword": "Password is too weak. Use at least 6 characters.",
-      "rateLimit": "Too many attempts. Wait a moment and try again.",
-      "providerOff": "This sign-in method isn't enabled yet.",
-      "network": "Can't connect. Check your internet connection.",
-      "invalidEmail": "Invalid email format.",
-      "emailRequired": "Enter your email first.",
-      "passwordRequired": "Enter your password."
-    },
-    "back": "Back",
-    "base44": "Sign in with Base44",
-    "base44NoCloud": "Base44 sign-in is for your profile name only. Cloud saves and the leaderboard use another account."
+    "back": "Back"
   },
   "newGame": {
-    "overwriteTitle": "Overwrite Save?",
-    "overwriteBody": "You already have a save. Starting a new game will overwrite it and the old progress will be lost. Continue?",
     "title": "Prepare New Expedition",
     "explorerName": "Explorer Name",
     "defaultName": "Arka-01",
@@ -129,16 +107,24 @@
       "female": "Female"
     }
   },
-  "save": {
+  "loadGame": {
+    "title": "Load Saved Expedition",
+    "empty": "No local or cloud saves found yet.",
+    "slot": "Slot",
     "local": "Local",
     "cloud": "Cloud",
-    "conflictTitle": "Device and Cloud Saves Differ",
-    "conflictBody": "The save on this device differs from your cloud save. Pick one to continue from; the other will be overwritten.",
-    "keepLocal": "Continue from This Device",
-    "keepCloud": "Continue from Cloud",
-    "legacyTitle": "Choose Your Save",
-    "legacyBody": "The game now uses a single autosave (no Slot 1/2/3). This device still has several old saves. Pick one to continue; the others will be deleted.",
-    "legacyNewest": "(newest)"
+    "playtime": "Playtime",
+    "seed": "Seed",
+    "load": "Load",
+    "delete": "Delete",
+    "confirmDeleteTitle": "Delete Save Slot?",
+    "confirmDeleteBody": "This save slot will be permanently removed.",
+    "back": "Back",
+    "conflictTitle": "Cloud Save Conflict Detected",
+    "conflictBody": "Your local save and cloud save for this slot differ. Choose which progress to keep.",
+    "keepLocal": "Keep Local",
+    "keepCloud": "Keep Cloud",
+    "keepBoth": "Keep Both (Save Local to Slot 3)"
   },
   "settings": {
     "title": "Settings",
@@ -149,7 +135,7 @@
       "gameplay": "Gameplay",
       "language": "Language",
       "account": "Account & Data",
-      "info": "Game Info"
+      "info": "Guide & Info"
     },
     "preset": "Quality Preset",
     "presets": {
@@ -167,7 +153,6 @@
     "ambientVol": "World Ambience",
     "sensitivity": "Camera Sensitivity",
     "joystickSize": "Touch Joystick Size",
-    "actionSize": "Touch Action Button Size",
     "hudScale": "HUD Scale",
     "buttonOpacity": "Touch Button Opacity",
     "handMode": "Touch Layout",
@@ -207,7 +192,6 @@
     "lowOxygen": "Oxygen running low! Follow the green arrow to clean air or use a Gas Filter.",
     "suffocating": "You are gasping — health will start dropping soon!",
     "bagRecovered": "Item bag recovered.",
-    "bagFull": "Bag full — free up some space first.",
     "bagPartial": "Inventory full — some items are still left in the bag.",
     "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar.",
     "autoFilter": "Gas Filter equipped automatically — oxygen almost gone.",
@@ -258,7 +242,6 @@
       "sheltered": "Sheltered"
     },
     "interact": "Press [E] to",
-    "interactTouch": "Tap ACT to",
     "actions": {
       "pickup_bag": "Pick Up Item Bag",
       "gather_rock": "Gather Basalt & Clay",
@@ -276,9 +259,7 @@
       "collect_rain": "Collect Condensed Water",
       "use_beacon": "Open Fast-Travel Map",
       "seed_pool": "Deposit Seed of Life",
-      "rest_shelter": "Rest & Sleep in Shelter",
-      "rest_slept": "You slept until morning. Energy and health restored.",
-      "rest_fresh": "You feel fine. Sleeping in a shelter only works at night."
+      "rest_shelter": "Rest & Sleep in Shelter"
     },
     "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",
@@ -311,17 +292,7 @@
       "meteor": "Meteor crater"
     },
     "questGuideLabel": "Mission",
-    "socialBtn": "Friends",
-    "nearby": {
-      "title": "Nearby players",
-      "none": "No players nearby",
-      "off": "Online off",
-      "connecting": "Connecting…",
-      "alone": "Alone in this world",
-      "count": "{n} nearby",
-      "nearest": "nearest"
-    },
-    "waypointHint": "Waypoint"
+    "socialBtn": "Friends"
   },
   "map": {
     "title": "Primordial Survey Map (4 km × 4 km)",
@@ -331,22 +302,10 @@
     "beacon": "Fast-Travel Beacon",
     "poi": "Point of Interest",
     "waypoint": "Custom Waypoint",
-    "clickHint": "Tap the map to place a waypoint. Drag to pan, pinch or mouse wheel to zoom. Tap a Beacon or point of interest for details.",
+    "clickHint": "Click/Tap terrain on the map to place a waypoint. Click a Beacon to fast-travel.",
     "fastTravel": "Fast-Travel Here",
     "clearWaypoint": "Clear Waypoint",
-    "discoveredChunks": "Explored Sectors",
-    "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out",
-    "centerPlayer": "To my position",
-    "fullWorld": "Whole world",
-    "unknownPoi": "Unknown signal",
-    "unknownPoiHint": "Get within about 40 m to reveal it.",
-    "markThis": "Set as Waypoint",
-    "distance": "Distance",
-    "waypointReached": "Waypoint reached.",
-    "scale": "Scale",
-    "selected": "Selected",
-    "beaconLabel": "Fast-Travel Beacon"
+    "discoveredChunks": "Explored Sectors"
   },
   "journal": {
     "title": "Explorer Journal & Achievements",
@@ -495,15 +454,13 @@
   "pause": {
     "title": "Expedition Paused",
     "resume": "Resume",
-    "save": "Save Now",
-    "saveCloudHint": "Also synced to the cloud.",
-    "saveFailedToast": "Save failed. Device storage is full or blocked.",
+    "saveLocal": "Save Slot 1",
+    "saveSlot2": "Save Slot 2",
+    "saveSlot3": "Save Slot 3",
+    "saveCloud": "Save to Cloud",
     "settings": "Settings",
     "mainMenu": "Return to Main Menu",
-    "savedToast": "Game progress saved.",
-    "exit": "Exit Game",
-    "exitTitle": "Exit the game?",
-    "exitBody": "If you are playing, your progress is saved first. Then you return to the PRIMORDIA home page."
+    "savedToast": "Game progress saved."
   },
   "inventory": {
     "title": "Inventory, Crafting & Blueprints",
@@ -514,8 +471,6 @@
     "use": "Use",
     "equip": "Assign Hotbar",
     "place": "Build / Snap Place",
-    "discardOne": "Drop 1",
-    "discardAll": "Drop All",
     "craft": "Craft",
     "missingMaterials": "Missing Materials",
     "needStation": "Requires",
@@ -679,7 +634,7 @@
     },
     "terrain_anchor": {
       "name": "Terrain Anchor",
-      "desc": "Locks terrain within 60 m so it will not change at an era shift. Protects your base."
+      "desc": "Locks terrain within 60 m so it will not change at the monthly shift. Protects your base."
     },
     "fast_beacon": {
       "name": "Fast-Travel Beacon",
@@ -815,7 +770,7 @@
   "credits": {
     "title": "Credits & Build Info",
     "lead": "PRIMORDIA — Open-World Primordial Earth Survival (Hadean – Archean)",
-    "engine": "Procedural chunk-streamed Three.js WebGL, fixed-timestep physics, Web Audio synthesis, React UI, PWA offline cache, and optional cloud sync.",
+    "engine": "Procedural chunk-streamed Three.js WebGL, fixed-timestep physics, Web Audio synthesis, React UI, PWA offline cache, and optional Supabase Cloud Sync.",
     "back": "Back"
   },
   "errors": {
@@ -848,18 +803,13 @@
     "none": "none",
     "warnings": "Heads-up",
     "allGood": "No problems detected.",
-    "gateTitle": "Character gate",
-    "gatePass": "Passed: this model can be used for character roles.",
-    "gateFail": "Not yet passed for character roles:",
-    "gateLocked": "Character roles locked: model has not passed the gate.",
-    "joints": "Skeleton joints",
     "roles": "Use as",
     "wired": "active in game",
     "notWired": "saved, not used by the game yet",
     "current": "Assigned",
     "reset": "Back to default",
     "appliesNext": "Applies the next time a world is loaded (reload the game).",
-    "addFile": "Try another file in public/play/models/",
+    "addFile": "Try another file in public/models/",
     "add": "Add",
     "invalidName": "Invalid file name (must be .glb/.gltf/.usdz/…, no folders).",
     "convert": "Needs conversion"
@@ -915,332 +865,179 @@
     "errGeneric": "Something went wrong. Try again."
   },
   "info": {
-    "title": "Game Info",
-    "subtitle": "Story, mechanics, missions, guide, terms and privacy of PRIMORDIA.",
-    "nav": {
-      "about": "About",
-      "scheme": "Mechanics",
+    "sections": {
+      "description": "Overview",
+      "scheme": "Game Systems",
       "missions": "Missions",
       "guide": "Guide",
       "terms": "Terms",
-      "privacy": "Privacy"
+      "privacy": "Privacy Policy"
     },
-    "about": {
-      "heading": "About PRIMORDIA",
-      "blocks": [
-        {
-          "title": "What is PRIMORDIA?",
-          "body": "A 3D survival game in the browser, set on primordial Earth (Hadean–Archean). You are the first survivor on a {worldKm} × {worldKm} km world: no plants, animals or other people, only basalt, volcanoes and steaming oceans."
-        },
-        {
-          "title": "What is the story?",
-          "body": "Your goal is not to conquer but to prepare life. You gather stone and minerals, smelt iron, mine metal from fallen stars, then brew prebiotic compounds until you can craft a Seed of Life. The last mission takes you to the Geyser Basin to plant it."
-        },
-        {
-          "title": "Main features",
-          "items": [
-            "Open world with {biomes} biomes, streamed in chunks",
-            "{items} items and {recipes} recipes across {tiers} tech tiers",
-            "Modular building, chests, furnaces, Moss Gardens and Auto Drills",
-            "A {quests}-mission campaign in {chapters} chapters, {journal} journal entries, {achievements} achievements",
-            "Adam & Eve era: immortal age, a real-time sky, resources that regrow daily",
-            "Guest mode, cloud saves, leaderboard, friends and messages"
-          ]
-        },
-        {
-          "title": "Version {version}",
-          "body": "Active era: {era}. The game grows in stages: survival foundation, mobile and cloud, then the Adam & Eve era. Planned next: full 3D assets (caves, ancient animals) and wider multiplayer."
-        },
-        {
-          "title": "Made by",
-          "body": "© 2026 Jurkon Studio. All rights reserved. PRIMORDIA, its name, logo, mascot Bruk, game design and original code belong to Jurkon Studio."
-        }
-      ]
+    "updated": "Effective 14 November 2026",
+    "description": {
+      "title": "About PRIMORDIA",
+      "p1": "PRIMORDIA is a browser-based 3D open-world survival game set on primordial Hadean–Archean Earth — before plants, animals, or other humans existed. You explore a 4 km × 4 km world of basalt plains, active volcanoes, lava rivers, sulfur flats, obsidian fields, geyser basins, meteorite impact zones, and shallow steaming oceans.",
+      "p2": "Your goal: survive, build technology from a stone axe to a research lab, then synthesize and plant the first Seed of Life in a hydrothermal spring.",
+      "p3": "Through the Era of Adam & Eve layer, you are an immortal explorer. The sky follows your device clock, the terrain shifts every month, resources regrow every day, and your world keeps running while you are away (up to 24 hours).",
+      "p4": "Play as a guest without an account (offline, saved on your device), or sign in for cloud saves, a leaderboard, friends, messages, and meeting other explorers in the same world."
     },
     "scheme": {
-      "heading": "Scheme & Mechanics",
-      "blocks": [
-        {
-          "title": "World",
-          "body": "A {worldKm} × {worldKm} km world streamed in {chunk} m chunks, with {biomes} biomes from shallow oceans to crystal craters."
-        },
-        {
-          "title": "Survival",
-          "items": [
-            "Manage health, stamina, temperature, hydration and oxygen",
-            "Hazards: toxic gas, ash storms, acid rain, lightning and meteors",
-            "Gas Filters and shelters protect you; an on-screen arrow points to the nearest clean air",
-            "Difficulty scales pressure: Explorer ×{multExplorer}, Survivor ×{multSurvivor}, Hadean ×{multHadean}"
-          ]
-        },
-        {
-          "title": "A gentle start",
-          "items": [
-            "The first {safeMin} minutes are safe: no storms and clean air within {safeRadius} m of the start",
-            "Until minute {easeMin}, survival pressure is reduced by {easePct}%",
-            "A Gas Filter equips itself when oxygen drops below {autoFilterPct}% and you own one"
-          ]
-        },
-        {
-          "title": "Items and crafting",
-          "body": "{items} items across {tiers} tiers ({tierCounts} per tier) and {recipes} recipes. Recipes unlock as you find new materials. Base carry capacity is {carry}."
-        },
-        {
-          "title": "Adam & Eve era",
-          "items": [
-            "Immortal age: no death from old age. Dying to hazards does not reduce your age",
-            "The sky follows your device clock; seasons: {seasons}",
-            "Base terrain is fixed; resources regrow daily (UTC). A Terrain Anchor shields a {anchorR} m radius from era changes",
-            "Wisdom from age ({wisdom}) unlocks perks: {perks}"
-          ]
-        },
-        {
-          "title": "While you are away",
-          "items": [
-            "Up to {offlineMaxH} hours are simulated; under {offlineMinMin} minutes are ignored",
-            "A Moss Garden ripens in about {gardenHours} hours; an Auto Drill adds {drillPerH} stone per hour (max {drillCap})",
-            "Storms can damage buildings without a roof, but buildings are never destroyed completely"
-          ]
-        },
-        {
-          "title": "Death and saving",
-          "body": "When you die, your items become a glowing bag where you fell (max 3 bags). The game autosaves every {autosaveSec} seconds to a single save; the Continue button on the main menu loads it."
-        }
-      ]
+      "title": "Game Systems",
+      "s1": {
+        "t": "World & Map",
+        "b": "The 4 × 4 km world streams in 64 m chunks with 10 biomes and regional points of interest. The survey map [M] has fog of war, personal waypoints, and Teleport Beacons for fast travel."
+      },
+      "s2": {
+        "t": "Body Condition",
+        "b": "Watch Health, Stamina, Body Temperature, Oxygen, Hydration, Radiation, Fatigue, and carry Weight. Refill water from warm pools, rest in a Shelter, and manage your temperature near lava."
+      },
+      "s3": {
+        "t": "Hazards & Weather",
+        "b": "Beware extreme heat near lava rivers, toxic sulfur gas (needs a Gas Filter), red meteor impact circles, and radiation zones. Weather cycles through orange haze, ash storms, acid rain, electrical storms, and meteor showers. Major events: super eruption, toxic gas surge, and orbital meteor storm. A Shelter protects you from almost all of them."
+      },
+      "s4": {
+        "t": "Difficulty & Death",
+        "b": "Three levels: Explorer (pressure ×0.55), Survivor (×1), Hadean (×1.5). The first ten minutes are a safe period with clean air (except on Hadean). If you fall, your items stay in a Bag where you died (yellow light pillar) and you respawn at a safe spot. Death only adds to a counter; your age is never reset."
+      },
+      "s5": {
+        "t": "5 Technology Tiers",
+        "b": "From the Stone Axe and Water Vessel, to the Workbench and Obsidian Pick, the Smelter Furnace and iron metallurgy, the Archean Research Lab with Meteoric Iron and Energy Cores, up to prebiotic compound synthesis. Recipes unlock based on materials and nearby stations."
+      },
+      "s6": {
+        "t": "Building",
+        "b": "Press [B]: Floor, Wall, and Roof modules snap to a 3 m grid (R rotates). Available: Shelter, Storage Chest, Condensation Collector, Moss Garden, Auto Drill (works while you are offline), Beacon, and the Terrain Anchor that locks terrain within a 60 m radius. Storms damage buildings without cover, but structures are never destroyed completely."
+      },
+      "s7": {
+        "t": "Era of Adam & Eve",
+        "b": "Your age counts from your character's birth date (server for accounts, local for guests). Wisdom Points are earned at ages 7, 30, 100, and 365 days (1/2/3/5 points) for permanent perks in the Pause menu: Lasting Filter, Ash Skin, Ancestral Recipe, Eternal Filter. Four seasons (Dry, Rain, Ash, Cold — 3 months each) affect weather, water, gardens, and temperature. A warning appears before the Great Shift on the 1st of each month."
+      },
+      "s8": {
+        "t": "Score & Campaign",
+        "b": "Your expedition score is sent to the leaderboard with server validation (accounts). Finishing all 22 campaign missions triggers the Archean Dawn; continue in Free Survival or start New Game+, which carries over recipes and journal."
+      },
+      "s9": {
+        "t": "Online & Social",
+        "b": "Online Mode (Pause menu) places players with the same world seed in a room of up to 8; a full room opens the next one. Send quick signals, view the player list, and — when signed in — view profiles, add friends, and message friends. Your inventory and saves are never shared."
+      },
+      "s10": {
+        "t": "Character",
+        "b": "Choose Male or Female, height, build, skin and hair colors, 7 hairstyles, suit color, and 3 pack models. Your appearance is visible to other players in the same world."
+      }
     },
     "missions": {
-      "intro": "A {quests}-mission campaign in {chapters} chapters. A blue arrow on screen points to the active objective. After the ending, continue in free survival or New Game+.",
-      "active": "In progress",
-      "done": "Done",
-      "achievementsTitle": "Achievements",
-      "chapters": {
-        "1": {
-          "title": "Chapter 1: Survive",
-          "desc": "Water, materials, tools and shelter."
-        },
-        "2": {
-          "title": "Chapter 2: Supplies",
-          "desc": "Better tools and dangerous ground."
-        },
-        "3": {
-          "title": "Chapter 3: Iron Age",
-          "desc": "Smelting and your first outpost."
-        },
-        "4": {
-          "title": "Chapter 4: Fallen Stars",
-          "desc": "Meteor metal and crystal power."
-        },
-        "5": {
-          "title": "Chapter 5: Seed of Life",
-          "desc": "Prebiotic chemistry, then the most important moment of this world."
-        }
-      },
-      "blocks": [
-        {
-          "title": "Mission tips",
-          "items": [
-            "Open the Journal [J] for repeatable survey contracts",
-            "Location missions show a destination arrow at the top center of the screen",
-            "Save before exploring far from a shelter"
-          ]
-        }
-      ]
+      "title": "Missions & Achievements",
+      "intro": "The \"Seed of Life\" campaign has 22 missions across 5 chapters. The active mission shows on the HUD, and a guide arrow helps with early missions.",
+      "chapter1": "Chapter 1 — Survival Basics",
+      "chapter2": "Chapter 2 — Tools & Exploration",
+      "chapter3": "Chapter 3 — Iron Age & Outpost",
+      "chapter4": "Chapter 4 — Archean Research",
+      "chapter5": "Chapter 5 — Seed of Life",
+      "achievements": "Achievements",
+      "extra": "Extra Missions",
+      "contract": "Repeatable Survey Contract: extract 1 Primordial Crystal or 2 Meteoric Iron and explore 250 m to send telemetry and earn score (Journal [J] → Survey Contracts).",
+      "journal": "The Journal [J] records 14 field discoveries: biomes, minerals, and natural phenomena unlocked as you explore.",
+      "ngplus": "New Game+: after finishing the campaign, restart with recipes and journal carried over."
     },
     "guide": {
-      "heading": "How to play",
+      "title": "How to Play",
       "controlsTitle": "Controls",
-      "controlsDesktop": "Keyboard and mouse (rebind in the Controls tab)",
-      "controlsMobile": "On phones: left joystick to move, drag the screen to look, and RUN, BUILD, ACTION and JUMP buttons at the bottom right.",
-      "keys": {
-        "forward": "Forward",
-        "backward": "Backward",
-        "left": "Left",
-        "right": "Right",
-        "jump": "Jump",
-        "sprint": "Sprint",
-        "interact": "Interact",
-        "inventory": "Inventory",
-        "build": "Build",
-        "map": "Map",
-        "journal": "Journal"
-      },
-      "blocks": [
-        {
-          "title": "Start here",
-          "items": [
-            "Fill water at the shallow pool (the blue arrow shows the way)",
-            "Collect stone and minerals, then craft a stone axe and shelter",
-            "Follow the active mission in the top-left panel"
-          ]
-        },
-        {
-          "title": "HUD modes",
-          "body": "Tap the eye icon at the top right (or press H) to switch: Full, Compact or Clean. Your choice is remembered."
-        },
-        {
-          "title": "Common problems",
-          "items": [
-            "Slow: turn off Particles and lower graphics in Settings",
-            "Breathless: equip a Gas Filter or follow the arrow to clean air",
-            "Lost items after dying: find the yellow light pillar and press [E]"
-          ]
-        }
-      ]
+      "desktop": "Desktop: WASD move · Mouse camera · Space jump · Shift sprint · E action · I bag · B build (R rotate) · M map · J journal · H HUD mode · F3 debug. Keys can be changed in Settings → Controls.",
+      "mobile": "Mobile: multi-touch joystick to move, drag the screen to look, RUN / BUILD / ACTION / JUMP buttons. Hold a hotbar slot to inspect or drop an item. The eye button cycles HUD mode (Full, Compact, Clean).",
+      "stepsTitle": "First Steps",
+      "st1": "Follow the blue pill and guide arrow to the water pool, then press [E] to fill up.",
+      "st2": "Gather Basalt Rock and Volcanic Mineral, then craft a Stone Axe and Water Vessel.",
+      "st3": "Place a Basalt Shelter before a storm hits; resting inside restores fatigue.",
+      "st4": "Head east to the Crystal Crater, then set up a Workbench for Tier 2–3 tools.",
+      "st5": "Prepare a Gas Filter before entering the Sulfur Flats. A filter is fitted automatically when oxygen drops below 30% (except on Hadean).",
+      "st6": "Set up a Storage Chest, a Smelter Furnace, and a few building modules as an outpost.",
+      "st7": "Place Teleport Beacons in distant biomes, and save before exploring far.",
+      "st8": "Build the Research Lab, then finish the last four missions to plant the Seed of Life.",
+      "tipsTitle": "Survival Tips",
+      "ti1": "Avoid red meteor circles; the debris carries Crystals and Meteoric Iron.",
+      "ti2": "Temperature spikes near lava — use a Heat Shield or Thermal Cloak.",
+      "ti3": "When oxygen runs low, follow the green arrow to clean air.",
+      "ti4": "If you fall, look for the yellow light pillar to recover your Item Bag.",
+      "ti5": "Build near a Terrain Anchor so your base is not buried by the monthly Great Shift.",
+      "ti6": "Save to a local slot or the Cloud. On a conflict, choose Keep Local, Keep Cloud, or Keep Both.",
+      "ti7": "Low FPS? Open Settings → Graphics and lower the preset, view distance, shadows, or particles.",
+      "ti8": "In online mode, use Signals to communicate, and open the Friends panel to view other players' profiles."
     },
     "terms": {
-      "heading": "Terms & Conditions",
-      "blocks": [
-        {
-          "title": "1. Acceptance",
-          "body": "By playing PRIMORDIA you agree to these terms. If you do not agree, stop using the game."
-        },
-        {
-          "title": "2. The service",
-          "body": "PRIMORDIA is an entertainment game by Jurkon Studio and is still in development. Features may change, be added or be removed without notice."
-        },
-        {
-          "title": "3. Accounts",
-          "body": "You can play as a guest. An account is only needed for cloud saves, the leaderboard, friends and messages. Keep your account secure; you are responsible for its activity."
-        },
-        {
-          "title": "4. Prohibited conduct",
-          "items": [
-            "Cheating or tampering with saves, device clocks, scores or servers",
-            "Using bots or scripts to submit scores or messages",
-            "Sending messages that harass, threaten, scam or break the law",
-            "Copying, decompiling or reselling the game and its assets without permission"
-          ]
-        },
-        {
-          "title": "5. Enforcement",
-          "body": "Violations may lead to removed scores, limited social features or a ban from online services."
-        },
-        {
-          "title": "6. Game data",
-          "body": "Progress is stored on your device and, if signed in, in the cloud. Data can be lost through browser clean-ups, outages or version changes. Back up what matters."
-        },
-        {
-          "title": "7. No warranty",
-          "body": "The game is provided \"as is\". To the extent the law allows, {owner} is not liable for indirect damages, including lost progress."
-        },
-        {
-          "title": "8. Changes and law",
-          "body": "These terms may be updated; the date is shown below. They are governed by the laws of the Republic of Indonesia."
-        }
-      ]
+      "title": "Terms of Service",
+      "c1": {
+        "t": "1. Acceptance",
+        "b": "By playing PRIMORDIA you agree to these terms. If you disagree, stop using the game. Users under 13 (or the age limit in your region) need a parent or guardian."
+      },
+      "c2": {
+        "t": "2. Guest Mode & Accounts",
+        "b": "You may play as a guest without an account. An account (email, magic link, or Google) enables cloud saves, a leaderboard, friends, and messages. Keep your account secure; you are responsible for activity in it."
+      },
+      "c3": {
+        "t": "3. Player Conduct",
+        "b": "Not allowed: harassing or insulting other players, spam, hate speech, adult or unlawful content, impersonating others, and offensive character names. Also prohibited: cheating, manipulating scores or device time for online advantage, and disrupting the service."
+      },
+      "c4": {
+        "t": "4. Online Features & Player Content",
+        "b": "Your character name, appearance, and position are visible to other players in the same room. Messages can only be sent between friends. The developer may remove content, limit features, or close accounts that violate these terms."
+      },
+      "c5": {
+        "t": "5. Progress & Availability",
+        "b": "PRIMORDIA is still in development. Features, balance, and the world may change; local progress may be lost if browser data is cleared; online services may stop at any time. Back up important progress to the Cloud."
+      },
+      "c6": {
+        "t": "6. Intellectual Property",
+        "b": "The game, code, and design of PRIMORDIA belong to its developer. Third-party assets are listed on the Credits screen. By using online features, you allow your character name and appearance to be shown to other players in the game."
+      },
+      "c7": {
+        "t": "7. No Warranty",
+        "b": "The game is provided \"as is\" without any warranty, including being uninterrupted or error-free."
+      },
+      "c8": {
+        "t": "8. Limitation of Liability",
+        "b": "To the extent permitted by law, the developer is not liable for indirect damages, loss of data or progress, or service interruptions arising from use of this game."
+      },
+      "c9": {
+        "t": "9. Changes & Contact",
+        "b": "These terms may be updated; the latest version applies from the date shown. Continuing to play means accepting the changes. Contact the developer through the project page on GitHub (kalfinstudio-ux/primordia)."
+      }
     },
     "privacy": {
-      "heading": "Privacy Policy",
-      "blocks": [
-        {
-          "title": "In short",
-          "body": "Guests: all data stays on your device. Signed-in players: game data is stored on a server so you can continue elsewhere. We do not sell your data and this game shows no ads."
-        },
-        {
-          "title": "Account data",
-          "items": [
-            "Account ID, email from the sign-in provider, display name (max 16 characters) and avatar settings",
-            "Used to sign you in and show your profile"
-          ]
-        },
-        {
-          "title": "Game data",
-          "items": [
-            "Game save (player and world state, seed, play time) and game settings",
-            "Character birth time, death count and last active time, for immortal age and away-time calculation",
-            "Score for the leaderboard"
-          ]
-        },
-        {
-          "title": "Social and online data",
-          "items": [
-            "Friend list and message text (max 500 characters) with read status",
-            "With online mode on: your name, appearance and position are shared temporarily with other players in the same world. Inventory and saves are not sent"
-          ]
-        },
-        {
-          "title": "On-device storage",
-          "body": "Guest saves, HUD settings, asset choices and the sign-in token are kept in browser local storage and can be cleared in Settings or the browser."
-        },
-        {
-          "title": "Third parties",
-          "body": "Account and cloud data are processed by Supabase and the sign-in provider you choose (Google, GitHub, Discord or Base44) under their own policies."
-        },
-        {
-          "title": "Security",
-          "body": "Access is limited per account: you can only read your own data, and messages can only be read by the sender and recipient. No system is perfectly secure, so do not put secrets in game messages."
-        },
-        {
-          "title": "Your rights and deletion",
-          "body": "Data is kept while your account is active. Deleting the account removes your profile, saves, score, friends and related messages. To request deletion or a copy of your data, use the contact below."
-        },
-        {
-          "title": "Children",
-          "body": "The game is intended for ages 13 and up. Players under 17 should use account and messaging features with a parent or guardian."
-        }
-      ]
-    },
-    "legal": {
-      "updated": "Last updated: {updatedAt}",
-      "owner": "Operator: {owner}",
-      "contact": "Contact: {contact}"
-    }
-  },
-  "poiNames": {
-    "lava_tube": "Lava Tube",
-    "hot_spring": "Hot Spring"
-  },
-  "regions": {
-    "tier": {
-      "0": "Starting Zone",
-      "1": "Frontier Plains",
-      "2": "Restless Expanse",
-      "3": "Barren Reach",
-      "4": "Hellrim"
-    },
-    "dir": {
-      "n": "North",
-      "ne": "Northeast",
-      "e": "East",
-      "se": "Southeast",
-      "s": "South",
-      "sw": "Southwest",
-      "w": "West",
-      "nw": "Northwest"
-    },
-    "format": "{dir} {tier}",
-    "danger": "Danger",
-    "entered": "Entering",
-    "current": "Region"
-  },
-  "bruk": {
-    "name": "Bruk",
-    "hintLabel": "hint",
-    "lines": {
-      "first_fire": "Hot. Go.",
-      "first_shelter": "A roof. I need none. You do. You are fragile.",
-      "storm_survived": "The storm passed. You are still here. Usually they are not.",
-      "fire_third": "Fire again. I do not leave. I sit near it. Do not ask why.",
-      "chapter_1": "You dug into the heart of my crater and I did not stop you. Call it mercy.",
-      "chapter_2": "Iron and obsidian. This world once had only fire. Now it has your hands. I do not yet know if that is better.",
-      "chapter_3": "You forge, and something hisses in the embers like a voice I forgot long ago. Do not stop. I am not ready to remember it.",
-      "chapter_4": "I hold back your years so someone has time to plant. Every day you live is a day I stole from the earth. I do not regret it. Not yet.",
-      "ending": "The seed is planted. Time can move again, or I can hold it once more. I am too tired to decide. You decide."
-    },
-    "hints": {
-      "level1": "Water is not far from where you woke. Follow the steam.",
-      "level2": "Crystals lie inside craters and at meteor sites. Look for red rings on the ground.",
-      "level3": "Obsidian sits in black fissures near the volcano. Bring a gas filter.",
-      "level4": "A roof shields nearby structures from storms. Raise your workbench beneath it."
-    },
-    "choice": {
-      "release": {
-        "label": "Release time",
-        "reply": "Very well. You will age, then go out. I stay here and remember everything. That is the price, and I pay it."
+      "title": "Privacy Policy",
+      "c1": {
+        "t": "1. Data on Your Device",
+        "b": "Settings, language, character appearance, save slots, achievements, and preferences (such as Online Mode and HUD mode) are stored in your browser's local storage. This data is not sent anywhere unless you use cloud features. Delete it via Settings → Account & Data."
       },
-      "hold": {
-        "label": "Hold time",
-        "reply": "You chose me. Then you will not age, and this world will not move on. I do not know if that is a gift or a curse. Stay."
+      "c2": {
+        "t": "2. Account & Cloud Data",
+        "b": "If you sign in, we store through Supabase: your account email (handled by the authentication service), display name (character name), character birth date, death count, last-seen time, settings, cloud saves, and leaderboard score. Your email and account username are not shown to other players."
+      },
+      "c3": {
+        "t": "3. Multiplayer",
+        "b": "In Online Mode, only the following is sent to other players in the same room: character name, appearance (including character gender), position, heading, animation, signals, and — when signed in — your account ID so your profile can be opened. Inventory, saves, and other account data are not sent. Rooms are public; turn off Online Mode in the Pause menu anytime."
+      },
+      "c4": {
+        "t": "4. Friends & Messages",
+        "b": "A public profile only shows character name, age, death count, score, and friendship status. Messages are stored on the server and can be read by the sender and recipient. Messages are not end-to-end encrypted, so database administrators can technically access them."
+      },
+      "c5": {
+        "t": "5. Third-Party Services",
+        "b": "Supabase (database, authentication, and realtime), Google (optional for Google sign-in, and Google Fonts for typefaces), and GitHub Pages (hosting) process technical data such as IP addresses under their own policies."
+      },
+      "c6": {
+        "t": "6. Ads & Tracking",
+        "b": "This version of the game shows no ads and installs no analytics trackers. The service worker only stores game files on your device so it can be played offline."
+      },
+      "c7": {
+        "t": "7. Security",
+        "b": "Connections use HTTPS. Cloud data is protected by per-user access rules (row level security), and writing scores, age, and friendships goes only through validated server functions. No system is completely secure; do not send sensitive information in messages."
+      },
+      "c8": {
+        "t": "8. Your Choices & Rights",
+        "b": "You can play as a guest, turn off Online Mode, sign out, delete local data, and remove friends. To request deletion of your cloud account data, contact the developer through the project page on GitHub."
+      },
+      "c9": {
+        "t": "9. Children, Changes & Contact",
+        "b": "This game is not intended for children under 13 without a parent or guardian. This policy may be updated; the effective date is shown above. Questions: GitHub kalfinstudio-ux/primordia."
       }
     }
   }
