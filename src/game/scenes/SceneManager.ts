@@ -504,6 +504,7 @@ export class SceneManager {
         this.lastBiomeSound = this.survival.currentBiomeId;
         audioSystem.setBiomeAmbience(this.survival.currentBiomeId);
       }
+      audioSystem.updateAmbient(dt, this.weather.currentWeather, this.survival.currentBiomeId);
 
       this.autosaveAccum += dt;
       if (this.autosaveAccum >= AUTOSAVE_INTERVAL_SEC) {
