@@ -1,11 +1,7 @@
 -- ============================================================================
 -- PRIMORDIA — SETUP SUPABASE LENGKAP (satu file, aman dijalankan berulang)
 -- Cara pakai: Supabase Dashboard → SQL Editor → New query → paste semua → Run.
-<<<<<<< HEAD
--- Gabungan: schema + policies + eden + presence + auth-google.
-=======
 -- Gabungan: schema + policies + eden + presence + auth-google + sosial (teman & pesan).
->>>>>>> 007c248 (Tambah profil, teman, dan pesan)
 -- Multiplayer (Realtime Broadcast/Presence) TIDAK butuh tabel; ia aktif otomatis.
 -- ============================================================================
 
@@ -201,8 +197,6 @@ from auth.users u
 left join public.profiles p on p.id = u.id
 where p.id is null;
 
-<<<<<<< HEAD
-=======
 -- ---------- 5) FITUR SOSIAL: profil publik, teman, pesan ----------
 -- ---------- 1) NAMA TAMPIL PUBLIK ----------
 alter table public.profiles add column if not exists display_name text;
@@ -472,7 +466,6 @@ grant execute on function
   public.get_messages(uuid, integer), public.unread_count()
 to authenticated;
 
->>>>>>> 007c248 (Tambah profil, teman, dan pesan)
 -- ---------- SELESAI ----------
 -- Multiplayer: tidak ada SQL tambahan. Pastikan di Dashboard →
 -- Project Settings → Realtime: "Allow public access" tetap ON.
