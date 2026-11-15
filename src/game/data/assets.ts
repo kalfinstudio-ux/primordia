@@ -40,6 +40,8 @@ export interface AssetEntry {
 
 /** Daftar model di public/play/models/. Tambah/ganti nama file di sini bila formatnya berubah. */
 export const ASSET_FILES: readonly AssetEntry[] = [
+  { file: 'primordia_adam.glb', note: 'Adam — karya asli PRIMORDIA, 19 sendi, 10 klip' },
+  { file: 'primordia_hawa.glb', note: 'Hawa — karya asli PRIMORDIA, 19 sendi, 10 klip' },
   { file: 'naked_dude.glb', note: 'Ringan (0,23 MB)' },
   { file: 'party_starter_-_layered_t-shirts.glb', note: 'Sedang (0,93 MB)' },
   { file: 'daren_-_lod_man_character.glb', note: 'Berat (3,0 MB)' },
@@ -155,7 +157,10 @@ export interface AssetLicense {
  * Catatan lisensi per berkas model. Model karakter TANPA entri di sini ditolak gerbang.
  * Tambahkan entri hanya setelah lisensi benar-benar diperiksa; lalu tulis atribusi di ui/CreditsScreen.tsx.
  */
-export const ASSET_LICENSES: Readonly<Record<string, AssetLicense>> = {};
+export const ASSET_LICENSES: Readonly<Record<string, AssetLicense>> = {
+  'primordia_adam.glb': { license: 'CC0 (karya asli)', source: 'PRIMORDIA — tools/make_character.py' },
+  'primordia_hawa.glb': { license: 'CC0 (karya asli)', source: 'PRIMORDIA — tools/make_character.py' },
+};
 
 export interface CharacterInfo extends AssetInfo {
   /** Jumlah sendi (bone) pada rangka; 0 = tanpa rangka. */

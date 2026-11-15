@@ -11,12 +11,17 @@ Keputusan pemilik: sumber model = **Mixamo + model gratis**; perangkat terlemah 
 - i18n id/en: `assets.gateTitle/gatePass/gateFail/gateLocked/joints`.
 - `tools/CHARACTER-PIPELINE.md`: langkah Mixamo → Blender → gltf-transform → masuk game.
 - Tes: `assets.test.ts` +5 tes gerbang. Sandbox: 92 lulus (2 gagal = tes yang butuh paket Supabase).
-- **Berikutnya (Fase 1 b):** pemilik menyiapkan satu `.glb` berangka sesuai pipeline; Claude menghubungkannya (arah hadap/skala/transisi), lalu menyatukan jalur gambar (lokal, jauh, pratinjau).
+- **Karakter buatan sendiri (tanpa Blender/Mixamo):** `tools/make_character.py` menghasilkan `public/play/models/primordia_adam.glb` dan `primordia_hawa.glb` (±1.300 segitiga, ±125 KB, 19 sendi bernama gaya Mixamo, 10 klip prosedural: Idle, Walk, Run, Jump, Fall, Swim, Mine, Craft, Hurt, Death; material Skin/Hair/Cloth/Eyes tanpa tekstur, mudah di-tint). Karya asli (`ASSET_LICENSES`: CC0). Jalankan ulang `python3 tools/make_character.py` setelah mengubah proporsi/animasi di skrip (`--preview <folder>` membuat PNG pratinjau, butuh numpy+matplotlib). Bentuk = low-poly bergaya, **bukan realistis**; jalur realistis (Mixamo/Blender) tetap di `tools/CHARACTER-PIPELINE.md`.
+- `characterAsset.test.ts` membaca `.glb` langsung (tanpa three): struktur glTF, indeks, bobot kulit, klip inti, dan gerbang karakter lolos. Sandbox: 100 lulus (2 gagal = tes Supabase).
+- **Belum dibuktikan di browser:** pemuatan GLTFLoader, arah hadap (+Z), skala/tinggi 1,8 m (Hawa 1,69 m), transisi klip, klip Death/Jump/Hurt yang tidak berulang (di game mungkin berulang-ulang), tabrakan kain dengan paha saat berlari.
+- **Berikutnya (Fase 1 b):** uji model di Galeri Aset lalu jadikan peran Karakter pemain; satukan jalur gambar (lokal, jauh, pratinjau); Adam/Hawa terpisah; kustomisasi tint dari `AvatarConfig`.
 
 ### Cek manual v17
 - [ ] Galeri Aset: pilih tiap model → kotak "Gerbang karakter" tampil dengan alasan penolakan; tombol Karakter pemain/Adam/Hawa abu-abu (terkunci); peran Gua/Hewan/Musuh tetap bisa dipilih.
 - [ ] Jumlah sendi tampil (daren ≈ 68; dua lainnya 0).
-- [ ] Game tetap jalan dengan karakter buatan kode.
+- [ ] Galeri Aset: `primordia_adam.glb` & `primordia_hawa.glb` muncul, kotak Gerbang karakter **hijau**; putar klip (Idle/Walk/Run/…) di pratinjau; bentuk tubuh wajar.
+- [ ] Pilih "Karakter pemain" = Adam → muat permainan: karakter tampil menghadap depan, kaki di tanah, ukuran wajar; idle→jalan→lari→lompat→jatuh→berenang→menambang berganti mulus; catat FPS (HP lama) dan hal yang janggal (kain menembus paha, tangan terpelintir).
+- [ ] Tanpa pilihan peran, game tetap jalan dengan karakter buatan kode.
 
 ## 0c. Perubahan v16 — Fase 0: perapian dokumen & CI (15 Nov 2026) — v15 sudah diuji pemilik: game berjalan baik
 - `GAME_VERSION` → `0.9.0-Archean` (`config.ts`).

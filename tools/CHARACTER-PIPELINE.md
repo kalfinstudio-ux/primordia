@@ -1,5 +1,7 @@
 # Menyiapkan karakter manusia berangka (Fase 1)
 
+> **Jalur cepat tanpa unduhan:** `python3 tools/make_character.py` sudah menghasilkan Adam & Hawa low-poly berangka + 10 klip (lisensi: karya asli PRIMORDIA). Jalur Mixamo di bawah untuk hasil yang lebih realistis.
+
 Target: HP murah/lama. Anggaran ada di `CHARACTER_BUDGET` (`src/game/data/assets.ts`):
 **≤ 8.000 segitiga, ≤ 2 MB, tekstur ≤ 512 px (maks 1024), rangka ≤ 75 sendi, klip inti idle/walk/run.**
 Model yang tidak lolos tidak bisa dipasang ke peran Karakter pemain / Adam / Hawa di Galeri Aset.
