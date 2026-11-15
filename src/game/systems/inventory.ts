@@ -2,6 +2,7 @@ import { BASE_CARRY_WEIGHT, ITEMS, RECIPES } from '../config';
 import { gameState, type InventorySlot, type StructureType } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { t } from '../utils/i18n';
+import { BALANCE } from '../data/balance';
 
 export const MAX_BAG_SLOTS = 28;
 
@@ -204,6 +205,9 @@ export function useItemById(itemId: string): boolean {
 
   if (itemId === 'water_vessel') {
     gameState.vitals.water = Math.min(100, gameState.vitals.water + 35);
+    if (gameState.vitals.water >= BALANCE.water.fullThresholdPct) {
+      gameState.vitals.waterGraceTimer = BALANCE.water.fullGraceSec;
+    }
     eventBus.emit('audio:sfx', 'water');
     eventBus.emit('toast:show', { text: `${t('hud.water')} +35%`, type: 'info' });
     return true;
@@ -212,6 +216,9 @@ export function useItemById(itemId: string): boolean {
   if (itemId === 'purified_water') {
     removeItem('purified_water', 1);
     gameState.vitals.water = Math.min(100, gameState.vitals.water + 45);
+    if (gameState.vitals.water >= BALANCE.water.fullThresholdPct) {
+      gameState.vitals.waterGraceTimer = BALANCE.water.fullGraceSec;
+    }
     gameState.vitals.fatigue = Math.min(100, gameState.vitals.fatigue + 10);
     eventBus.emit('audio:sfx', 'water');
     eventBus.emit('toast:show', { text: `${t('hud.water')} +45%`, type: 'success' });

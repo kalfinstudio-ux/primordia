@@ -3,11 +3,14 @@ import {
   DEFAULT_SETTINGS,
   type DifficultyLevel,
   type GameSettings,
-  type GraphicsPreset,
+  type GraphicsMode,
+  type GraphicsTier,
   type HandMode,
   type KeyBindings,
   type LanguageCode,
+  type SurvivalRatePreset,
 } from '../game/config';
+import { recommendGraphicsPreset } from '../game/utils/device';
 import { gameState, saveSettingsToLocal, setScreen } from '../game/core/state';
 import { pushCloudSettings } from '../game/net/settingsSync';
 import { clearAllGameStorage, writeStorage } from '../game/utils/storage';
@@ -33,14 +36,40 @@ export function SettingsScreen() {
     saveSettingsToLocal(next);
   };
 
-  const applyPreset = (preset: GraphicsPreset) => {
-    const viewDistance = preset === 'low' ? 85 : preset === 'medium' ? 125 : 175;
-    const shadows = preset !== 'low';
-    const particles = preset !== 'low';
-    const volumetricFog = preset !== 'low';
+  const applyMode = (mode: GraphicsMode) => {
+    if (mode === 'auto') {
+      const startTier: GraphicsTier = draft.graphics.manualTier ?? recommendGraphicsPreset();
+      const viewDistance = startTier === 'low' ? 85 : startTier === 'medium' ? 125 : 175;
+      applyAndSave({
+        ...draft,
+        graphics: {
+          ...draft.graphics,
+          mode: 'auto',
+          preset: startTier,
+          viewDistance,
+          shadows: startTier !== 'low',
+          particles: startTier !== 'low',
+          volumetricFog: startTier !== 'low',
+        },
+      });
+      return;
+    }
+    const viewDistance = mode === 'low' ? 85 : mode === 'medium' ? 125 : 175;
+    const shadows = mode !== 'low';
+    const particles = mode !== 'low';
+    const volumetricFog = mode !== 'low';
     applyAndSave({
       ...draft,
-      graphics: { ...draft.graphics, preset, viewDistance, shadows, particles, volumetricFog },
+      graphics: {
+        ...draft.graphics,
+        mode,
+        manualTier: mode,
+        preset: mode,
+        viewDistance,
+        shadows,
+        particles,
+        volumetricFog,
+      },
     });
   };
 
@@ -97,22 +126,38 @@ export function SettingsScreen() {
             <>
               <div>
                 <div className="text-xs font-medium text-stone-300">{t('settings.preset')}</div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {(['low', 'medium', 'high'] as GraphicsPreset[]).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => applyPreset(p)}
-                      className={`min-h-[42px] rounded-lg border text-sm font-medium ${
-                        draft.graphics.preset === p
-                          ? 'border-orange-500 bg-orange-600/20 text-orange-200'
-                          : 'border-stone-800 bg-stone-900 text-stone-300 hover:bg-stone-800'
-                      }`}
-                    >
-                      {t(`settings.presets.${p}`)}
-                    </button>
-                  ))}
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {(['auto', 'high', 'medium', 'low'] as GraphicsMode[]).map((p) => {
+                    const selectedMode = draft.graphics.mode ?? draft.graphics.preset;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => applyMode(p)}
+                        className={`min-h-[42px] rounded-lg border text-sm font-medium ${
+                          selectedMode === p
+                            ? 'border-orange-500 bg-orange-600/20 text-orange-200'
+                            : 'border-stone-800 bg-stone-900 text-stone-300 hover:bg-stone-800'
+                        }`}
+                      >
+                        {t(`settings.presets.${p}`)}
+                      </button>
+                    );
+                  })}
                 </div>
+                {(draft.graphics.mode ?? draft.graphics.preset) === 'auto' && (
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-400">
+                    <span>
+                      {t('settings.autoStatus')}:{' '}
+                      <strong className="text-amber-300">{t(`settings.presets.${draft.graphics.preset}`)}</strong>
+                    </span>
+                    {draft.graphics.manualTier && (
+                      <span>
+                        {t('settings.lastManual')}: {t(`settings.presets.${draft.graphics.manualTier}`)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -341,6 +386,30 @@ export function SettingsScreen() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-medium text-stone-300">{t('settings.survivalRate')}</div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {(['relaxed', 'normal', 'hard'] as SurvivalRatePreset[]).map((rate) => {
+                    const currentRate = draft.gameplay.survivalRate ?? 'normal';
+                    return (
+                      <button
+                        key={rate}
+                        type="button"
+                        onClick={() => applyAndSave({ ...draft, gameplay: { ...draft.gameplay, survivalRate: rate } })}
+                        className={`min-h-[44px] rounded-lg border px-2 text-xs font-medium ${
+                          currentRate === rate
+                            ? 'border-orange-500 bg-orange-600/20 text-orange-200'
+                            : 'border-stone-800 bg-stone-900 text-stone-300'
+                        }`}
+                      >
+                        {t(`settings.survivalRates.${rate}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-[11px] text-stone-400">{t('settings.survivalRateHint')}</p>
               </div>
 
               <ToggleRow

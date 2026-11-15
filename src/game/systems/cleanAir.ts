@@ -1,5 +1,5 @@
 import { BALANCE } from '../data/balance';
-import { getBiomeAt } from '../world/biomes';
+import { getBiomeAt, WORLD_POIS } from '../world/biomes';
 import { distance2D } from '../utils/math';
 
 export interface CleanAirTarget {
@@ -7,6 +7,13 @@ export interface CleanAirTarget {
   z: number;
   dist: number;
   kind: 'shelter' | 'terrain';
+}
+
+export interface HeatSourceTarget {
+  x: number;
+  z: number;
+  dist: number;
+  kind: 'campfire' | 'geyser' | 'shelter';
 }
 
 export interface ShelterLike {
@@ -100,4 +107,38 @@ export function pickRespawnPoint(
   if (isCleanAirAt(best.x, best.z, sampleHeight)) return best;
   const alt = findNearestCleanAir(best.x, best.z, sampleHeight, [], false);
   return alt ? { x: alt.x, z: alt.z } : best;
+}
+
+/**
+ * Cari sumber panas terdekat saat kedinginan: api unggun, kolam gejser, atau shelter.
+ * Murni (tanpa THREE) agar dapat dipakai HUD dan diuji unit.
+ */
+export function findNearestHeatSource(
+  px: number,
+  pz: number,
+  structures: readonly ShelterLike[] = [],
+  worldGeysers: ReadonlyArray<{ x: number; z: number }> = [],
+  fallbackPois: ReadonlyArray<{ kind: string; x: number; z: number }> = WORLD_POIS
+): HeatSourceTarget | null {
+  let best: HeatSourceTarget | null = null;
+  const consider = (x: number, z: number, kind: HeatSourceTarget['kind']) => {
+    const dist = distance2D(px, pz, x, z);
+    if (!best || dist < best.dist) {
+      best = { x, z, dist, kind };
+    }
+  };
+
+  for (const s of structures) {
+    if (s.type === 'campfire_kit') consider(s.x, s.z, 'campfire');
+    else if (s.type === 'basic_shelter' || s.type === 'roof_panel') consider(s.x, s.z, 'shelter');
+  }
+  for (const g of worldGeysers) {
+    consider(g.x, g.z, 'geyser');
+  }
+  for (const poi of fallbackPois) {
+    if (poi.kind === 'geyser' || poi.kind === 'hot_spring') {
+      consider(poi.x, poi.z, 'geyser');
+    }
+  }
+  return best;
 }

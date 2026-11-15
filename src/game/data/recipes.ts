@@ -38,9 +38,17 @@ export const RECIPES: CraftingRecipe[] = [
     outputId: 'campfire_kit',
     outputQty: 1,
     discoveredByDefault: true,
+    ingredients: [{ itemId: 'basalt_rock', qty: 2 }],
+  },
+  {
+    id: 'recipe_ash_cloak',
+    tier: 1,
+    outputId: 'ash_cloak',
+    outputQty: 1,
+    discoveredByDefault: true,
     ingredients: [
       { itemId: 'basalt_rock', qty: 2 },
-      { itemId: 'sulfur_mineral', qty: 1 },
+      { itemId: 'ash_clay', qty: 1 },
     ],
   },
   {

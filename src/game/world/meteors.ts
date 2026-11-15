@@ -3,6 +3,7 @@ import { WORLD_HALF_EXTENT, type WeatherType } from '../config';
 import type { TerrainSystem } from './terrain';
 import { distance2D } from '../utils/math';
 import { eventBus } from '../core/eventBus';
+import { markGlowEmitter } from './glowSprites';
 
 interface ActiveMeteor {
   mesh: THREE.Group;
@@ -22,7 +23,7 @@ export class MeteorSystem {
   private rockMat = new THREE.MeshStandardMaterial({
     color: '#292524',
     emissive: '#ea580c',
-    emissiveIntensity: 1.6,
+    emissiveIntensity: 2.3,
     roughness: 0.6,
   });
   private ringGeo = new THREE.RingGeometry(2.6, 3.3, 28);
@@ -42,9 +43,10 @@ export class MeteorSystem {
     return this.meteors.some((m) => distance2D(px, pz, m.targetX, m.targetZ) < 4.2);
   }
 
-  private spawnMeteor(terrain: TerrainSystem, playerPos: THREE.Vector3): void {
+  private spawnMeteor(terrain: TerrainSystem, playerPos: THREE.Vector3, minDist = 10): void {
     const angle = Math.random() * Math.PI * 2;
-    const dist = 10 + Math.random() * 34;
+    const baseMin = Math.max(10, minDist);
+    const dist = baseMin + Math.random() * 34;
     const bound = WORLD_HALF_EXTENT - 24;
     const tx = THREE.MathUtils.clamp(playerPos.x + Math.cos(angle) * dist, -bound, bound);
     const tz = THREE.MathUtils.clamp(playerPos.z + Math.sin(angle) * dist, -bound, bound);
@@ -58,6 +60,7 @@ export class MeteorSystem {
     );
     tail.position.y = 2.4;
     meteorGroup.add(core, tail);
+    markGlowEmitter(meteorGroup, 0, 0, 0, 4.2);
     meteorGroup.position.set(tx + 18, ty + 48, tz - 14);
 
     const ring = new THREE.Mesh(this.ringGeo, this.ringMat);
@@ -83,14 +86,15 @@ export class MeteorSystem {
     terrain: TerrainSystem,
     playerPos: THREE.Vector3,
     onImpact: (x: number, y: number, z: number, playerDist: number) => void,
-    swarmMultiplier = 1
+    swarmMultiplier = 1,
+    minDist = 10
   ): void {
     const baseRate = weather === 'meteor_shower' ? 2.4 : 11.0;
     const rate = baseRate / swarmMultiplier;
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) {
       this.spawnTimer = rate + Math.random() * 2.2;
-      this.spawnMeteor(terrain, playerPos);
+      this.spawnMeteor(terrain, playerPos, minDist);
     }
 
     for (let i = this.meteors.length - 1; i >= 0; i--) {

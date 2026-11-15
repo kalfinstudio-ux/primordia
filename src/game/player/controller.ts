@@ -19,7 +19,14 @@ export interface FixedStepResult {
   horizontalSpeed: number;
   distanceMoved: number;
   inLava: boolean;
+  inWater: boolean;
   swimming: boolean;
+}
+
+export interface LandEvent {
+  impactSpeed: number;
+  inWater: boolean;
+  immersed: boolean;
 }
 
 export class PlayerController {
@@ -29,6 +36,7 @@ export class PlayerController {
   yaw = Math.PI;
   grounded = true;
   swimming = false;
+  inWater = false;
   inLava = false;
   lastHorizontalSpeed = 0;
 
@@ -36,11 +44,11 @@ export class PlayerController {
   private jumpBufferTimer = 0;
   private wasGrounded = true;
   private onJumpCb?: () => void;
-  private onLandCb?: () => void;
+  private onLandCb?: (event: LandEvent) => void;
   private onFootstepCb?: () => void;
   private stepAccum = 0;
 
-  constructor(callbacks?: { onJump?: () => void; onLand?: () => void; onFootstep?: () => void }) {
+  constructor(callbacks?: { onJump?: () => void; onLand?: (event: LandEvent) => void; onFootstep?: () => void }) {
     this.onJumpCb = callbacks?.onJump;
     this.onLandCb = callbacks?.onLand;
     this.onFootstepCb = callbacks?.onFootstep;
@@ -55,6 +63,7 @@ export class PlayerController {
     this.grounded = true;
     this.wasGrounded = true;
     this.swimming = false;
+    this.inWater = false;
   }
 
   fixedStep(
@@ -62,7 +71,8 @@ export class PlayerController {
     cameraYaw: number,
     terrain: TerrainSystem,
     spatialHash: SpatialHashGrid,
-    weightRatio = 1.0
+    weightRatio = 1.0,
+    waterLevel = WATER_LEVEL
   ): FixedStepResult {
     this.prevPosition.copy(this.position);
     const keys = gameState.settings.controls.keys;
@@ -89,9 +99,10 @@ export class PlayerController {
     if (hasInput) _move.normalize();
 
     const currentGroundY = terrain.groundHeightAt(this.position.x, this.position.z);
-    const waterDepth = WATER_LEVEL - currentGroundY;
+    const waterDepth = waterLevel - currentGroundY;
     const wading = waterDepth > 0.15 && waterDepth <= 1.15;
     this.swimming = waterDepth > 1.15;
+    this.inWater = waterDepth > 0.15;
 
     const encumberMult = weightRatio > 1 ? Math.max(0.55, 1.35 - weightRatio * 0.35) : 1;
     const baseSpeed = (wantsSprint && hasInput ? 9.4 : 5.6) * encumberMult;
@@ -153,12 +164,20 @@ export class PlayerController {
     this.position.set(nextX, nextY, nextZ);
 
     const newGroundY = terrain.groundHeightAt(this.position.x, this.position.z);
-    const swimSurfaceY = WATER_LEVEL - 0.85;
+    const landingWaterDepth = waterLevel - newGroundY;
+    const landedInWater = landingWaterDepth > 0.15;
+    const landedImmersed = landingWaterDepth > 1.15;
+    const swimSurfaceY = waterLevel - 0.85;
     const floorY = this.swimming ? Math.max(newGroundY, swimSurfaceY) : newGroundY;
 
     if (this.position.y <= floorY + 0.04 && this.velocity.y <= 0) {
-      if (!this.wasGrounded && this.velocity.y < -4.2 && !this.swimming) {
-        this.onLandCb?.();
+      const impactSpeed = -this.velocity.y;
+      if (!this.wasGrounded && impactSpeed > 4.2) {
+        this.onLandCb?.({
+          impactSpeed,
+          inWater: landedInWater,
+          immersed: landedImmersed,
+        });
       }
       this.position.y = floorY;
       this.velocity.y = 0;
@@ -167,6 +186,7 @@ export class PlayerController {
       this.grounded = false;
     }
     this.wasGrounded = this.grounded;
+    this.inWater = landedInWater;
 
     const lavaDist = getDistanceToLava(this.position.x, this.position.z);
     this.inLava = lavaDist < 2.2 && this.position.y < 1.2;
@@ -197,7 +217,13 @@ export class PlayerController {
       yaw: this.yaw,
     };
 
-    return { horizontalSpeed: horizSpeed, distanceMoved: distMoved, inLava: this.inLava, swimming: this.swimming };
+    return {
+      horizontalSpeed: horizSpeed,
+      distanceMoved: distMoved,
+      inLava: this.inLava,
+      inWater: this.inWater,
+      swimming: this.swimming,
+    };
   }
 
   renderUpdate(

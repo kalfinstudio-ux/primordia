@@ -1,6 +1,9 @@
 export type LanguageCode = 'id' | 'en';
 export type DifficultyLevel = 'explorer' | 'survivor' | 'hadean';
-export type GraphicsPreset = 'low' | 'medium' | 'high';
+export type SurvivalRatePreset = 'relaxed' | 'normal' | 'hard';
+export type GraphicsTier = 'low' | 'medium' | 'high';
+export type GraphicsPreset = GraphicsTier;
+export type GraphicsMode = 'auto' | GraphicsTier;
 export type WeatherType = 'clear_haze' | 'ash_storm' | 'acid_rain' | 'electrical_storm' | 'meteor_shower';
 export type HazardType = 'safe' | 'heat' | 'toxic' | 'meteor' | 'radiation' | 'sheltered';
 export type WorldEventType = 'none' | 'super_eruption' | 'toxic_surge' | 'meteor_swarm';
@@ -44,7 +47,9 @@ export interface KeyBindings {
 
 export interface GameSettings {
   graphics: {
-    preset: GraphicsPreset;
+    mode?: GraphicsMode;
+    manualTier?: GraphicsTier;
+    preset: GraphicsTier;
     viewDistance: number; // 70 - 220
     shadows: boolean;
     particles: boolean;
@@ -72,6 +77,7 @@ export interface GameSettings {
   };
   gameplay: {
     difficulty: DifficultyLevel;
+    survivalRate?: SurvivalRatePreset;
     showHud: boolean;
     units: 'metric' | 'imperial';
   };
@@ -140,6 +146,8 @@ export const DEFAULT_AVATAR: AvatarConfig = {
 
 export const DEFAULT_SETTINGS: GameSettings = {
   graphics: {
+    mode: 'auto',
+    manualTier: 'medium',
     preset: 'medium',
     viewDistance: 135,
     shadows: true,
@@ -180,6 +188,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   },
   gameplay: {
     difficulty: 'explorer',
+    survivalRate: 'normal',
     showHud: true,
     units: 'metric',
   },

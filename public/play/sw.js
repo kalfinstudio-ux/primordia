@@ -1,4 +1,4 @@
-const CACHE_NAME = 'primordia-v2-shell';
+const CACHE_NAME = 'primordia-v3-shell';
 const CORE_ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {

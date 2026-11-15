@@ -1,4 +1,5 @@
 import { realTimeOfDay } from '../data/eden';
+import { combinedWorldVisuals, type WorldSeason } from '../data/worldEvolution';
 import { WEATHER_TYPES, type WeatherWeights } from '../data/weather';
 import { VOLCANO_MAIN, WORLD_POIS } from './biomes';
 import { distance2D } from '../utils/math';
@@ -45,6 +46,13 @@ export class SkySystem {
   private biomeAmountTarget = 0;
   private biomeFog = 1;
   private biomeFogTarget = 1;
+  /** Atmosfer era & musim: target lalu dihaluskan bersama biome (0 alokasi per frame). */
+  private evoTint = new THREE.Color('#c94c16');
+  private evoTintTarget = new THREE.Color('#c94c16');
+  private evoAmount = 0;
+  private evoAmountTarget = 0;
+  private evoFog = 1;
+  private evoFogTarget = 1;
   /** Warna horizon/kabut terakhir (dipakai siluet landmark). */
   readonly horizonColor = new THREE.Color('#d9581a');
 
@@ -174,6 +182,19 @@ export class SkySystem {
     this.biomeFogTarget = a.fogMult;
   }
 
+  /** Atur evolusi atmosfer per Era (tahunan) dan Musim (bulanan); tidak mengubah medan dasar. */
+  setWorldEvolution(eraYear: number, season: WorldSeason, immediate = false): void {
+    const vis = combinedWorldVisuals(eraYear, season);
+    this.evoTintTarget.set(vis.fogTintHex);
+    this.evoAmountTarget = vis.fogTintAmount;
+    this.evoFogTarget = vis.fogDensityMult;
+    if (immediate) {
+      this.evoTint.copy(this.evoTintTarget);
+      this.evoAmount = this.evoAmountTarget;
+      this.evoFog = this.evoFogTarget;
+    }
+  }
+
   triggerLightning(): void {
     this.flashIntensity = 0.9;
   }
@@ -197,7 +218,7 @@ export class SkySystem {
   applyFog(scene: THREE.Scene, weather: WeatherType | WeatherWeights): void {
     const viewDist = gameState.settings.graphics.viewDistance;
     const baseDensity = THREE.MathUtils.mapLinear(viewDist, 70, 180, 0.017, 0.0065);
-    const weatherMult = this.blendFogMult(weather) * this.biomeFog;
+    const weatherMult = this.blendFogMult(weather) * this.biomeFog * this.evoFog;
     const fog = scene.fog as THREE.FogExp2 | null;
     if (fog) {
       fog.density = baseDensity * weatherMult;
@@ -283,15 +304,22 @@ export class SkySystem {
 
     this._horizon.copy(HORIZON_NIGHT).lerp(this._horizonDay, dayFactor);
 
-    // Haluskan atmosfer biome (≈ 2–3 detik), lalu campurkan ke horizon/tengah langit.
+    // Haluskan atmosfer biome, era, dan musim (≈ 2–3 detik), lalu campurkan ke horizon/tengah langit.
     const sm = 1 - Math.exp(-Math.min(dt, 0.25) * 0.7);
     this.biomeTint.lerp(this.biomeTintTarget, sm);
     this.biomeAmount += (this.biomeAmountTarget - this.biomeAmount) * sm;
     this.biomeFog += (this.biomeFogTarget - this.biomeFog) * sm;
+    this.evoTint.lerp(this.evoTintTarget, sm);
+    this.evoAmount += (this.evoAmountTarget - this.evoAmount) * sm;
+    this.evoFog += (this.evoFogTarget - this.evoFog) * sm;
+
     const tintAmt = this.biomeAmount * (0.35 + dayFactor * 0.35);
+    const evoTintAmt = this.evoAmount * (0.38 + dayFactor * 0.32);
+    this._horizon.lerp(this.evoTint, evoTintAmt);
     this._horizon.lerp(this.biomeTint, tintAmt);
 
     this._mid.copy(MID_NIGHT).lerp(this._midDay, dayFactor);
+    this._mid.lerp(this.evoTint, evoTintAmt * 0.55);
     this._mid.lerp(this.biomeTint, tintAmt * 0.5);
 
     this._top.copy(TOP_NIGHT).lerp(TOP_DAY, dayFactor);

@@ -3,6 +3,8 @@ import { CHUNK_SIZE } from '../config';
 import { createNoise2D, type Noise2D } from './noise';
 import { buildChunkGeometryData, sampleHeightAnchored, type ResolvedAnchor } from './terrainHeight';
 import type { AnchorSpec } from '../data/eden';
+import { BALANCE } from '../data/balance';
+import type { PlayerFootprint, WorldSeason } from '../data/worldEvolution';
 import type { ProceduralAssets } from '../core/assetLoader';
 import { gameState } from '../core/state';
 import {
@@ -57,6 +59,9 @@ export class TerrainSystem {
   readonly material: THREE.MeshStandardMaterial;
   private noise: Noise2D;
   private seed: string;
+  private eraYear = 1;
+  private season: WorldSeason = 'kering';
+  private footprints: PlayerFootprint[] = [];
   private anchorSpecs: AnchorSpec[] = [];
   private anchorNoises = new Map<string, Noise2D>();
   private resolvedAnchors: ResolvedAnchor[] = [];
@@ -139,8 +144,35 @@ export class TerrainSystem {
     });
   }
 
+  /** Atur era & musim aktif untuk tint medan + delta era opsional (Langkah 2). */
+  setEvolution(eraYear: number, season: WorldSeason): void {
+    const safeEra = Math.max(1, Math.floor(eraYear));
+    if (this.eraYear === safeEra && this.season === season) return;
+    this.eraYear = safeEra;
+    this.season = season;
+    this.clearAllChunks();
+    this.lastCenterKey = '';
+  }
+
+  /** Jejak bangunan/beacon/base pemain yang menolkan delta tinggi era (Langkah 2). */
+  setFootprints(list: ReadonlyArray<PlayerFootprint>): void {
+    this.footprints = list.map((p) => ({ x: p.x, z: p.z }));
+    if (BALANCE.eraEvolution.eraTerrainDelta) {
+      this.clearAllChunks();
+      this.lastCenterKey = '';
+    }
+  }
+
   groundHeightAt(x: number, z: number): number {
-    return sampleHeightAnchored(this.noise, this.resolvedAnchors, x, z);
+    if (!BALANCE.eraEvolution.eraTerrainDelta) {
+      return sampleHeightAnchored(this.noise, this.resolvedAnchors, x, z);
+    }
+    return sampleHeightAnchored(this.noise, this.resolvedAnchors, x, z, {
+      seed: this.seed,
+      eraYear: this.eraYear,
+      footprints: this.footprints,
+      enabled: true,
+    });
   }
 
   slopeDegreesAt(x: number, z: number): number {
@@ -204,7 +236,21 @@ export class TerrainSystem {
   }
 
   private buildNow(spec: ChunkSpec): void {
-    const data = buildChunkGeometryData(this.seed, this.noise, spec.cx, spec.cz, CHUNK_SIZE, spec.segments, this.resolvedAnchors);
+    const data = buildChunkGeometryData(
+      this.seed,
+      this.noise,
+      spec.cx,
+      spec.cz,
+      CHUNK_SIZE,
+      spec.segments,
+      this.resolvedAnchors,
+      {
+        eraYear: this.eraYear,
+        season: this.season,
+        eraTerrainDelta: BALANCE.eraEvolution.eraTerrainDelta,
+        footprints: this.footprints,
+      }
+    );
     this.applyChunkGeometry(spec.key, spec.cx, spec.cz, spec.segments, data);
   }
 
@@ -247,6 +293,10 @@ export class TerrainSystem {
       chunkSize: CHUNK_SIZE,
       segments: spec.segments,
       anchors: this.anchorSpecs,
+      eraYear: this.eraYear,
+      season: this.season,
+      eraTerrainDelta: BALANCE.eraEvolution.eraTerrainDelta,
+      footprints: BALANCE.eraEvolution.eraTerrainDelta ? this.footprints : undefined,
     });
   }
 

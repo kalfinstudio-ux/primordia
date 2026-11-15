@@ -158,11 +158,11 @@ export function effectiveWaterLevel(baseWaterLevel: number, date: Date = new Dat
 }
 
 /**
- * Seed efektif untuk medan: berubah tiap BULAN dan tiap TAHUN (1 Januari UTC).
- * Props/sumber daya memakai seed harian, jadi vegetasi & batu tumbuh ulang tiap hari.
- * Dilindungi oleh Jangkar Medan (60 m) serta aturan relokasi aman agar base/pemain tidak pernah terkubur.
+ * Pergeseran seed medan bulanan: dimatikan (false) — bulan menjadi MUSIM yang hanya mengubah
+ * cuaca, langit, kabut, dan warna tanpa merusak base atau memisahkan ruang multiplayer.
+ * Props/sumber daya harian tetap memakai seed harian agar tumbuh ulang tiap hari UTC.
  */
-export const MONTHLY_TERRAIN_SHIFT = true;
+export const MONTHLY_TERRAIN_SHIFT = false;
 
 export function effectiveTerrainSeed(worldSeed: string, date: Date = new Date(), shift: boolean = MONTHLY_TERRAIN_SHIFT): string {
   if (!shift) return worldSeed;

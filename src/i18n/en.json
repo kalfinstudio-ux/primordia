@@ -162,10 +162,13 @@
     },
     "preset": "Quality Preset",
     "presets": {
+      "auto": "Auto",
       "low": "Low",
       "medium": "Medium",
       "high": "High"
     },
+    "autoStatus": "Active tier",
+    "lastManual": "Last manual",
     "viewDistance": "View Distance",
     "shadows": "Dynamic Shadows",
     "particles": "Ash & Weather Particles",
@@ -188,6 +191,13 @@
     "keyBindings": "Key Bindings",
     "pressKey": "Press a key...",
     "difficulty": "Difficulty",
+    "survivalRate": "Survival Rate",
+    "survivalRates": {
+      "relaxed": "Relaxed",
+      "normal": "Normal",
+      "hard": "Hard"
+    },
+    "survivalRateHint": "Needs drain in real seconds, independent of the accelerated world clock.",
     "showHud": "Show Full HUD",
     "units": "Measurement Units",
     "metric": "Metric (°C, m)",
@@ -200,7 +210,8 @@
     "confirmClearBody": "All local saves and settings will be erased from this browser.",
     "saveClose": "Save & Close",
     "reset": "Reset Defaults",
-    "adaptiveDown": "Quality adjusted for smoother framerate."
+    "adaptiveDown": "Quality adjusted for smoother framerate.",
+    "adaptiveUp": "Quality increased after stable framerate."
   },
   "biomes": {
     "shallow_ocean": "Shallow Steaming Ocean",
@@ -222,7 +233,12 @@
     "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar.",
     "autoFilter": "Gas Filter equipped automatically — oxygen almost gone.",
     "noRefuge": "Toxic air and no shelter nearby! Use a Gas Filter or build a Shelter [B].",
-    "bagFull": "Pack is full! Free up space or store items in a chest first."
+    "bagFull": "Pack is full! Free up space or store items in a chest first.",
+    "fallHurt": "Hard landing (-{dmg} HP).",
+    "coldWarning": "Getting cold! Place a Lava Hearth [5], head toward a warm geyser, or enter a Shelter.",
+    "heatWarning": "Body temperature too high! Step back from lava or take cover in a Shelter.",
+    "lowWater": "Hydration running low! Drink from a Water Vessel or refill at shallow pools.",
+    "respawnShield": "Respawn protection active for 60 seconds."
   },
   "events": {
     "super_eruption": "SUPER-ERUPTION IMMINENT — SEEK SHELTER",
@@ -241,17 +257,33 @@
     "cleanAirHint": "Clean air",
     "shelterHint": "Shelter",
     "bagHint": "Bag",
+    "coldAlert": "LOW BODY TEMP — SEEK WARMTH",
+    "heatAlert": "OVERHEATING — SEEK SHELTER",
+    "respawnShield": "RESPAWN SHIELD",
+    "heatSource": {
+      "campfire": "Campfire",
+      "geyser": "Warm geyser",
+      "shelter": "Shelter"
+    },
     "health": "Health",
     "stamina": "Stamina",
     "temperature": "Body Temp",
     "oxygen": "Oxygen",
     "water": "Hydration",
+    "hunger": "Hunger",
     "radiation": "Radiation",
     "fatigue": "Rest",
     "weight": "Weight",
     "filter": "Gas Filter",
     "burnStatus": "BURN",
     "woundStatus": "WOUND",
+    "status": {
+      "wet": "WET",
+      "immersed": "SOAKED",
+      "cold": "COLD",
+      "windy": "WINDY",
+      "falling": "FALLING"
+    },
     "objective": "Active Mission",
     "weather": {
       "clear_haze": "Orange Haze",
@@ -584,6 +616,10 @@
       "name": "Lava Hearth",
       "desc": "Provides steady light and warmth during Archean nightfall."
     },
+    "ash_cloak": {
+      "name": "Warm Ash Cloak",
+      "desc": "Tier 1 woven ash-and-basalt wrap; reduces night chill and wind cold by 35%."
+    },
     "basic_shelter": {
       "name": "Basalt Shelter",
       "desc": "Portable shelter protecting against acid rain, ash storms, and heat."
@@ -876,6 +912,8 @@
     "reasonTemp": "Hyperthermia or hypothermia from extreme temperatures.",
     "reasonOxygen": "Asphyxiation inside dense volcanic gas.",
     "reasonDehydration": "Severe dehydration on the barren plains.",
+    "reasonStarvation": "Severe starvation after exhausting your energy reserves.",
+    "reasonFall": "Fatal impact from a high-speed fall.",
     "reasonRadiation": "Acute radiation sickness from meteorite fallout.",
     "reasonMeteor": "Struck directly by a falling meteor.",
     "reasonGeneric": "Explorer vitals reached critical zero.",
@@ -883,7 +921,17 @@
     "statQuests": "Missions Cleared",
     "statDistance": "Distance Explored",
     "respawn": "Respawn at Safe Ridge",
-    "mainMenu": "Main Menu"
+    "mainMenu": "Main Menu",
+    "advice": {
+      "reasonTemp": "Tip: Place a Lava Hearth from hotbar [5], craft a Warm Ash Cloak, or avoid staying wet during cold nights.",
+      "reasonOxygen": "Tip: Follow the green clean-air arrow, equip a Gas Filter in your pack, or step inside a Shelter.",
+      "reasonDehydration": "Tip: Walk into shallow glowing pools and press [E] to drink and refill a Water Vessel.",
+      "reasonStarvation": "Tip: Harvest a Moss Garden or prepare rations before long expeditions.",
+      "reasonFall": "Tip: Watch steep volcanic cliffs; landing in deep water absorbs fall impact.",
+      "reasonRadiation": "Tip: Keep clear of glowing meteorite craters or craft Hazmat Lining / a Radiation Scrubber.",
+      "reasonMeteor": "Tip: Step out of red ground impact rings immediately when you hear a meteor incoming.",
+      "reasonGeneric": "Tip: Keep an eye on your vital bars top-left and place a Basalt Shelter early to recover."
+    }
   },
   "credits": {
     "title": "Credits & Build Info",

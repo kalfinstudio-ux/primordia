@@ -260,6 +260,10 @@ export class WeatherSystem {
     return this.weights;
   }
 
+  getRainWeight(): number {
+    return Math.min(1, this.weights.acid_rain + this.weights.electrical_storm);
+  }
+
   getWind(): WindVector {
     return this.wind;
   }
@@ -425,8 +429,10 @@ export class WeatherSystem {
     gameState.wind.z = this.wind.z;
     gameState.wind.strength = this.wind.strength;
 
-    const rainWeight = Math.min(1, this.weights.acid_rain + this.weights.electrical_storm);
-    gameState.wetness = stepWetness(gameState.wetness, rainWeight, dt);
+    const rainWeight = this.getRainWeight();
+    if (gameState.screen !== 'hud') {
+      gameState.wetness = stepWetness(gameState.wetness, rainWeight, dt);
+    }
 
     // Refresh cached 5x5 terrain ground heights + valley/geyser fog anchors every 0.25s
     this.groundCacheTimer -= dt;

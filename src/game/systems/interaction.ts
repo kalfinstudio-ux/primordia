@@ -5,6 +5,7 @@ import type { WorldInteractable } from '../world/props';
 import { addItem, canAddAll, damageToolDurability, getBestMiningToolId, hasItem, notifyBagFull, removeItem } from './inventory';
 import { t } from '../utils/i18n';
 import type { SkySystem } from '../world/sky';
+import { BALANCE } from '../data/balance';
 
 /**
  * Beri `drops` hanya bila semuanya muat di tas. Bila penuh: tampilkan peringatan dan kembalikan false,
@@ -80,6 +81,7 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     eventBus.emit('toast:show', { text: `+1 ${t('items.primordial_crystal.name')}`, type: 'success' });
   } else if (target.kind === 'water') {
     gameState.vitals.water = 100;
+    gameState.vitals.waterGraceTimer = BALANCE.water.fullGraceSec;
     gameState.waterCollectedCount += 1;
     gameState.sootLevel = Math.max(0, gameState.sootLevel - 0.5);
     eventBus.emit('audio:sfx', 'water');
@@ -95,6 +97,7 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
       setScreen('victory');
     } else {
       gameState.vitals.water = 100;
+      gameState.vitals.waterGraceTimer = BALANCE.water.fullGraceSec;
       gameState.waterCollectedCount += 1;
       eventBus.emit('audio:sfx', 'water');
       // Air tetap terisi walau tas penuh; garam hanya diberi bila muat.
@@ -117,6 +120,9 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
       eventBus.emit('toast:show', { text: `+1 ${t('items.purified_water.name')}`, type: 'success' });
     } else {
       gameState.vitals.water = Math.min(100, gameState.vitals.water + 15);
+      if (gameState.vitals.water >= BALANCE.water.fullThresholdPct) {
+        gameState.vitals.waterGraceTimer = BALANCE.water.fullGraceSec;
+      }
       eventBus.emit('audio:sfx', 'water');
     }
   } else if (target.kind === 'garden_plot') {

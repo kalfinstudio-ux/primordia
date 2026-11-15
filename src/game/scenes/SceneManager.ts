@@ -4,15 +4,28 @@ import {
   effectiveTerrainSeed,
   effectiveWaterLevel,
   formatShiftCountdown,
+  getEdenCalendar,
   getWorldAge,
   safeRelocatePlayer,
   safeRelocateStructures,
   sanitizeClockSample,
   shiftWarning,
 } from '../data/eden';
+import {
+  collectPlayerFootprints,
+  combinedWorldVisuals,
+  type WorldSeason,
+} from '../data/worldEvolution';
 import * as THREE from 'three';
 import { AUTOSAVE_INTERVAL_SEC, WATER_LEVEL } from '../config';
 import { Engine } from '../core/engine';
+import {
+  decideGraphicsTier,
+  recordFpsSample,
+  tierRank,
+  type FpsSample,
+  type TierTransitionDirection,
+} from '../data/graphicsTier';
 import { GameLoop } from '../core/loop';
 import { input } from '../core/input';
 import { loadProceduralAssets, type ProceduralAssets } from '../core/assetLoader';
@@ -61,7 +74,8 @@ import { DeathBagView } from '../world/deathBagView';
 import { findBagInRange, pickUpBag } from '../systems/deathBag';
 import { pickRespawnPoint, relativeBearingDeg } from '../systems/cleanAir';
 import { pickQuestGuide } from '../systems/questGuide';
-import { BALANCE } from '../data/balance';
+import { BALANCE, isSafeStartActive } from '../data/balance';
+import { isFallingFast } from '../data/survivalRates';
 import { distance2D } from '../utils/math';
 import { audioSystem } from '../systems/audio';
 import type { SpatialAmbientKind } from '../data/audioMath';
@@ -111,13 +125,18 @@ export class SceneManager {
   private autosaveAccum = 0;
   private fpsSamples = 0;
   private fpsAccum = 0;
-  private lowFpsTimer = 0;
   private currentFps = 60;
+  private fpsHistory: FpsSample[] = [];
+  private adaptiveTimeSec = 0;
+  private lastTierChangeSec: number | null = null;
+  private lastTierChangeDir: TierTransitionDirection | null = null;
+  private isApplyingAdaptive = false;
   private lastBiomeSound = '';
   private ready = false;
   private appliedEdenSeed = '';
   private appliedYear = 0;
   private appliedEraYear = 1;
+  private appliedSeason: WorldSeason = 'kering';
   private currentWaterLevel = WATER_LEVEL;
   private lastClockMs = 0;
   private edenCheckTimer = 0;
@@ -127,6 +146,8 @@ export class SceneManager {
   private readonly spatialSlotGeyser = { kind: 'geyser' as const, x: 0, y: 0, z: 0, distance: 999 };
   private readonly spatialSlotWater = { kind: 'water' as const, x: 0, y: 0, z: 0, distance: 999 };
   private readonly spatialSlotCampfire = { kind: 'campfire' as const, x: 0, y: 0, z: 0, distance: 999 };
+  private readonly geyserCoordBuf: Array<{ x: number; z: number }> = [];
+  private readonly geyserCoordPool: Array<{ x: number; z: number }> = [];
   private unsubs: Array<() => void> = [];
 
   constructor(container: HTMLElement) {
@@ -138,7 +159,10 @@ export class SceneManager {
         this.animator.triggerJump();
         audioSystem.playSfx('jump');
       },
-      onLand: () => this.animator.triggerLand(),
+      onLand: (ev) => {
+        this.animator.triggerLand();
+        this.survival.applyFallDamage(ev.impactSpeed, ev.inWater, ev.immersed);
+      },
       onFootstep: () =>
         audioSystem.playFootstep(this.survival.currentSurface, this.controller.lastHorizontalSpeed, gameState.wetness),
     });
@@ -179,6 +203,11 @@ export class SceneManager {
       }),
       eventBus.on('settings:updated', () => {
         this.engine.applyGraphicsSettings();
+        if (!this.isApplyingAdaptive) {
+          this.fpsHistory = [];
+          this.lastTierChangeSec = null;
+          this.lastTierChangeDir = null;
+        }
         if (this.sky) {
           this.sky.sunLight.castShadow = !this.engine.isSoftwareGl && gameState.settings.graphics.shadows;
           this.sky.applyFog(this.engine.scene, this.weather.getWeights());
@@ -193,10 +222,18 @@ export class SceneManager {
   async init(): Promise<void> {
     this.assets = await loadProceduralAssets(this.engine.renderer);
 
+    const initDate = new Date();
+    const initCal = getEdenCalendar(initDate);
+    this.appliedEraYear = initCal.eraYear;
+    this.appliedSeason = initCal.season;
+
     this.terrain = new TerrainSystem(gameState.worldSeed, this.assets);
+    this.terrain.setEvolution(this.appliedEraYear, this.appliedSeason);
     this.engine.scene.add(this.terrain.group);
 
     this.sky = new SkySystem(this.engine.scene, this.engine.isSoftwareGl);
+    this.sky.setWorldEvolution(this.appliedEraYear, this.appliedSeason, true);
+    this.engine.setToneExposureMultiplier(combinedWorldVisuals(this.appliedEraYear, this.appliedSeason).exposureMult);
     this.landmarks = new LandmarkSilhouettes(this.engine.scene);
     this.water = new WaterSystem(this.engine.scene);
     this.lava = new LavaSystem(this.engine.scene, this.terrain, this.assets);
@@ -204,7 +241,7 @@ export class SceneManager {
     this.weather = new WeatherSystem(this.engine.scene, this.engine.isSoftwareGl);
     this.deathBagView = new DeathBagView(this.engine.scene);
     this.meteors = new MeteorSystem(this.engine.scene);
-    this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash);
+    this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash, this.appliedEraYear);
     this.buildingGhost = new BuildingGhostSystem(this.engine.scene, this.assets.contactShadowTexture);
     this.remotePlayers = new RemotePlayersSystem(this.engine.scene, this.assets.contactShadowTexture);
     this.brukBody = new BrukBody(this.engine.scene, this.spatialHash);
@@ -217,6 +254,7 @@ export class SceneManager {
     this.engine.scene.add(this.character.root);
 
     this.syncPlayerGlbModel();
+    this.engine.syncGlowTier();
 
     this.engine.prewarm();
     this.ready = true;
@@ -256,11 +294,17 @@ export class SceneManager {
     let sz = resetPlayer ? 18 : p.z;
     const syaw = resetPlayer ? Math.PI : p.yaw;
 
+    const cal = getEdenCalendar(nowDate);
     this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed, nowDate);
     this.appliedYear = nowDate.getUTCFullYear();
     this.appliedEraYear = getWorldAge(nowDate).eraYear;
+    this.appliedSeason = cal.season;
     this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
+    this.terrain.setFootprints(collectPlayerFootprints(gameState.placedStructures));
+    this.terrain.setEvolution(this.appliedEraYear, this.appliedSeason);
     this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
+    this.sky.setWorldEvolution(this.appliedEraYear, this.appliedSeason, true);
+    this.engine.setToneExposureMultiplier(combinedWorldVisuals(this.appliedEraYear, this.appliedSeason).exposureMult);
     const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
     this.currentWaterLevel = waterY;
     this.water.setLevel(waterY);
@@ -273,6 +317,7 @@ export class SceneManager {
       );
       if (reloc.relocatedCount > 0) {
         this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
+        this.terrain.setFootprints(collectPlayerFootprints(gameState.placedStructures));
       }
       const safeP = safeRelocatePlayer(
         { x: sx, y: p.y, z: sz },
@@ -284,7 +329,7 @@ export class SceneManager {
     }
 
     this.terrain.updateStreaming(sx, sz, true);
-    this.chunks.populate(this.terrain, this.appliedEdenSeed);
+    this.chunks.populate(this.terrain, this.appliedEdenSeed, this.appliedEraYear);
     this.chunks.updateStreaming(this.terrain, sx, sz, true);
     this.chunks.syncPlacedStructures(gameState.placedStructures);
 
@@ -346,12 +391,17 @@ export class SceneManager {
       temperature: R.temperature,
       oxygen: R.oxygen,
       water: R.water,
+      hunger: R.hunger,
       radiation: Math.min(gameState.vitals.radiation, R.radiationCap),
       fatigue: R.fatigue,
       burnTimer: 0,
       woundTimer: 0,
       suffocationTimer: 0,
       filterDurability: 0,
+      waterGraceTimer: BALANCE.water.fullGraceSec,
+      hungerGraceTimer: BALANCE.hunger.fullGraceSec,
+      tempDangerTimer: 0,
+      respawnGraceTimer: BALANCE.respawn.protectionSec,
     };
     // Bekal darurat: barang ada di kantong, jadi beri filter agar perjalanan mengambilnya tidak mustahil.
     const emergencyFilters = BALANCE.newPlayer.respawnFilterQty[diff] ?? 0;
@@ -361,6 +411,7 @@ export class SceneManager {
     this.controller.resetTo(spot.x, spot.z, Math.PI, this.terrain);
     this.camRig.snapToPlayer(this.controller.position, Math.PI);
     setScreen('hud');
+    eventBus.emit('toast:show', { text: t('survival.respawnShield'), type: 'info' });
     if (gameState.deathBags.length > 0) {
       eventBus.emit('toast:show', { text: t('survival.bagHint'), type: 'info' });
     }
@@ -435,7 +486,8 @@ export class SceneManager {
       this.camRig.yaw,
       this.terrain,
       this.spatialHash,
-      weightRatio
+      weightRatio,
+      this.currentWaterLevel
     );
     gameState.distanceExplored += moveRes.distanceMoved;
 
@@ -448,13 +500,42 @@ export class SceneManager {
       this.sky.getTimeOfDay(),
       moveRes.inLava,
       inMeteorDanger,
-      this.activeEvent.type
+      this.activeEvent.type,
+      {
+        rainWeight: this.weather.getRainWeight(),
+        windStrength: this.weather.getWind().strength,
+        inWater: moveRes.inWater,
+        immersed: moveRes.swimming,
+        eraYear: this.appliedEraYear,
+        waterLevel: this.currentWaterLevel,
+      }
     );
     this.survival.updateCleanAir(
       fixedDt,
       (x, z) => this.terrain.groundHeightAt(x, z),
       this.weather.currentWeather
     );
+    this.geyserCoordBuf.length = 0;
+    if (
+      gameState.vitals.temperature <= BALANCE.temperature.coldWarnBannerC &&
+      !this.survival.inShelter &&
+      !this.survival.nearCampfire
+    ) {
+      let idx = 0;
+      for (const item of this.chunks.interactables) {
+        if (item.depleted || item.kind !== 'geyser_pool') continue;
+        let slot = this.geyserCoordPool[idx];
+        if (!slot) {
+          slot = { x: 0, z: 0 };
+          this.geyserCoordPool.push(slot);
+        }
+        slot.x = item.x;
+        slot.z = item.z;
+        this.geyserCoordBuf.push(slot);
+        idx++;
+      }
+    }
+    this.survival.updateHeatSource(fixedDt, this.geyserCoordBuf);
     tickStructures(fixedDt, this.weather.currentWeather);
     this.bruk.update(fixedDt, this.weather.currentWeather, this.brukBody.getWorldPos());
   }
@@ -479,6 +560,7 @@ export class SceneManager {
       this.fpsSamples++;
       if (this.fpsAccum >= 1.0) {
         this.currentFps = Math.round(this.fpsSamples / this.fpsAccum);
+        this.adaptiveTimeSec += this.fpsAccum;
         this.fpsSamples = 0;
         this.fpsAccum = 0;
         this.checkAdaptiveQuality();
@@ -510,10 +592,25 @@ export class SceneManager {
         const next = effectivePropSeed(gameState.worldSeed, nowDate);
         if (next !== this.appliedEdenSeed) {
           this.appliedEdenSeed = next;
+          const nextCal = getEdenCalendar(nowDate);
+          const newAge = getWorldAge(nowDate);
+          const eraChanged = nowDate.getUTCFullYear() !== this.appliedYear;
+          const seasonChanged = nextCal.season !== this.appliedSeason;
+          if (eraChanged) {
+            this.appliedYear = nowDate.getUTCFullYear();
+            this.appliedEraYear = newAge.eraYear;
+          }
+          if (seasonChanged) {
+            this.appliedSeason = nextCal.season;
+          }
+          this.sky.setWorldEvolution(this.appliedEraYear, this.appliedSeason);
+          this.engine.setToneExposureMultiplier(combinedWorldVisuals(this.appliedEraYear, this.appliedSeason).exposureMult);
           const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
           this.currentWaterLevel = waterY;
           this.water.setLevel(waterY);
           this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
+          this.terrain.setFootprints(collectPlayerFootprints(gameState.placedStructures));
+          this.terrain.setEvolution(this.appliedEraYear, this.appliedSeason);
           this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
           safeRelocateStructures(
             gameState.placedStructures,
@@ -528,12 +625,9 @@ export class SceneManager {
           if (safeP.relocated) {
             this.controller.resetTo(safeP.x, safeP.z, this.controller.yaw, this.terrain);
           }
-          this.chunks.populate(this.terrain, next);
+          this.chunks.populate(this.terrain, next, this.appliedEraYear);
           this.chunks.syncPlacedStructures(gameState.placedStructures);
-          if (nowDate.getUTCFullYear() !== this.appliedYear) {
-            this.appliedYear = nowDate.getUTCFullYear();
-            const newAge = getWorldAge(nowDate);
-            this.appliedEraYear = newAge.eraYear;
+          if (eraChanged) {
             eventBus.emit('era:achieved', { id: `era_${newAge.eraYear}`, eraYear: newAge.eraYear });
             eventBus.emit('toast:show', { text: `⏳ ${newAge.name} (Tahun ${newAge.eraYear}) dimulai!`, type: 'info' });
           } else {
@@ -576,6 +670,9 @@ export class SceneManager {
       this.deathBagView.update(elapsed, (x, z) => this.terrain.groundHeightAt(x, z));
 
       const swarmMult = this.activeEvent.type === 'meteor_swarm' ? 2.8 : 1;
+      const meteorMinDist = isSafeStartActive(gameState.settings.gameplay.difficulty, gameState.playtimeSec)
+        ? BALANCE.safeStart.minMeteorDistM
+        : 10;
       this.meteors.update(
         dt,
         this.weather.currentWeather,
@@ -590,7 +687,8 @@ export class SceneManager {
             this.chunks.spawnMeteorCrystal(x, y, z);
           }
         },
-        swarmMult
+        swarmMult,
+        meteorMinDist
       );
 
       const nearest = this.chunks.findNearestInteractable(pos.x, pos.z);
@@ -776,25 +874,45 @@ export class SceneManager {
 
   private checkAdaptiveQuality(): void {
     if (this.engine.isSoftwareGl) return;
-    if (this.currentFps < 22) {
-      this.lowFpsTimer += 1;
-      if (this.lowFpsTimer >= 4 && gameState.settings.graphics.preset !== 'low') {
-        this.lowFpsTimer = 0;
-        const nextPreset = gameState.settings.graphics.preset === 'high' ? 'medium' : 'low';
+    const gfx = gameState.settings.graphics;
+    const mode = gfx.mode ?? gfx.preset;
+    if (mode !== 'auto') return;
+
+    this.fpsHistory = recordFpsSample(this.fpsHistory, this.currentFps, this.adaptiveTimeSec);
+    const currentTier = gfx.preset;
+    const nextTier = decideGraphicsTier({
+      samples: this.fpsHistory,
+      currentTier,
+      timeSec: this.adaptiveTimeSec,
+      lastChangeTimeSec: this.lastTierChangeSec,
+      lastChangeDirection: this.lastTierChangeDir,
+    });
+
+    if (nextTier !== currentTier) {
+      const dir: TierTransitionDirection = tierRank(nextTier) < tierRank(currentTier) ? 'down' : 'up';
+      this.lastTierChangeSec = this.adaptiveTimeSec;
+      this.lastTierChangeDir = dir;
+      this.isApplyingAdaptive = true;
+      try {
         saveSettingsToLocal({
           ...gameState.settings,
           graphics: {
-            ...gameState.settings.graphics,
-            preset: nextPreset,
-            shadows: nextPreset !== 'low',
-            particles: nextPreset !== 'low',
-            viewDistance: nextPreset === 'low' ? 85 : 115,
+            ...gfx,
+            mode: 'auto',
+            preset: nextTier,
+            shadows: nextTier !== 'low',
+            particles: nextTier !== 'low',
+            volumetricFog: nextTier !== 'low',
+            viewDistance: nextTier === 'low' ? 85 : nextTier === 'medium' ? 125 : 175,
           },
         });
-        eventBus.emit('toast:show', { text: t('settings.adaptiveDown'), type: 'info' });
+      } finally {
+        this.isApplyingAdaptive = false;
       }
-    } else {
-      this.lowFpsTimer = 0;
+      eventBus.emit('toast:show', {
+        text: t(dir === 'down' ? 'settings.adaptiveDown' : 'settings.adaptiveUp'),
+        type: 'info',
+      });
     }
   }
 
@@ -843,6 +961,7 @@ export class SceneManager {
       }
     }
     const ca = this.survival.cleanAir;
+    const hs = this.survival.heatSource;
     const guide = pickQuestGuide(quest.activeQuestId, p.x, p.z, minimapNodes);
 
     const snap: HudSnapshot = {
@@ -889,18 +1008,43 @@ export class SceneManager {
             kind: ca.kind,
           }
         : null,
+      heatSource: hs
+        ? {
+            dist: Math.round(hs.dist),
+            relDeg: relativeBearingDeg(p.x, p.z, hs.x, hs.z, headingRad),
+            kind: hs.kind,
+          }
+        : null,
       deathBag: nearestBag,
       waypoint: wpInfo,
       questGuide: guide
         ? { kind: guide.kind, dist: Math.round(guide.dist), relDeg: relativeBearingDeg(p.x, p.z, guide.x, guide.z, headingRad) }
         : null,
+      eraYear: this.appliedEraYear,
+      hungerActive: BALANCE.survival.switches.hunger && this.appliedEraYear >= BALANCE.hunger.startsAtEra,
+      statusCues: {
+        wet:
+          BALANCE.survival.switches.wetness &&
+          (gameState.wetness >= BALANCE.wetness.hudWetThreshold || this.controller.inWater),
+        immersed: BALANCE.survival.switches.wetness && this.controller.swimming,
+        cold: gameState.vitals.temperature <= BALANCE.temperature.coldWarnC,
+        windy:
+          BALANCE.survival.switches.wind &&
+          !this.survival.inShelter &&
+          this.weather.getWind().strength >= BALANCE.wind.hudWindySpeedThreshold,
+        falling: isFallingFast(this.controller.grounded, this.controller.swimming, this.controller.velocity.y),
+      },
       debug: (() => {
         const fTel = this.fauna.getTelemetry();
         return {
           fps: this.currentFps,
           activeChunks: this.terrain.getActiveChunkCount(),
           pendingChunks: this.terrain.getPendingChunkCount(),
-          drawCalls: this.engine.renderer.info.render.calls,
+          drawCalls: this.engine.renderStats.calls,
+          triangles: this.engine.renderStats.triangles,
+          graphicsTier: this.engine.getActiveTier(),
+          graphicsMode: gameState.settings.graphics.mode ?? gameState.settings.graphics.preset,
+          renderTargetSize: this.engine.renderStats.renderTargetSize,
           playerX: p.x,
           playerY: p.y,
           playerZ: p.z,

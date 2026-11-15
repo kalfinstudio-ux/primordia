@@ -22,6 +22,10 @@ import {
   EyeOff,
   Flag,
   Users,
+  Droplets,
+  Snowflake,
+  Wind,
+  ArrowDown,
 } from 'lucide-react';
 import { ITEMS, WORLD_RADIUS } from '../game/config';
 import { BALANCE } from '../game/data/balance';
@@ -180,6 +184,9 @@ export function HudScreen() {
   const showFull = gameState.settings.gameplay.showHud;
   const lowOxygen = snap.vitals.oxygen < BALANCE.oxygen.lowWarnPct;
   const suffocating = snap.vitals.oxygen <= BALANCE.oxygen.depletedAtPct && (snap.vitals.suffocationTimer || 0) > 0;
+  const lowTemp = snap.vitals.temperature <= BALANCE.temperature.coldWarnBannerC;
+  const highTemp = snap.vitals.temperature >= BALANCE.temperature.heatWarnBannerC;
+  const respawnShieldSec = Math.ceil(snap.vitals.respawnGraceTimer || 0);
   const isImperial = gameState.settings.gameplay.units === 'imperial';
   const tempDisplay = isImperial
     ? `${Math.round((snap.vitals.temperature * 9) / 5 + 32)}°F`
@@ -433,12 +440,22 @@ export function HudScreen() {
                 {bar(t('hud.health'), snap.vitals.health, `${Math.round(snap.vitals.health)}`, 'bg-red-600')}
                 {!showFullBars && lowOxygen &&
                   bar(t('hud.oxygen'), snap.vitals.oxygen, `${Math.round(snap.vitals.oxygen)}%`, 'bg-red-500', true)}
+                {!showFullBars && (lowTemp || highTemp) &&
+                  bar(t('hud.temperature'), tempPct, tempDisplay, lowTemp ? 'bg-sky-400' : 'bg-red-500', true)}
                 {showFullBars && (
                   <>
                     {bar(t('hud.stamina'), snap.vitals.stamina, `${Math.round(snap.vitals.stamina)}`, 'bg-amber-500')}
-                    {bar(t('hud.temperature'), tempPct, tempDisplay, 'bg-orange-500')}
+                    {bar(
+                      t('hud.temperature'),
+                      tempPct,
+                      tempDisplay,
+                      lowTemp ? 'bg-sky-400' : highTemp ? 'bg-red-500' : 'bg-orange-500',
+                      lowTemp || highTemp
+                    )}
                     {bar(t('hud.oxygen'), snap.vitals.oxygen, `${Math.round(snap.vitals.oxygen)}%`, lowOxygen ? 'bg-red-500' : 'bg-emerald-500', lowOxygen)}
                     {bar(t('hud.water'), snap.vitals.water, `${Math.round(snap.vitals.water)}%`, 'bg-sky-500')}
+                    {snap.hungerActive &&
+                      bar(t('hud.hunger'), snap.vitals.hunger ?? 100, `${Math.round(snap.vitals.hunger ?? 100)}%`, 'bg-lime-500')}
                   </>
                 )}
               </div>
@@ -449,10 +466,47 @@ export function HudScreen() {
                   <span className="text-stone-400">REST {Math.round(snap.vitals.fatigue)}%</span>
                 </div>
               )}
-              {(snap.vitals.burnTimer > 0 || snap.vitals.woundTimer > 0) && (
-                <div className="mt-1 flex gap-1.5 text-[10px] font-bold">
-                  {snap.vitals.burnTimer > 0 && <span className="rounded bg-red-900/70 px-1.5 py-0.5 text-red-200">{t('hud.burnStatus')}</span>}
-                  {snap.vitals.woundTimer > 0 && <span className="rounded bg-amber-900/70 px-1.5 py-0.5 text-amber-200">{t('hud.woundStatus')}</span>}
+              {(snap.vitals.burnTimer > 0 ||
+                snap.vitals.woundTimer > 0 ||
+                snap.statusCues?.wet ||
+                snap.statusCues?.cold ||
+                snap.statusCues?.windy ||
+                snap.statusCues?.falling) && (
+                <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold">
+                  {snap.vitals.burnTimer > 0 && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-red-900/75 px-1.5 py-0.5 text-red-200">
+                      {t('hud.burnStatus')}
+                    </span>
+                  )}
+                  {snap.vitals.woundTimer > 0 && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-900/75 px-1.5 py-0.5 text-amber-200">
+                      {t('hud.woundStatus')}
+                    </span>
+                  )}
+                  {snap.statusCues?.wet && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-sky-900/80 px-1.5 py-0.5 text-sky-200">
+                      <Droplets className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {snap.statusCues.immersed ? t('hud.status.immersed') : t('hud.status.wet')}
+                    </span>
+                  )}
+                  {snap.statusCues?.cold && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-cyan-950/85 px-1.5 py-0.5 text-cyan-200">
+                      <Snowflake className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {t('hud.status.cold')}
+                    </span>
+                  )}
+                  {snap.statusCues?.windy && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-stone-800/90 px-1.5 py-0.5 text-stone-200">
+                      <Wind className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {t('hud.status.windy')}
+                    </span>
+                  )}
+                  {snap.statusCues?.falling && (
+                    <span className="inline-flex animate-pulse items-center gap-0.5 rounded bg-orange-900/85 px-1.5 py-0.5 text-orange-200">
+                      <ArrowDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {t('hud.status.falling')}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -519,6 +573,33 @@ export function HudScreen() {
           {vis.hazardPills && suffocating && (
             <div className="animate-pulse rounded-md border border-red-500 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-red-300" style={{ backgroundColor: 'rgba(40, 8, 8, 0.92)' }} role="alert">
               {t('hud.suffocating')}
+            </div>
+          )}
+
+          {vis.hazardPills && (lowTemp || highTemp) && (
+            <div
+              className={`animate-pulse rounded-md border px-2.5 py-0.5 text-[11px] font-bold tracking-wider ${
+                lowTemp ? 'border-cyan-400 text-cyan-200' : 'border-red-500 text-red-200'
+              }`}
+              style={{ backgroundColor: lowTemp ? 'rgba(8, 30, 44, 0.92)' : 'rgba(46, 12, 8, 0.92)' }}
+              role="alert"
+            >
+              {t(lowTemp ? 'hud.coldAlert' : 'hud.heatAlert')}
+            </div>
+          )}
+
+          {vis.hazardPills && respawnShieldSec > 0 && (
+            <div className="rounded-md border border-emerald-500/70 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-200" style={{ backgroundColor: 'rgba(8, 30, 22, 0.9)' }}>
+              {t('hud.respawnShield')} · {respawnShieldSec}s
+            </div>
+          )}
+
+          {vis.hazardPills && snap.heatSource && snap.heatSource.dist > 0 && (
+            <div className="flex animate-pulse items-center gap-1.5 rounded-md border border-orange-500/70 px-2.5 py-0.5 text-[11px] font-medium text-orange-200" style={{ backgroundColor: 'rgba(38, 18, 6, 0.92)' }}>
+              <ArrowUp className="h-4 w-4" style={{ transform: `rotate(${snap.heatSource.relDeg}deg)` }} aria-hidden="true" />
+              <span>
+                {t(`hud.heatSource.${snap.heatSource.kind}`)} · {snap.heatSource.dist} m
+              </span>
             </div>
           )}
 

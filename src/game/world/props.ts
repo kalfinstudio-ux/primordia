@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { StructureType } from '../core/state';
 import { markShared } from './disposal';
+import { markGlowEmitter } from './glowSprites';
 
 export interface WorldInteractable {
   id: string;
@@ -36,13 +37,13 @@ const sulfurMat = markShared(new THREE.MeshStandardMaterial({ color: '#eab308', 
 const obsidianMat = markShared(new THREE.MeshStandardMaterial({ color: '#1e1b4b', emissive: '#312e81', emissiveIntensity: 0.25, roughness: 0.16, metalness: 0.6 }));
 const saltMat = markShared(new THREE.MeshStandardMaterial({ color: '#fef3c7', emissive: '#d97706', emissiveIntensity: 0.18, roughness: 0.45, metalness: 0.1 }));
 const meteorIronMat = markShared(new THREE.MeshStandardMaterial({ color: '#475569', emissive: '#1d4ed8', emissiveIntensity: 0.35, roughness: 0.28, metalness: 0.85 }));
-const crystalMat = markShared(new THREE.MeshStandardMaterial({ color: '#fb923c', emissive: '#ea580c', emissiveIntensity: 1.15, roughness: 0.14, metalness: 0.2 }));
+const crystalMat = markShared(new THREE.MeshStandardMaterial({ color: '#fb923c', emissive: '#ea580c', emissiveIntensity: 2.2, roughness: 0.14, metalness: 0.2 }));
 const shelterFrameMat = markShared(new THREE.MeshStandardMaterial({ color: '#57534e', roughness: 0.75, metalness: 0.25 }));
 const shelterShieldMat = markShared(new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32, metalness: 0.65 }));
 const ironMat = markShared(new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 }));
 const glassMat = markShared(new THREE.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.65, roughness: 0.1, metalness: 0.2 }));
 const mossMat = markShared(new THREE.MeshStandardMaterial({ color: '#4d7c0f', emissive: '#14532d', emissiveIntensity: 0.25, roughness: 0.85 }));
-const beaconMat = markShared(new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#eab308', emissiveIntensity: 1.4, roughness: 0.2 }));
+const beaconMat = markShared(new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#eab308', emissiveIntensity: 1.9, roughness: 0.2 }));
 
 export function createBasaltRockNode(shadowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
@@ -111,6 +112,7 @@ export function createCrystalClusterNode(shadowTex: THREE.Texture): THREE.Group 
   spire2.position.set(0.35, 0.8, 0.15);
   spire2.rotation.z = -0.32;
   g.add(makeShadowDisc(shadowTex, 1.35), base, spire1, spire2);
+  markGlowEmitter(g, 0, 1.05, 0, 2.6);
   return g;
 }
 
@@ -144,6 +146,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.25, 0), crystalMat);
     beacon.position.y = 3.35;
     g.add(makeShadowDisc(shadowTex, 3.0), plinth, roof, beacon);
+    markGlowEmitter(g, 0, 3.35, 0, 1.5);
   } else if (type === 'campfire_kit') {
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
@@ -156,6 +159,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const light = new THREE.PointLight('#ff6b2b', 9, 14, 1.8);
     light.position.y = 1.1;
     g.add(makeShadowDisc(shadowTex, 1.1), ember, light);
+    markGlowEmitter(g, 0, 0.56, 0, 2.4);
   } else if (type === 'workbench') {
     const top = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.18, 0.95), shelterShieldMat);
     top.position.y = 0.95;
@@ -168,6 +172,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const core = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.3), crystalMat);
     core.position.set(0, 0.5, 0.72);
     g.add(makeShadowDisc(shadowTex, 1.4), body, core);
+    markGlowEmitter(g, 0, 0.52, 0.82, 1.8);
   } else if (type === 'research_station') {
     const base = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.95, 1.2), ironMat);
     base.position.y = 0.48;
@@ -176,6 +181,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), beaconMat);
     orb.position.set(0, 1.25, 0);
     g.add(makeShadowDisc(shadowTex, 1.5), base, dome, orb);
+    markGlowEmitter(g, 0, 1.25, 0, 1.4);
   } else if (type === 'storage_chest') {
     const box = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.75, 0.75), shelterFrameMat);
     box.position.y = 0.38;
@@ -217,6 +223,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), beaconMat);
     orb.position.y = 3.1;
     g.add(makeShadowDisc(shadowTex, 1.3), plinth, pylon, orb);
+    markGlowEmitter(g, 0, 3.1, 0, 2.4);
   } else if (type === 'terrain_anchor') {
     const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.3, 0.45, 8), darkBasaltMat);
     plinth.position.y = 0.22;
@@ -228,6 +235,7 @@ export function createStructureMesh(type: StructureType, shadowTex: THREE.Textur
     const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0), crystalMat);
     orb.position.y = 3.9;
     g.add(makeShadowDisc(shadowTex, 1.5), plinth, pylon, ring, orb);
+    markGlowEmitter(g, 0, 3.9, 0, 2.8);
   } else if (type === 'floor_tile') {
     const slab = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.24, 3.0), shelterFrameMat);
     slab.position.y = 0.12;

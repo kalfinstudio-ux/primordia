@@ -2,16 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BALANCE,
+  capRadiationForSafeStart,
   capToxicLevelForSafeStart,
   earlyEaseMultiplier,
   getDifficultyMultiplier,
   isSafeStartActive,
+  isSafeTempActive,
   shouldAutoEquipFilter,
 } from './data/balance';
-import { createInitialVitals, type DeathBag } from './core/state';
+import { stepPlayerWetness } from './data/survivalRates';
+import { createInitialVitals, gameState, resetRunState, type DeathBag } from './core/state';
+import { ITEMS, RECIPES } from './config';
 import { computeHazardState, isSuffocating, stepVitals, type SurvivalEnvironment } from './player/stats';
-import { findNearestCleanAir, isCleanAirAt, pickRespawnPoint, relativeBearingDeg } from './systems/cleanAir';
+import { findNearestCleanAir, findNearestHeatSource, isCleanAirAt, pickRespawnPoint, relativeBearingDeg } from './systems/cleanAir';
 import { dropInventoryAsBag, findBagInRange, mergeBagIntoInventory, mergeSlots } from './systems/deathBag';
+import { SEASON_FX } from './data/eden';
+import idLocale from '../i18n/id.json';
+import enLocale from '../i18n/en.json';
 
 function toxicEnv(over: Partial<SurvivalEnvironment> = {}): SurvivalEnvironment {
   return {
@@ -245,4 +252,206 @@ test('kantong kematian: inventaris penuh -> sisa tetap di kantong', () => {
   assert.equal(r.inventory.length, 28);
   assert.equal(r.remaining.length, 1);
   assert.equal(mergeSlots([], [{ itemId: 'basalt_rock', qty: 120 }]).slots.length, 3); // maxStack 50
+});
+
+const NON_LAVA_BIOMES: ReadonlyArray<{ id: string; ambientTempC: number }> = [
+  { id: 'shallow_ocean', ambientTempC: 35 },
+  { id: 'black_basalt_plains', ambientTempC: 37.5 },
+  { id: 'volcanic_ridge', ambientTempC: 48 },
+  { id: 'sulfur_flats', ambientTempC: 43 },
+  { id: 'obsidian_fields', ambientTempC: 40 },
+  { id: 'geyser_basin', ambientTempC: 42 },
+  { id: 'crystal_crater', ambientTempC: 39 },
+  { id: 'ash_dunes', ambientTempC: 36 },
+  { id: 'meteor_impact', ambientTempC: 41 },
+];
+
+test('pemain baru Explorer: 600 detik tanpa item di semua bioma aman x 4 musim x siang/malam x basah tidak mati suhu/haus', () => {
+  assert.equal(isSafeTempActive('explorer', 100), true);
+  assert.equal(isSafeTempActive('explorer', 1499), true);
+  assert.equal(isSafeTempActive('hadean', 100), false);
+
+  for (const biome of NON_LAVA_BIOMES) {
+    for (const [seasonId, fx] of Object.entries(SEASON_FX)) {
+      for (const isNight of [false, true]) {
+        for (const wet of [0, 1]) {
+          let v = createInitialVitals();
+          for (let sec = 0; sec < 600; sec += 10) {
+            const res = stepVitals(
+              v,
+              {
+                ambientTempC: biome.ambientTempC + fx.tempOffsetC,
+                toxicLevel: 0,
+                radiationLevel: 0,
+                weather: 'clear_haze',
+                isNight,
+                inShelter: false,
+                nearCampfire: false,
+                hasHeatShield: false,
+                inLava: false,
+                inMeteorDanger: false,
+                difficulty: 'explorer',
+                playtimeSec: sec,
+                biomeId: biome.id,
+                wetness: wet,
+                windStrength: wet > 0 ? 5 : 2,
+              },
+              10
+            );
+            v = res.vitals;
+            assert.equal(res.deathReason, null, `${biome.id} ${seasonId} night=${isNight} wet=${wet} mati di ${sec}s`);
+          }
+          assert.ok(v.health > 0, `${biome.id} ${seasonId} HP=${v.health}`);
+          assert.ok(v.temperature >= BALANCE.temperature.safeMinC - 0.05, `${biome.id} ${seasonId} temp=${v.temperature}`);
+          assert.ok(v.temperature <= BALANCE.temperature.safeMaxC + 0.05, `${biome.id} ${seasonId} temp=${v.temperature}`);
+          assert.ok(v.water > 0, `${biome.id} ${seasonId} water=${v.water}`);
+        }
+      }
+    }
+  }
+});
+
+test('masa aman radiasi & meteor: POI dekat spawn (-180, 140) aman di masa aman, di luar tetap berbahaya', () => {
+  // poi_meteor_sw berjarak 217 m dari spawn (0, 18) -> masuk radius 260 m safeStart
+  assert.equal(capRadiationForSafeStart(0.65, -180, 140, 'explorer', 120), 0);
+  assert.equal(capRadiationForSafeStart(0.65, -180, 140, 'survivor', 599), 0);
+  assert.equal(capRadiationForSafeStart(0.65, -180, 140, 'explorer', 601), 0.65);
+  assert.equal(capRadiationForSafeStart(0.65, -180, 140, 'hadean', 120), 0.65);
+  assert.equal(capRadiationForSafeStart(0.65, 500, 500, 'explorer', 120), 0.65);
+  assert.ok(BALANCE.safeStart.minMeteorDistM >= 20);
+});
+
+test('gradien damage suhu & jeda 15 detik: tidak langsung bunuh dan reset saat pulih', () => {
+  const coldEnv = toxicEnv({
+    ambientTempC: 35,
+    toxicLevel: 0,
+    isNight: true,
+    wetness: 1,
+    difficulty: 'hadean',
+    playtimeSec: 100,
+    biomeId: 'shallow_ocean',
+  });
+
+  // Mulai tepat di bawah dangerLow: selama <15 detik nyawa belum tergerus oleh suhu
+  let v = { ...createInitialVitals(), temperature: BALANCE.temperature.dangerLow - 0.5, tempDangerTimer: 0 };
+  for (let i = 0; i < 10; i++) {
+    v = stepVitals(v, { ...coldEnv, wetness: 1 }, 1).vitals;
+  }
+  assert.ok(v.tempDangerTimer >= 9.9);
+  assert.equal(v.health, 100, 'jeda 15 detik mencegah damage instan');
+
+  // Setelah melewati 15 detik pada suhu ekstrem (-2°C di bawah dangerLow -> ramp penuh), HP mulai turun
+  let extremeV = {
+    ...createInitialVitals(),
+    temperature: BALANCE.temperature.dangerLow - BALANCE.temperature.dangerRampWidthC - 0.5,
+    tempDangerTimer: BALANCE.temperature.dangerGraceSec,
+  };
+  const step1 = stepVitals(extremeV, coldEnv, 1).vitals;
+  assert.ok(step1.health < 100, 'setelah jeda habis dan melewati ambang, damage suhu aktif');
+
+  // Gradien linear: tepat di dekat ambang (-0.2°C) jauh lebih ringan daripada -2.0°C
+  let mildV = {
+    ...createInitialVitals(),
+    temperature: BALANCE.temperature.dangerLow - 0.2,
+    tempDangerTimer: BALANCE.temperature.dangerGraceSec,
+  };
+  const mildStep = stepVitals(mildV, coldEnv, 1).vitals;
+  const severeDrop = 100 - step1.health;
+  const mildDrop = 100 - mildStep.health;
+  assert.ok(mildDrop > 0 && mildDrop < severeDrop * 0.25, `mildDrop=${mildDrop} vs severeDrop=${severeDrop}`);
+
+  // Pemulihan suhu di dalam margin mereset tempDangerTimer ke 0
+  const warmed = stepVitals(
+    { ...createInitialVitals(), temperature: BALANCE.temperature.dangerLow + BALANCE.temperature.dangerRecoverMarginC + 0.1, tempDangerTimer: 12 },
+    toxicEnv({ toxicLevel: 0, ambientTempC: 37 }),
+    0.5
+  ).vitals;
+  assert.equal(warmed.tempDangerTimer, 0);
+});
+
+test('mode Hadean tetap keras: dingin musim dingin basah malam menembus dangerLow dan bisa mematikan', () => {
+  let v = createInitialVitals();
+  const env: SurvivalEnvironment = {
+    ambientTempC: 35 + SEASON_FX.dingin.tempOffsetC,
+    toxicLevel: 0,
+    weather: 'clear_haze',
+    isNight: true,
+    inShelter: false,
+    nearCampfire: false,
+    hasHeatShield: false,
+    inLava: false,
+    inMeteorDanger: false,
+    difficulty: 'hadean',
+    playtimeSec: 120,
+    biomeId: 'shallow_ocean',
+    wetness: 1,
+    windStrength: 6,
+  };
+  let death: string | null = null;
+  for (let i = 0; i < 600; i++) {
+    const r = stepVitals(v, env, 1);
+    v = r.vitals;
+    if (r.deathReason) {
+      death = r.deathReason;
+      break;
+    }
+  }
+  assert.equal(death, 'reasonTemp', 'Hadean tanpa api unggun di musim dingin basah harus tetap mematikan');
+});
+
+test('pemulihan HP pasif di luar ruangan hanya aktif saat vital & suhu aman', () => {
+  const safeHurt = { ...createInitialVitals(), health: 60, temperature: 37.0, water: 80, oxygen: 100 };
+  const recovered = stepVitals(safeHurt, toxicEnv({ toxicLevel: 0, ambientTempC: 37 }), 10).vitals;
+  assert.ok(recovered.health > 63 && recovered.health < 65, `expected ~64 HP, got ${recovered.health}`);
+
+  // Jika sedang haus berat (< passiveRegenMinWater), regen pasif berhenti
+  const thirsty = { ...safeHurt, water: 20 };
+  const noRegen = stepVitals(thirsty, toxicEnv({ toxicLevel: 0, ambientTempC: 37 }), 10).vitals;
+  assert.equal(noRegen.health, 60);
+});
+
+test('pengeringan dekat api unggun bekerja saat gerimis ringan & Selimut Abu mengurangi dingin malam', () => {
+  const dryNearFire = stepPlayerWetness(1, 5, {
+    rainWeight: 0.5,
+    inWater: false,
+    immersed: false,
+    inShelter: false,
+    nearCampfire: true,
+    windStrength: 3,
+  });
+  assert.ok(dryNearFire < 0.2, `api unggun harus mengeringkan meski gerimis ringan, dapat ${dryNearFire}`);
+
+  assert.ok(ITEMS.ash_cloak, 'item ash_cloak Tier 1 harus ada');
+  assert.ok(RECIPES.some((r) => r.id === 'recipe_ash_cloak' && r.tier === 1));
+  const bare = stepVitals(createInitialVitals(), toxicEnv({ toxicLevel: 0, ambientTempC: 33, isNight: true }), 20).vitals;
+  const cloaked = stepVitals(
+    createInitialVitals(),
+    toxicEnv({ toxicLevel: 0, ambientTempC: 33, isNight: true, hasStarterCloak: true }),
+    20
+  ).vitals;
+  assert.ok(cloaked.temperature > bare.temperature, 'Selimut Abu Hangat harus menjaga tubuh lebih hangat');
+});
+
+test('perlindungan bangkit 60 detik menahan bahaya lingkungan & resetRunState memberi Perapian di slot 5', () => {
+  const shielded = { ...createInitialVitals(), respawnGraceTimer: 60, oxygen: 0, water: 1, radiation: 90, temperature: 31 };
+  const after = stepVitals(shielded, toxicEnv({ ambientTempC: 30, toxicLevel: 1, radiationLevel: 1 }), 10).vitals;
+  assert.equal(after.health, 100, 'perlindungan bangkit 60 dtk menahan damage lingkungan');
+  assert.ok(after.respawnGraceTimer < 51 && after.respawnGraceTimer > 49);
+
+  resetRunState('new-game-test', 'explorer');
+  assert.ok(gameState.inventory.some((s) => s.itemId === 'campfire_kit' && s.qty >= 1));
+  assert.equal(gameState.hotbarItemIds[4], 'campfire_kit');
+});
+
+test('pencari sumber panas mengutamakan api unggun / gejser / shelter terdekat & lokalisasi ID/EN selaras', () => {
+  const heat = findNearestHeatSource(0, 0, [{ type: 'campfire_kit', x: 18, z: 0 }], [{ x: 120, z: 0 }], []);
+  assert.deepEqual(heat, { x: 18, z: 0, dist: 18, kind: 'campfire' });
+
+  for (const key of ['coldWarning', 'heatWarning', 'lowWater', 'respawnShield'] as const) {
+    assert.ok(idLocale.survival[key], `id.survival.${key}`);
+    assert.ok(enLocale.survival[key], `en.survival.${key}`);
+  }
+  assert.ok(idLocale.items.ash_cloak?.name && enLocale.items.ash_cloak?.name);
+  assert.deepEqual(Object.keys(idLocale.gameOver.advice).sort(), Object.keys(enLocale.gameOver.advice).sort());
+  assert.deepEqual(Object.keys(idLocale.hud.heatSource).sort(), Object.keys(enLocale.hud.heatSource).sort());
 });

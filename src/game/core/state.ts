@@ -4,6 +4,8 @@ import {
   RECIPES,
   type AvatarConfig,
   type GameSettings,
+  type GraphicsMode,
+  type GraphicsTier,
   type HazardType,
   type ScreenName,
   type WeatherType,
@@ -28,12 +30,17 @@ export interface PlayerVitals {
   temperature: number; // Celsius
   oxygen: number; // 0..100
   water: number; // 0..100
+  hunger: number; // 0..100 (active in Era 2+)
   radiation: number; // 0..100
   fatigue: number; // 0..100 (100 = rested, 0 = exhausted)
   filterDurability: number; // 0..100
   burnTimer: number; // seconds remaining
   woundTimer: number; // seconds remaining
   suffocationTimer: number; // seconds sejak oksigen habis (status sesak)
+  waterGraceTimer: number; // real seconds remaining before full water starts dropping
+  hungerGraceTimer: number; // real seconds remaining before full hunger starts dropping
+  tempDangerTimer: number; // seconds spent past extreme temperature threshold before damage starts
+  respawnGraceTimer: number; // seconds of post-respawn thermal/hazard protection remaining
 }
 
 export interface DeathBag {
@@ -101,6 +108,10 @@ export interface DebugTelemetry {
   activeChunks: number;
   pendingChunks: number;
   drawCalls: number;
+  triangles?: number;
+  graphicsTier?: GraphicsTier;
+  graphicsMode?: GraphicsMode;
+  renderTargetSize?: string;
   playerX: number;
   playerY: number;
   playerZ: number;
@@ -143,11 +154,21 @@ export interface HudSnapshot {
   minimapNodes: Array<{ x: number; z: number; kind: 'water' | 'crystal' | 'shelter' | 'volcano' | 'beacon' | 'geyser' | 'player' }>;
   online: { status: 'off' | 'connecting' | 'online' | 'error'; players: number };
   cleanAir: { dist: number; relDeg: number; kind: 'shelter' | 'terrain' } | null;
+  heatSource?: { dist: number; relDeg: number; kind: 'campfire' | 'geyser' | 'shelter' } | null;
   deathBag: { dist: number; relDeg: number } | null;
   /** Penanda peta pribadi (opsional): jarak & arah relatif ke penanda. */
   waypoint?: { dist: number; relDeg: number } | null;
   /** Panah tujuan misi aktif (kolam air, kristal, …); null bila misi tidak butuh panah. */
   questGuide: { kind: 'water' | 'crystal' | 'geyser' | 'obsidian' | 'meteor'; dist: number; relDeg: number } | null;
+  eraYear?: number;
+  hungerActive?: boolean;
+  statusCues?: {
+    wet: boolean;
+    immersed: boolean;
+    cold: boolean;
+    windy: boolean;
+    falling: boolean;
+  };
   debug: DebugTelemetry;
 }
 
@@ -239,14 +260,20 @@ function getDefaultUnlockedRecipes(): string[] {
 function loadInitialSettings(): GameSettings {
   const saved = readStorage<Partial<GameSettings>>('settings', {});
   const recommended = recommendGraphicsPreset();
+  const savedGfx = saved.graphics;
+  const mode: GraphicsMode = savedGfx?.mode ?? savedGfx?.preset ?? 'auto';
+  const manualTier: GraphicsTier = savedGfx?.manualTier ?? savedGfx?.preset ?? recommended;
+  const activePreset: GraphicsTier = mode === 'auto' ? (savedGfx?.preset ?? manualTier ?? recommended) : mode;
   const merged: GameSettings = {
     graphics: {
       ...DEFAULT_SETTINGS.graphics,
-      preset: recommended,
-      shadows: recommended !== 'low',
-      particles: recommended !== 'low',
-      volumetricFog: recommended !== 'low',
-      ...saved.graphics,
+      mode,
+      manualTier,
+      preset: activePreset,
+      shadows: activePreset !== 'low',
+      particles: activePreset !== 'low',
+      volumetricFog: activePreset !== 'low',
+      ...savedGfx,
     },
     audio: { ...DEFAULT_SETTINGS.audio, ...saved.audio },
     controls: {
@@ -267,13 +294,18 @@ export function createInitialVitals(): PlayerVitals {
     stamina: 100,
     temperature: 37.0,
     oxygen: 100,
-    water: 90,
+    water: 100,
+    hunger: 100,
     radiation: 0,
     fatigue: 100,
     filterDurability: 0,
     burnTimer: 0,
     woundTimer: 0,
     suffocationTimer: 0,
+    waterGraceTimer: BALANCE.water.fullGraceSec,
+    hungerGraceTimer: BALANCE.hunger.fullGraceSec,
+    tempDangerTimer: 0,
+    respawnGraceTimer: 0,
   };
 }
 
@@ -369,8 +401,11 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
   writeStorage('last_avatar', gameState.avatar);
   gameState.vitals = createInitialVitals();
   gameState.inventory = [{ itemId: 'basalt_rock', qty: 2 }];
+  const diff = gameState.settings.gameplay.difficulty;
+  const starterFireQty = BALANCE.newPlayer.starterCampfireQty[diff] ?? 0;
+  if (starterFireQty > 0) gameState.inventory.push({ itemId: 'campfire_kit', qty: starterFireQty });
   const filterQty = Math.max(
-    BALANCE.newPlayer.gasFilterQty[gameState.settings.gameplay.difficulty] ?? 0,
+    BALANCE.newPlayer.gasFilterQty[diff] ?? 0,
     preserveKnowledge ? 1 : 0
   );
   if (filterQty > 0) gameState.inventory.push({ itemId: 'gas_filter', qty: filterQty });

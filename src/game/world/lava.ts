@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { ProceduralAssets } from '../core/assetLoader';
 import { VOLCANO_MAIN, getLavaRiverCenterX } from './biomes';
 import type { TerrainSystem } from './terrain';
+import { markGlowEmitter } from './glowSprites';
 
 export class LavaSystem {
   readonly group = new THREE.Group();
@@ -18,7 +19,7 @@ export class LavaSystem {
       map: this.lavaTexture,
       emissive: new THREE.Color('#ff5500'),
       emissiveMap: this.lavaTexture,
-      emissiveIntensity: 1.9,
+      emissiveIntensity: 2.3,
       roughness: 0.42,
       metalness: 0.05,
     });
@@ -68,6 +69,14 @@ export class LavaSystem {
     this.craterPool.position.set(VOLCANO_MAIN.x, 12.2, VOLCANO_MAIN.z);
     this.group.add(this.craterPool);
 
+    // Medium-tier additive glow sprite anchors (crater + spaced points along lava river)
+    markGlowEmitter(this.group, VOLCANO_MAIN.x, 12.8, VOLCANO_MAIN.z, 14.0);
+    for (const rz of [-38, -24, -10, 4, 18]) {
+      const rx = getLavaRiverCenterX(rz);
+      const ry = Math.min(terrain.groundHeightAt(rx, rz), -0.58) + 0.55;
+      markGlowEmitter(this.group, rx, ry, rz, 6.8);
+    }
+
     // 2 warm magma PointLights (within budget)
     const craterLight = new THREE.PointLight('#ff5a1f', 45, 55, 1.6);
     craterLight.position.set(VOLCANO_MAIN.x, 16, VOLCANO_MAIN.z);
@@ -85,7 +94,7 @@ export class LavaSystem {
   update(dt: number, elapsed: number): void {
     this.lavaTexture.offset.y -= dt * 0.22;
     this.lavaTexture.offset.x = Math.sin(elapsed * 0.4) * 0.04;
-    const pulse = 1.75 + Math.sin(elapsed * 2.8) * 0.22;
+    const pulse = 2.2 + Math.sin(elapsed * 2.8) * 0.25;
     this.lavaMat.emissiveIntensity = pulse;
   }
 

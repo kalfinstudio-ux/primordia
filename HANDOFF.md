@@ -3,6 +3,14 @@
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau AI) tanpa konteks percakapan sebelumnya.
 Terakhir diperbarui: November 2026 (v25: pipeline kompresi aset 3D & decoder lokal, penguatan RPC umur abadi Supabase + UI profil/jeda, siklus waktu Hari/Bulan/Tahun + relokasi aman, cerita Bab 6–7 Era Adam & Hawa + Pasang Pertama, sinkronisasi penuh i18n `id.json`/`en.json`; v24: Bruk wujud 3D; v23: pilihan akhir Bruk).
 
+## 0n. Audit pasca-v25 (16 Nov 2026) — dilakukan di sandbox TANPA vite/three (tsc penuh & build belum dijalankan)
+- Dijalankan: 296 tes murni (di-compile dengan tsc, `@supabase`/`@base44` di-stub, `import.meta` di-shim) → **296 lulus** setelah perbaikan di bawah. Cek statis: tidak ada impor relatif rusak, `id.json`/`en.json` sama persis, tidak ada kunci `t()` yang hilang.
+- **Bug diperbaiki:** `stats.ts` — Explorer tanpa item kehabisan air dalam ±520 dtk di Punggung Gunung Api / Musim Kering siang (suhu aman 41°C > `hotThreshold` 39,5 → `hotFactor` 1,45). Kini `hotFactor` tidak berlaku selama masa aman suhu (`isSafeTempActive`, s/d 25 menit untuk non-Hadean). Tes `balance.test.ts` "pemain baru Explorer: 600 detik..." sebelumnya MERAH dan akan memblokir CI.
+- **Keamanan publikasi:** `public/assets/aistudio/Screenshot_*.png` (tangkapan layar pribadi, tak dipakai) dihapus karena ikut terbit publik di GitHub Pages.
+- **Cache:** `public/play/sw.js` `CACHE_NAME` → `primordia-v3-shell` agar pemain/penguji tidak melihat versi lama saat muat pertama. **Naikkan angka ini setiap rilis.**
+- Zip v25 tidak berisi `package-lock.json`, `bun.lock`, `.env`. CI memakai `npm ci` → **butuh `package-lock.json` di repo**; timpa file tanpa `--delete`.
+- Belum teruji: `npm run lint` penuh, `npm run build`, tampilan visual game/Bruk 3D/pose, GLB terkompresi di HP lama.
+
 ## 0m. Perubahan v25 — Asset Pipeline, Immortal Age, World Age, Story Bab 6–7 & i18n
 
 ### 1) Asset Pipeline (`public/play/models/`) — KOMPRESI & LOADER OFFLINE

@@ -1,3 +1,4 @@
+import type { PlayerFootprint, WorldSeason } from '../data/worldEvolution';
 import { createNoise2D, type Noise2D } from './noise';
 import { buildChunkGeometryData, type ResolvedAnchor } from './terrainHeight';
 
@@ -17,8 +18,22 @@ function noiseForSeed(seed: string): Noise2D {
 
 type WorkerPost = (msg: unknown, transfer: Transferable[]) => void;
 
-self.onmessage = (e: MessageEvent<{ jobId: number; seed: string; chunkX: number; chunkZ: number; chunkSize: number; segments: number; anchors?: Array<{ x: number; z: number; r: number; seed: string }> }>) => {
-  const { jobId, seed, chunkX, chunkZ, chunkSize, segments, anchors = [] } = e.data;
+self.onmessage = (
+  e: MessageEvent<{
+    jobId: number;
+    seed: string;
+    chunkX: number;
+    chunkZ: number;
+    chunkSize: number;
+    segments: number;
+    anchors?: Array<{ x: number; z: number; r: number; seed: string }>;
+    eraYear?: number;
+    season?: WorldSeason;
+    eraTerrainDelta?: boolean;
+    footprints?: PlayerFootprint[];
+  }>
+) => {
+  const { jobId, seed, chunkX, chunkZ, chunkSize, segments, anchors = [], eraYear, season, eraTerrainDelta, footprints } = e.data;
   const post = (self as unknown as { postMessage: WorkerPost }).postMessage.bind(self);
   try {
     if (!cachedNoise || cachedSeed !== seed) {
@@ -26,8 +41,14 @@ self.onmessage = (e: MessageEvent<{ jobId: number; seed: string; chunkX: number;
       cachedNoise = createNoise2D(seed);
     }
     const meshData = buildChunkGeometryData(
-      seed, cachedNoise, chunkX, chunkZ, chunkSize, segments,
-      anchors.map((a): ResolvedAnchor => ({ x: a.x, z: a.z, r: a.r, noise: noiseForSeed(a.seed) }))
+      seed,
+      cachedNoise,
+      chunkX,
+      chunkZ,
+      chunkSize,
+      segments,
+      anchors.map((a): ResolvedAnchor => ({ x: a.x, z: a.z, r: a.r, noise: noiseForSeed(a.seed) })),
+      { eraYear, season, eraTerrainDelta, footprints }
     );
     post({ jobId, chunkX, chunkZ, segments, ...meshData }, [
       meshData.positions.buffer,

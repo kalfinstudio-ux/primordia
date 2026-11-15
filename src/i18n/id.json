@@ -162,10 +162,13 @@
     },
     "preset": "Preset Kualitas",
     "presets": {
+      "auto": "Otomatis",
       "low": "Rendah",
       "medium": "Sedang",
       "high": "Tinggi"
     },
+    "autoStatus": "Tingkat aktif",
+    "lastManual": "Pilihan manual terakhir",
     "viewDistance": "Jarak Pandang",
     "shadows": "Bayangan Dinamis",
     "particles": "Partikel Abu & Cuaca",
@@ -188,6 +191,13 @@
     "keyBindings": "Pemetaan Tombol",
     "pressKey": "Tekan tombol...",
     "difficulty": "Tingkat Kesulitan",
+    "survivalRate": "Laju Survival",
+    "survivalRates": {
+      "relaxed": "Santai",
+      "normal": "Normal",
+      "hard": "Berat"
+    },
+    "survivalRateHint": "Kebutuhan berkurang menurut detik nyata, bukan jam dunia yang dipercepat.",
     "showHud": "Tampilkan HUD Lengkap",
     "units": "Satuan Pengukuran",
     "metric": "Metrik (°C, m)",
@@ -200,7 +210,8 @@
     "confirmClearBody": "Semua simpanan lokal dan pengaturan akan dihapus dari browser ini.",
     "saveClose": "Simpan & Tutup",
     "reset": "Setel Ulang",
-    "adaptiveDown": "Kualitas grafis disesuaikan otomatis demi kelancaran FPS."
+    "adaptiveDown": "Kualitas grafis disesuaikan otomatis demi kelancaran FPS.",
+    "adaptiveUp": "Kualitas grafis dinaikkan karena FPS stabil lama."
   },
   "biomes": {
     "shallow_ocean": "Samudra Dangkal Mengepul",
@@ -222,7 +233,12 @@
     "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning.",
     "autoFilter": "Filter Gas dipasang otomatis — oksigen hampir habis.",
     "noRefuge": "Udara beracun & tak ada tempat berlindung! Pakai Filter Gas atau bangun Shelter [B].",
-    "bagFull": "Tas penuh! Kosongkan atau simpan barang ke peti terlebih dahulu."
+    "bagFull": "Tas penuh! Kosongkan atau simpan barang ke peti terlebih dahulu.",
+    "fallHurt": "Terhempas keras (-{dmg} HP).",
+    "coldWarning": "Tubuh mulai dingin! Nyalakan Api Unggun [5], dekati kolam gejser, atau masuk Shelter.",
+    "heatWarning": "Suhu tubuh terlalu panas! Menjauhlah dari lava atau berlindung di Shelter.",
+    "lowWater": "Hidrasi menipis! Minum dari Wadah Air atau cari genangan air dangkal.",
+    "respawnShield": "Perlindungan bangkit aktif selama 60 detik."
   },
   "events": {
     "super_eruption": "ERUPSI SUPER SEGERA TERJADI — CARI PERLINDUNGAN",
@@ -241,17 +257,33 @@
     "cleanAirHint": "Udara bersih",
     "shelterHint": "Shelter",
     "bagHint": "Kantong",
+    "coldAlert": "SUHU DINGIN — CARI KEHANGATAN",
+    "heatAlert": "SUHU PANAS — CARI TEDUH",
+    "respawnShield": "PERLINDUNGAN BANGKIT",
+    "heatSource": {
+      "campfire": "Api unggun",
+      "geyser": "Kolam hangat",
+      "shelter": "Shelter"
+    },
     "health": "Kesehatan",
     "stamina": "Stamina",
     "temperature": "Suhu Tubuh",
     "oxygen": "Oksigen",
     "water": "Hidrasi",
+    "hunger": "Lapar",
     "radiation": "Radiasi",
     "fatigue": "Istirahat",
     "weight": "Beban",
     "filter": "Filter Gas",
     "burnStatus": "TERBAKAR",
     "woundStatus": "LUKA",
+    "status": {
+      "wet": "BASAH",
+      "immersed": "TERENDAM",
+      "cold": "DINGIN",
+      "windy": "BERANGIN",
+      "falling": "JATUH"
+    },
     "objective": "Misi Aktif",
     "weather": {
       "clear_haze": "Kabut Oranye",
@@ -584,6 +616,10 @@
       "name": "Perapian Lava",
       "desc": "Sumber cahaya dan kehangatan di malam Archean."
     },
+    "ash_cloak": {
+      "name": "Selimut Abu Hangat",
+      "desc": "Jubah tenun abu & batu basal Tingkat 1; mengurangi dingin malam dan angin 35%."
+    },
     "basic_shelter": {
       "name": "Shelter Basalt",
       "desc": "Tempat berlindung dari hujan asam, badai abu, dan panas."
@@ -876,6 +912,8 @@
     "reasonTemp": "Hipertermia atau hipotermia akibat suhu ekstrem.",
     "reasonOxygen": "Kehabisan oksigen di zona gas beracun.",
     "reasonDehydration": "Dehidrasi berat di dataran kering.",
+    "reasonStarvation": "Kelaparan parah setelah kehabisan cadangan energi.",
+    "reasonFall": "Benturan fatal akibat jatuh berkecepatan tinggi.",
     "reasonRadiation": "Keracunan radiasi akut dari zona meteorit.",
     "reasonMeteor": "Terkena hantaman langsung meteor.",
     "reasonGeneric": "Kondisi vital penjelajah mencapai nol.",
@@ -883,7 +921,17 @@
     "statQuests": "Misi Selesai",
     "statDistance": "Jarak Jelajah",
     "respawn": "Bangkit di Titik Aman",
-    "mainMenu": "Menu Utama"
+    "mainMenu": "Menu Utama",
+    "advice": {
+      "reasonTemp": "Saran: Pasang Perapian dari hotbar [5], buat Selimut Abu Hangat, atau hindari berbasah-basahan saat malam dingin.",
+      "reasonOxygen": "Saran: Segera ikuti panah hijau ke udara bersih, pakai Filter Gas di Inventaris, atau masuk ke Shelter.",
+      "reasonDehydration": "Saran: Cari genangan air dangkal berkilau lalu tekan [E] untuk minum & mengisi Wadah Air.",
+      "reasonStarvation": "Saran: Kumpulkan hasil Kebun Lumut atau olah ransum sebelum menjelajah jauh.",
+      "reasonFall": "Saran: Hindari tebing curam; mendarat di air dalam akan meredam benturan jatuh.",
+      "reasonRadiation": "Saran: Jauhi kawah meteorit bercahaya atau rakit Lapisan Hazmat / Penyerap Radiasi.",
+      "reasonMeteor": "Saran: Keluar segera dari lingkaran merah di tanah saat mendengar gemuruh meteor jatuh.",
+      "reasonGeneric": "Saran: Pantau bar vital di kiri atas dan dirikan Shelter Basalt lebih awal untuk memulihkan diri."
+    }
   },
   "credits": {
     "title": "Kredit & Informasi",

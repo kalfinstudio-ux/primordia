@@ -5,6 +5,7 @@ import type { SpatialHashGrid } from '../core/spatialHash';
 import { gameState, type PlacedStructure } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { dailyMicroDetails } from '../data/eden';
+import { eraVisuals } from '../data/worldEvolution';
 import { distance2D, hashString, mulberry32 } from '../utils/math';
 import { CRYSTAL_CRATER, VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getDistanceToLava } from './biomes';
 import { monthlyPois } from './poiGen';
@@ -30,6 +31,9 @@ const SPIRE_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#2b24
 const SPIRE_GEOMETRY = markShared(new THREE.CylinderGeometry(0.45, 1.3, 5.2, 6));
 const ASH_DRIFT_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#3b332f', roughness: 0.96, metalness: 0.04 }));
 const ASH_DRIFT_GEOMETRY = markShared(new THREE.CylinderGeometry(1.1, 1.65, 0.28, 7));
+// Vegetasi perintis Era 2+ (aset bersama; 0 alokasi material per chunk)
+const VEG_MOSS_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#3f6212', emissive: '#14532d', emissiveIntensity: 0.16, roughness: 0.9, metalness: 0.02 }));
+const VEG_MOSS_GEOMETRY = markShared(new THREE.ConeGeometry(0.32, 0.58, 5));
 
 interface LoadedPropChunk {
   key: string;
@@ -50,6 +54,7 @@ export class ChunkManager {
   private structureColliderIds: string[] = [];
   private assets: ProceduralAssets;
   private seed = 'HADEAN-01';
+  private eraYear = 1;
   private lastCenterKey = '';
 
   constructor(
@@ -57,16 +62,18 @@ export class ChunkManager {
     terrain: TerrainSystem,
     seed: string,
     assets: ProceduralAssets,
-    spatialHash: SpatialHashGrid
+    spatialHash: SpatialHashGrid,
+    eraYear = 1
   ) {
     this.assets = assets;
     this.spatialHash = spatialHash;
-    this.populate(terrain, seed);
+    this.populate(terrain, seed, eraYear);
     scene.add(this.group);
   }
 
-  populate(terrain: TerrainSystem, seed: string): void {
+  populate(terrain: TerrainSystem, seed: string, eraYear = this.eraYear): void {
     this.seed = seed;
+    this.eraYear = Math.max(1, Math.floor(eraYear));
     this.clearAllPropChunks();
     for (const ex of this.extraInteractables) {
       this.group.remove(ex.mesh);
@@ -201,8 +208,11 @@ export class ChunkManager {
       this.addWaterDisc(chunkGroup, list, 'water_starter', 16, 22, terrain, 'water', 'collect_water');
     }
 
+    const eraVis = eraVisuals(this.eraYear);
+
     // Procedural basalt spires for vertical geological silhouette + spatial obstacle collision
-    for (let i = 0; i < 4; i++) {
+    const spireCount = Math.max(1, Math.round(4 * eraVis.spireDensityMult));
+    for (let i = 0; i < spireCount; i++) {
       const sx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 8);
       const sz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 8);
       if (distance2D(sx, sz, 0, 18) < 13) continue;
@@ -227,8 +237,25 @@ export class ChunkManager {
       });
     }
 
-    // Biome-aware resource nodes per chunk
-    const nodeCount = 7;
+    // Klaster lumut/vegetasi perintis mulai Era 2+ (Langkah 1: visual & prop per era saja)
+    if (eraVis.vegClustersPerChunk > 0) {
+      for (let i = 0; i < eraVis.vegClustersPerChunk; i++) {
+        const vx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 8);
+        const vz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 8);
+        if (distance2D(vx, vz, 0, 18) < 9) continue;
+        const vy = terrain.groundHeightAt(vx, vz);
+        if (vy < WATER_LEVEL + 0.25 || vy > 9.5 || getDistanceToLava(vx, vz) < 6.5) continue;
+        const tuft = new THREE.Mesh(VEG_MOSS_GEOMETRY, VEG_MOSS_MATERIAL);
+        const vs = 0.7 + rng() * 0.9;
+        tuft.scale.set(vs, 0.75 + rng() * 0.75, vs);
+        tuft.position.set(vx, vy + 0.22 * vs, vz);
+        tuft.rotation.set((rng() - 0.5) * 0.18, rng() * Math.PI * 2, (rng() - 0.5) * 0.18);
+        chunkGroup.add(tuft);
+      }
+    }
+
+    // Biome-aware resource nodes per chunk (kerapatan prop mengikuti era)
+    const nodeCount = Math.max(4, Math.round(7 * eraVis.propDensityMult));
     for (let i = 0; i < nodeCount; i++) {
       const nx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 6);
       const nz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 6);

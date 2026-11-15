@@ -30,6 +30,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
   water_vessel: { id: 'water_vessel', tier: 1, category: 'consumable', stackable: false, maxStack: 1, weight: 1.0, maxDurability: 20, iconType: 'vessel', color: '#38bdf8' },
   campfire_kit: { id: 'campfire_kit', tier: 1, category: 'structure', stackable: true, maxStack: 5, weight: 2.5, iconType: 'fire', color: '#ef4444' },
   basic_shelter: { id: 'basic_shelter', tier: 1, category: 'structure', stackable: true, maxStack: 5, weight: 4.0, iconType: 'shelter', color: '#d6d3d1' },
+  ash_cloak: { id: 'ash_cloak', tier: 1, category: 'suit', stackable: false, maxStack: 1, weight: 1.2, iconType: 'suit', color: '#a8a29e' },
 
   // === TIER 2: Obsidian, Insulation & Stations ===
   obsidian_shard: { id: 'obsidian_shard', tier: 2, category: 'resource', stackable: true, maxStack: 40, weight: 0.45, iconType: 'shard', color: '#312e81' },

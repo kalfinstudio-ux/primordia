@@ -19,6 +19,16 @@ export function GameOverModal() {
       <section className="primordia-scroll max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-xl border border-red-900/70 bg-[#160e0d] p-5 sm:p-7 shadow-2xl">
         <h2 className="font-display text-3xl font-bold text-red-400">{t('gameOver.title')}</h2>
         <p className="mt-2 text-sm text-stone-300">{t(`gameOver.${gameState.deathReason}`)}</p>
+        {(() => {
+          const adviceKey = `gameOver.advice.${gameState.deathReason}`;
+          const localized = t(adviceKey);
+          const adviceText = localized === adviceKey ? t('gameOver.advice.reasonGeneric') : localized;
+          return (
+            <p className="mt-3 rounded-lg border border-amber-800/60 bg-amber-950/35 px-3 py-2 text-xs leading-relaxed text-amber-200">
+              {adviceText}
+            </p>
+          );
+        })()}
         {gameState.deathBags.length > 0 && (
           <p className="mt-2 text-xs text-amber-300">{t('gameOver.bagNote')}</p>
         )}

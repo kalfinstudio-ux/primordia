@@ -1,4 +1,4 @@
-// Kalender dunia = UTC (sama di semua zona waktu) dan medan berganti tiap bulan/tahun secara deterministik.
+// Kalender dunia = UTC (sama di semua zona waktu); bulan menjadi musim tanpa menggeser seed medan/kamar multiplayer.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -7,16 +7,18 @@ import {
 } from './data/eden';
 import { roomName } from './net/multiplayerProtocol';
 
-test('pergeseran medan bulanan aktif secara bawaan; seed medan berganti tiap bulan dan tahun', () => {
-  assert.equal(MONTHLY_TERRAIN_SHIFT, true);
+test('pergeseran medan bulanan mati secara bawaan (bulan = musim), dan shift=true tetap didukung jika diaktifkan', () => {
+  assert.equal(MONTHLY_TERRAIN_SHIFT, false);
   const s = 'HADEAN-01';
   const nov = effectiveTerrainSeed(s, new Date('2026-11-05T00:00:00Z'));
   const dec = effectiveTerrainSeed(s, new Date('2026-12-20T00:00:00Z'));
   const next = effectiveTerrainSeed(s, new Date('2027-06-01T00:00:00Z'));
-  assert.equal(nov, 'HADEAN-01|Y2026|M11');
-  assert.equal(dec, 'HADEAN-01|Y2026|M12');
-  assert.equal(next, 'HADEAN-01|Y2027|M6');
-  assert.equal(effectiveTerrainSeed(s, new Date('2026-11-05T00:00:00Z'), false), s);
+  assert.equal(nov, s);
+  assert.equal(dec, s);
+  assert.equal(next, s);
+  assert.equal(effectiveTerrainSeed(s, new Date('2026-11-05T00:00:00Z'), true), 'HADEAN-01|Y2026|M11');
+  assert.equal(effectiveTerrainSeed(s, new Date('2026-12-20T00:00:00Z'), true), 'HADEAN-01|Y2026|M12');
+  assert.equal(effectiveTerrainSeed(s, new Date('2027-06-01T00:00:00Z'), true), 'HADEAN-01|Y2027|M6');
 });
 
 test('seed prop harian tetap berganti per hari UTC', () => {
@@ -37,29 +39,32 @@ test('kalender memakai UTC: pergantian hari/bulan jatuh pada 00:00 UTC, bukan ja
 
 test('seed efektif sama untuk dua pemain di zona waktu berbeda pada instan yang sama', () => {
   const t = new Date('2026-11-30T20:00:00Z'); // 01 Des di Jakarta, 30 Nov di London/LA
-  assert.equal(effectiveTerrainSeed('W', t), 'W|Y2026|M11');
+  assert.equal(effectiveTerrainSeed('W', t), 'W');
+  assert.equal(effectiveTerrainSeed('W', t, true), 'W|Y2026|M11');
 });
 
-test('peringatan Pergeseran Besar aktif secara bawaan memakai UTC dan bisa dimatikan lewat parameter', () => {
+test('peringatan Pergeseran Besar mati secara bawaan karena medan tidak bergeser bulanan (aktif jika enabled=true)', () => {
   const t = Date.parse('2026-11-30T23:45:00Z');
-  assert.equal(shiftWarning(t, false).level, 'none');
-  assert.equal(shiftWarning(t).level, 'imminent');
-  assert.equal(shiftWarning(t).kind, 'month');
+  assert.equal(shiftWarning(t).level, 'none');
+  assert.equal(shiftWarning(t, true).level, 'imminent');
+  assert.equal(shiftWarning(t, true).kind, 'month');
   assert.equal(msUntilMonthShift(t), 15 * 60 * 1000);
 });
 
-test('laporan "Saat kamu pergi" menyebut Pergeseran Besar secara bawaan, tidak menyebut bila dimatikan', () => {
+test('laporan "Saat kamu pergi" tidak menyebut Pergeseran Besar secara bawaan (bulan = musim), kecuali terrainShift=true', () => {
   const from = Date.parse('2026-11-30T20:00:00Z');
   const to = Date.parse('2026-12-01T08:00:00Z');
-  const off = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }], false);
+  const off = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }]);
   assert.equal(off.entries.some((e) => e.text.startsWith('Pergeseran Besar')), false);
-  const on = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }]);
+  const on = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }], true);
   assert.equal(on.entries.some((e) => e.text.startsWith('Pergeseran Besar')), true);
 });
 
-test('nama kamar multiplayer mengikuti seed efektif, jadi bulan berbeda tidak pernah satu kamar', () => {
+test('nama kamar multiplayer stabil di semua bulan & tahun (bulan menjadi musim, bukan pemisah ruang)', () => {
   const nov = roomName(effectiveTerrainSeed('HADEAN-01', new Date('2026-11-05T00:00:00Z')), 0);
   const dec = roomName(effectiveTerrainSeed('HADEAN-01', new Date('2026-12-05T00:00:00Z')), 0);
-  assert.notEqual(nov, dec);
-  assert.equal(roomName(effectiveTerrainSeed('HADEAN-01', new Date('2026-11-05T00:00:00Z'), false), 0), 'primordia:HADEAN-01:0');
+  const nextYear = roomName(effectiveTerrainSeed('HADEAN-01', new Date('2027-03-05T00:00:00Z')), 0);
+  assert.equal(nov, 'primordia:HADEAN-01:0');
+  assert.equal(dec, 'primordia:HADEAN-01:0');
+  assert.equal(nextYear, 'primordia:HADEAN-01:0');
 });

@@ -2,6 +2,39 @@ import { WATER_LEVEL, WORLD_HALF_EXTENT } from '../config';
 import { clamp, distance2D, lerp, smoothstep } from '../utils/math';
 import type { Noise2D } from './noise';
 import { CRYSTAL_CRATER, VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getDistanceToLava, getLavaRiverCenterX } from './biomes';
+import { BALANCE } from '../data/balance';
+import {
+  combinedWorldVisuals,
+  filterFootprintsForBounds,
+  footprintSuppressionWeight,
+  getEraWaveParams,
+  sampleEraLayerFromParams,
+  type EraWaveParams,
+  type PlayerFootprint,
+  type WorldSeason,
+} from '../data/worldEvolution';
+
+export interface TerrainHeightEvolution {
+  seed: string;
+  eraYear: number;
+  footprints?: readonly PlayerFootprint[];
+  enabled?: boolean;
+  waveParams?: EraWaveParams;
+}
+
+export interface TerrainColorEvolution {
+  seed: string;
+  eraYear: number;
+  season: WorldSeason;
+  waveParams?: EraWaveParams;
+}
+
+export interface ChunkEvolutionOptions {
+  eraYear?: number;
+  season?: WorldSeason;
+  eraTerrainDelta?: boolean;
+  footprints?: readonly PlayerFootprint[];
+}
 
 export function sampleWorldHeight(noise: Noise2D, x: number, z: number): number {
   // Continental basalt terrain + ridged tectonic faults
@@ -113,7 +146,14 @@ function biomePalette(id: string, n: number): RGB {
  * Lapisan: palet bioma → bercak besar (hangat/dingin) → tebing curam jadi batu gelap → ketinggian teroksidasi →
  * debu abu di dataran → urat bara di sekitar gunung api & sungai lava.
  */
-export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: number, slope = 0): RGB {
+export function sampleTerrainColor(
+  noise: Noise2D,
+  x: number,
+  z: number,
+  y: number,
+  slope = 0,
+  evo?: TerrainColorEvolution
+): RGB {
   const lavaDist = getDistanceToLava(x, z);
   const biome = getBiomeAt(x, z, y);
   const n = noise.fbm(x * 0.08, z * 0.08, 2) * 0.5 + 0.5;
@@ -158,6 +198,18 @@ export function sampleTerrainColor(noise: Noise2D, x: number, z: number, y: numb
   g *= TERRAIN_DARKEN;
   b *= TERRAIN_DARKEN;
 
+  // Langkah 1 Peta Berevolusi: tint tanah halus per era & musim tanpa mengubah tipe bioma.
+  if (evo && (evo.eraYear > 1 || evo.season !== 'kering')) {
+    const vis = combinedWorldVisuals(evo.eraYear, evo.season);
+    const layer = vis.groundLayerTintAmt > 0
+      ? sampleEraLayerFromParams(evo.waveParams ?? getEraWaveParams(evo.seed, evo.eraYear), x, z) * vis.groundLayerTintAmt
+      : 0;
+    const flatFactor = 1 - steep * 0.65;
+    r = r * vis.groundTintMult[0] + vis.groundTintAdd[0] * flatFactor + layer * 0.4;
+    g = g * vis.groundTintMult[1] + vis.groundTintAdd[1] * flatFactor + layer;
+    b = b * vis.groundTintMult[2] + vis.groundTintAdd[2] * flatFactor + layer * 0.25;
+  }
+
   // Urat bara: retakan menyala di kaki gunung api dan tepi sungai lava
   const volcanoDist = distance2D(x, z, VOLCANO_MAIN.x, VOLCANO_MAIN.z);
   const emberZone = 1 - smoothstep(8, 46, Math.min(volcanoDist, lavaDist + 8));
@@ -183,12 +235,27 @@ function anchorWeight(a: ResolvedAnchor, x: number, z: number): number {
   return 1 - smoothstep(a.r * 0.7, a.r, Math.hypot(x - a.x, z - a.z));
 }
 
-/** Tinggi medan dengan jangkar: di dalam radius jangkar dipakai medan beku, lalu dicampur halus ke medan baru. */
-export function sampleHeightAnchored(noise: Noise2D, anchors: readonly ResolvedAnchor[], x: number, z: number): number {
+/** Tinggi medan dengan jangkar (+ delta opsional per era bila `ERA_TERRAIN_DELTA` aktif; 0 di dekat base). */
+export function sampleHeightAnchored(
+  noise: Noise2D,
+  anchors: readonly ResolvedAnchor[],
+  x: number,
+  z: number,
+  evo?: TerrainHeightEvolution
+): number {
   let h = sampleWorldHeight(noise, x, z);
   for (const a of anchors) {
     const w = anchorWeight(a, x, z);
     if (w > 0) h = lerp(h, sampleWorldHeight(a.noise, x, z), w);
+  }
+  if (evo?.enabled) {
+    const fpWeight = evo.footprints && evo.footprints.length > 0
+      ? footprintSuppressionWeight(x, z, evo.footprints)
+      : 1;
+    if (fpWeight > 0) {
+      const wp = evo.waveParams ?? getEraWaveParams(evo.seed, evo.eraYear);
+      h += sampleEraLayerFromParams(wp, x, z) * BALANCE.eraEvolution.maxHeightDeltaM * fpWeight;
+    }
   }
   return h;
 }
@@ -205,7 +272,8 @@ export function buildChunkGeometryData(
   chunkZ: number,
   chunkSize: number,
   segments: number,
-  anchors: readonly ResolvedAnchor[] = []
+  anchors: readonly ResolvedAnchor[] = [],
+  evo?: ChunkEvolutionOptions
 ): { positions: Float32Array; colors: Float32Array; normals: Float32Array; indices: Uint32Array } {
   const gridN = segments + 1;
   const baseVerts = gridN * gridN;
@@ -221,13 +289,29 @@ export function buildChunkGeometryData(
   const step = chunkSize / segments;
   const skirtDepth = 3.5;
 
+  const eraYear = evo?.eraYear ?? 1;
+  const season: WorldSeason = evo?.season ?? 'kering';
+  const deltaEnabled = evo?.eraTerrainDelta ?? BALANCE.eraEvolution.eraTerrainDelta;
+  const waveParams = (deltaEnabled || eraYear > 1 || season !== 'kering')
+    ? getEraWaveParams(seed, eraYear)
+    : undefined;
+  const localFootprints = deltaEnabled && evo?.footprints && evo.footprints.length > 0
+    ? filterFootprintsForBounds(evo.footprints, originX, originX + chunkSize, originZ, originZ + chunkSize)
+    : undefined;
+  const heightEvo: TerrainHeightEvolution | undefined = deltaEnabled
+    ? { seed, eraYear, footprints: localFootprints, enabled: true, waveParams }
+    : undefined;
+  const colorEvo: TerrainColorEvolution | undefined = (eraYear > 1 || season !== 'kering')
+    ? { seed, eraYear, season, waveParams }
+    : undefined;
+
   // Grid vertices
   for (let gz = 0; gz < gridN; gz++) {
     for (let gx = 0; gx < gridN; gx++) {
       const idx = gz * gridN + gx;
       const wx = originX + gx * step;
       const wz = originZ + gz * step;
-      const wy = sampleHeightAnchored(noise, anchors, wx, wz);
+      const wy = sampleHeightAnchored(noise, anchors, wx, wz, heightEvo);
 
       positions[idx * 3] = wx - chunkX * chunkSize;
       positions[idx * 3 + 1] = wy;
@@ -235,10 +319,10 @@ export function buildChunkGeometryData(
 
       // Finite-difference normal so chunk edges match seamlessly
       const eps = 0.85;
-      const hL = sampleHeightAnchored(noise, anchors, wx - eps, wz);
-      const hR = sampleHeightAnchored(noise, anchors, wx + eps, wz);
-      const hD = sampleHeightAnchored(noise, anchors, wx, wz - eps);
-      const hU = sampleHeightAnchored(noise, anchors, wx, wz + eps);
+      const hL = sampleHeightAnchored(noise, anchors, wx - eps, wz, heightEvo);
+      const hR = sampleHeightAnchored(noise, anchors, wx + eps, wz, heightEvo);
+      const hD = sampleHeightAnchored(noise, anchors, wx, wz - eps, heightEvo);
+      const hU = sampleHeightAnchored(noise, anchors, wx, wz + eps, heightEvo);
       const nx = hL - hR;
       const ny = 2 * eps;
       const nz = hD - hU;
@@ -248,7 +332,14 @@ export function buildChunkGeometryData(
       normals[idx * 3 + 2] = nz * invLen;
 
       // Warna dihitung setelah normal supaya kemiringan (1 − normal.y) ikut mewarnai tebing.
-      const [r, g, b] = sampleTerrainColor(pickColorNoise(noise, anchors, wx, wz), wx, wz, wy, 1 - ny * invLen);
+      const [r, g, b] = sampleTerrainColor(
+        pickColorNoise(noise, anchors, wx, wz),
+        wx,
+        wz,
+        wy,
+        1 - ny * invLen,
+        colorEvo
+      );
       colors[idx * 3] = r;
       colors[idx * 3 + 1] = g;
       colors[idx * 3 + 2] = b;

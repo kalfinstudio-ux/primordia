@@ -128,12 +128,15 @@ test('peringatan pergantian tahun menandai kind="year" sebelum 1 Januari UTC', (
   assert.equal(novSoon.key, '2026-12:soon');
 });
 
-test('laporan "Saat kamu pergi" mencatat Era berubah & Pergeseran Besar saat lintas tahun UTC', () => {
+test('laporan "Saat kamu pergi" mencatat Era berubah saat lintas tahun UTC (tanpa Pergeseran Besar bawaan)', () => {
   const from = Date.UTC(2026, 11, 31, 18, 0, 0);
   const to = Date.UTC(2027, 0, 1, 6, 0, 0);
   const report = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }]);
   assert.ok(report.entries.some((e) => e.text.includes('Era berubah') && e.text.includes('Tahun 2')));
-  assert.ok(report.entries.some((e) => e.text.includes('Pergeseran Besar') && e.text.includes('Januari 2027')));
+  assert.equal(report.entries.some((e) => e.text.includes('Pergeseran Besar')), false);
+
+  const legacyShift = buildAwayReport(from, to, [{ type: 'storage_chest', x: 0, z: 0 }], true);
+  assert.ok(legacyShift.entries.some((e) => e.text.includes('Pergeseran Besar') && e.text.includes('Januari 2027')));
 });
 
 test('umur abadi tidak pernah direset atau dibelokkan ke masa depan/sebelum era', () => {
