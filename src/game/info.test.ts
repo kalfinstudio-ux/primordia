@@ -62,7 +62,8 @@ test('panel info: struktur id dan en identik', () => {
   assert.deepEqual(a, b);
 });
 
-test('panel info: misi kampanye 22 dan tiap bab terisi', () => {
-  assert.equal(CAMPAIGN_QUESTS.length, 22);
+test('panel info: prolog 22 misi + bab zaman baru lengkap dan tiap bab terisi', () => {
+  assert.ok(CAMPAIGN_QUESTS.length >= 22);
+  assert.equal(CAMPAIGN_QUESTS.filter((q) => q.chapter <= 5).length, 22);
   for (const c of CHAPTERS) assert.ok(CAMPAIGN_QUESTS.some((q) => q.chapter === c));
 });

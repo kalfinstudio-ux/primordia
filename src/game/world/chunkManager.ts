@@ -1,11 +1,13 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE, WATER_LEVEL } from '../config';
+import { CHUNK_SIZE, WATER_LEVEL, WORLD_HALF_EXTENT } from '../config';
 import type { ProceduralAssets } from '../core/assetLoader';
 import type { SpatialHashGrid } from '../core/spatialHash';
 import { gameState, type PlacedStructure } from '../core/state';
 import { eventBus } from '../core/eventBus';
+import { dailyMicroDetails } from '../data/eden';
 import { distance2D, hashString, mulberry32 } from '../utils/math';
 import { CRYSTAL_CRATER, VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getDistanceToLava } from './biomes';
+import { monthlyPois } from './poiGen';
 import { disposeObject3D, markShared } from './disposal';
 import type { TerrainSystem } from './terrain';
 import {
@@ -26,6 +28,8 @@ const SPIRE_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#2b24
 // Satu geometri spire berukuran 1; skala per spire lewat mesh.scale.
 // Bentuk setara CylinderGeometry(0.45*s, 1.3*s, 5.2*s, 6) karena skala seragam.
 const SPIRE_GEOMETRY = markShared(new THREE.CylinderGeometry(0.45, 1.3, 5.2, 6));
+const ASH_DRIFT_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#3b332f', roughness: 0.96, metalness: 0.04 }));
+const ASH_DRIFT_GEOMETRY = markShared(new THREE.CylinderGeometry(1.1, 1.65, 0.28, 7));
 
 interface LoadedPropChunk {
   key: string;
@@ -85,8 +89,9 @@ export class ChunkManager {
       gameState.discoveredChunks.push(centerKey);
     }
 
-    // Discover nearby POIs
-    for (const poi of WORLD_POIS) {
+    // Discover nearby POIs (permanen + bulanan)
+    const allPois = [...WORLD_POIS, ...monthlyPois(WORLD_POIS, WORLD_HALF_EXTENT)];
+    for (const poi of allPois) {
       if (distance2D(px, pz, poi.x, poi.z) < 42) {
         if (!gameState.discoveredPois.some((d) => d.id === poi.id)) {
           gameState.discoveredPois.push({ ...poi });
@@ -266,6 +271,34 @@ export class ChunkManager {
     }
     if (distance2D(baseX, baseZ, VOLCANO_MAIN.x, VOLCANO_MAIN.z) < CHUNK_SIZE) {
       addProp('obsidian', 'volc_obs_0', VOLCANO_MAIN.x + 14, VOLCANO_MAIN.z + 18, 'gather_obsidian', 0.85);
+    }
+
+    // Detail mikro harian: uap panas & gundukan abu yang bergeser deterministik tiap hari UTC
+    const daily = dailyMicroDetails();
+    const dailyRng = mulberry32(hashString(`${daily.dayKey}_${cx}_${cz}`));
+    for (let i = 0; i < daily.steamVentsPerChunk; i++) {
+      const dx = baseX + (dailyRng() - 0.5) * (CHUNK_SIZE - 12);
+      const dz = baseZ + (dailyRng() - 0.5) * (CHUNK_SIZE - 12);
+      if (distance2D(dx, dz, 0, 18) < 10) continue;
+      const dy = terrain.groundHeightAt(dx, dz);
+      if (dy < WATER_LEVEL + 0.35 || getDistanceToLava(dx, dz) < 5) continue;
+      const vent = createFumaroleVentModel();
+      vent.scale.setScalar(0.55 + dailyRng() * 0.3);
+      vent.position.set(dx, dy, dz);
+      chunkGroup.add(vent);
+    }
+    if (daily.ashDriftStrength > 0.5) {
+      const ax = baseX + (dailyRng() - 0.5) * (CHUNK_SIZE - 10);
+      const az = baseZ + (dailyRng() - 0.5) * (CHUNK_SIZE - 10);
+      const ay = terrain.groundHeightAt(ax, az);
+      if (ay >= WATER_LEVEL + 0.35 && distance2D(ax, az, 0, 18) >= 10) {
+        const drift = new THREE.Mesh(ASH_DRIFT_GEOMETRY, ASH_DRIFT_MATERIAL);
+        const s = 0.8 + daily.ashDriftStrength * 0.7;
+        drift.scale.set(s, 0.7 + dailyRng() * 0.5, s * 0.85);
+        drift.rotation.y = dailyRng() * Math.PI * 2;
+        drift.position.set(ax, ay + 0.08, az);
+        chunkGroup.add(drift);
+      }
     }
 
     this.group.add(chunkGroup);

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createConfiguredGltfLoader } from '../game/core/gltfLoader';
 import {
   ASSET_FILES,
   ASSET_LICENSES,
@@ -35,6 +35,7 @@ interface ModelStats {
 }
 
 interface Runtime {
+  renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   controls: OrbitControls;
@@ -108,7 +109,7 @@ export function AssetGalleryScreen() {
     controls.enableDamping = true;
     controls.target.set(0, 1, 0);
 
-    const runtime: Runtime = { scene, camera, controls, grid, model: null, mixer: null, action: null, clips: [] };
+    const runtime: Runtime = { renderer, scene, camera, controls, grid, model: null, mixer: null, action: null, clips: [] };
     rt.current = runtime;
 
     const clock = new THREE.Clock();
@@ -176,7 +177,7 @@ export function AssetGalleryScreen() {
         const res = await fetch(assetUrl(selected));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
-        const gltf = await new GLTFLoader().parseAsync(buf, MODELS_DIR);
+        const gltf = await createConfiguredGltfLoader(r.renderer).parseAsync(buf, MODELS_DIR);
         if (cancelled || !rt.current) {
           disposeObject(gltf.scene);
           return;
@@ -308,7 +309,7 @@ export function AssetGalleryScreen() {
         <h2 className="font-display text-xl sm:text-2xl font-semibold text-stone-100">{t('assets.title')}</h2>
         <button
           type="button"
-          onClick={() => setScreen('menu')}
+          onClick={() => setScreen('settings')}
           className="min-h-[40px] rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-orange-500"
         >
           {t('assets.close')}

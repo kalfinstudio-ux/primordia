@@ -1,4 +1,15 @@
-import { collectAnchors, effectivePropSeed, effectiveTerrainSeed, formatShiftCountdown, shiftWarning } from '../data/eden';
+import {
+  collectAnchors,
+  effectivePropSeed,
+  effectiveTerrainSeed,
+  effectiveWaterLevel,
+  formatShiftCountdown,
+  getWorldAge,
+  safeRelocatePlayer,
+  safeRelocateStructures,
+  sanitizeClockSample,
+  shiftWarning,
+} from '../data/eden';
 import * as THREE from 'three';
 import { AUTOSAVE_INTERVAL_SEC, WATER_LEVEL } from '../config';
 import { Engine } from '../core/engine';
@@ -79,6 +90,8 @@ export class SceneManager {
   private buildingGhost!: BuildingGhostSystem;
   private character!: CharacterRig;
   private glbHandle: GlbExplorerHandle | null = null;
+  private loadedGlbUrl = '';
+  private glbLoadSeq = 0;
   private animator = new CharacterAnimator();
   private controller: PlayerController;
   private camRig = new ThirdPersonCamera();
@@ -97,6 +110,8 @@ export class SceneManager {
   private lastBiomeSound = '';
   private ready = false;
   private appliedEdenSeed = '';
+  private appliedYear = 0;
+  private lastClockMs = 0;
   private edenCheckTimer = 0;
   private unsubs: Array<() => void> = [];
 
@@ -116,6 +131,8 @@ export class SceneManager {
     this.loop = new GameLoop(this.engine.renderer, {
       onFixedStep: (dt) => this.fixedStep(dt),
       onRender: (alpha, dt, elapsed) => this.renderFrame(alpha, dt, elapsed),
+      isPaused: () =>
+        this.engine.isSoftwareGl && !['hud', 'splash', 'onboarding', 'menu'].includes(gameState.screen),
     });
 
     this.registerBusEvents();
@@ -129,7 +146,6 @@ export class SceneManager {
       }),
       eventBus.on('world:lightning', (p) => {
         const data = p as { dist?: number };
-        audioSystem.playSfx('thunder');
         if (typeof data?.dist === 'number' && data.dist < 3.6) {
           this.survival.applyLightningHit(data.dist);
           this.camRig.addTrauma(0.55);
@@ -150,7 +166,7 @@ export class SceneManager {
         this.engine.applyGraphicsSettings();
         if (this.sky) {
           this.sky.sunLight.castShadow = !this.engine.isSoftwareGl && gameState.settings.graphics.shadows;
-          this.sky.applyFog(this.engine.scene, this.weather.currentWeather);
+          this.sky.applyFog(this.engine.scene, this.weather.getWeights());
         }
       }),
       eventBus.on('engine:resized', () => {
@@ -170,7 +186,7 @@ export class SceneManager {
     this.water = new WaterSystem(this.engine.scene);
     this.lava = new LavaSystem(this.engine.scene, this.terrain, this.assets);
     this.volcano = new VolcanoSystem(this.engine.scene, this.terrain);
-    this.weather = new WeatherSystem(this.engine.scene);
+    this.weather = new WeatherSystem(this.engine.scene, this.engine.isSoftwareGl);
     this.deathBagView = new DeathBagView(this.engine.scene);
     this.meteors = new MeteorSystem(this.engine.scene);
     this.chunks = new ChunkManager(this.engine.scene, this.terrain, gameState.worldSeed, this.assets, this.spatialHash);
@@ -183,37 +199,81 @@ export class SceneManager {
     this.character.root.visible = false;
     this.engine.scene.add(this.character.root);
 
-    void tryLoadExplorerGlb(currentPlayerModelUrl()).then((glb) => {
-      if (!glb || !this.character) return;
-      this.glbHandle = glb;
-      this.character.bodyPivot.visible = false;
-      this.character.root.add(glb.root);
-    });
+    this.syncPlayerGlbModel();
 
     this.engine.prewarm();
     this.ready = true;
-    this.sky.update(0.016, this.engine.scene, _worldCenter, this.weather.currentWeather);
+    this.sky.update(0.016, this.engine.scene, _worldCenter, this.weather.getWeights());
     this.camRig.updateMenuFlyover(0, this.engine.camera);
     this.engine.render();
     this.loop.start();
   }
 
+  private syncPlayerGlbModel(): void {
+    if (!this.character) return;
+    const url = currentPlayerModelUrl(gameState.avatar.gender);
+    if (url === this.loadedGlbUrl && this.glbHandle) return;
+    this.loadedGlbUrl = url;
+    const seq = ++this.glbLoadSeq;
+    if (this.glbHandle) {
+      this.character.root.remove(this.glbHandle.root);
+      this.glbHandle = null;
+    }
+    this.character.bodyPivot.visible = true;
+    void tryLoadExplorerGlb(url, this.engine.renderer).then((glb) => {
+      if (seq !== this.glbLoadSeq || !this.character) return;
+      if (!glb) return;
+      this.glbHandle = glb;
+      this.character.bodyPivot.visible = false;
+      this.character.root.add(glb.root);
+    });
+  }
+
   enterWorld(resetPlayer: boolean): void {
     if (!this.ready) return;
+    const nowMs = sanitizeClockSample(Date.now(), this.lastClockMs);
+    this.lastClockMs = nowMs;
+    const nowDate = new Date(nowMs);
     const p = gameState.playerPos;
-    const sx = resetPlayer ? 0 : p.x;
-    const sz = resetPlayer ? 18 : p.z;
+    let sx = resetPlayer ? 0 : p.x;
+    let sz = resetPlayer ? 18 : p.z;
     const syaw = resetPlayer ? Math.PI : p.yaw;
 
-    this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed);
+    this.appliedEdenSeed = effectivePropSeed(gameState.worldSeed, nowDate);
+    this.appliedYear = nowDate.getUTCFullYear();
     this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
-    this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
+    this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
+    const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
+    this.water.setLevel(waterY);
+
+    if (!resetPlayer) {
+      const reloc = safeRelocateStructures(
+        gameState.placedStructures,
+        (x, z) => this.terrain.groundHeightAt(x, z),
+        waterY
+      );
+      if (reloc.relocatedCount > 0) {
+        this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
+      }
+      const safeP = safeRelocatePlayer(
+        { x: sx, y: p.y, z: sz },
+        (x, z) => this.terrain.groundHeightAt(x, z),
+        waterY
+      );
+      sx = safeP.x;
+      sz = safeP.z;
+    }
+
     this.terrain.updateStreaming(sx, sz, true);
     this.chunks.populate(this.terrain, this.appliedEdenSeed);
     this.chunks.updateStreaming(this.terrain, sx, sz, true);
     this.chunks.syncPlacedStructures(gameState.placedStructures);
 
+    this.weather.reset(nowMs, this.engine.scene, this.sky);
+    this.terrain.setWetness(gameState.wetness);
+
     this.character.applyAppearance(gameState.avatar);
+    this.syncPlayerGlbModel();
     this.character.root.visible = true;
 
     this.controller.resetTo(sx, sz, syaw, this.terrain);
@@ -222,7 +282,7 @@ export class SceneManager {
     this.autosaveAccum = 0;
     this.bruk.reset();
     this.brukBody.reset(this.terrain);
-    multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed));
+    multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed, nowDate));
     this.emitHudSnapshot();
     this.engine.render();
   }
@@ -385,11 +445,11 @@ export class SceneManager {
     const isFlyover = ['menu', 'splash', 'onboarding', 'newGame', 'auth', 'credits'].includes(screen);
 
     if (isFlyover) {
-      this.sky.update(dt * 0.4, this.engine.scene, _worldCenter, this.weather.currentWeather);
+      this.sky.update(dt * 0.4, this.engine.scene, _worldCenter, this.weather.getWeights());
       this.landmarks.update(_worldCenter, this.sky.horizonColor);
       this.water.update(dt, _worldCenter);
       this.lava.update(dt, elapsed);
-      this.volcano.update(dt, gameState.settings.graphics.particles);
+      this.volcano.update(dt, gameState.settings.graphics.particles, undefined, undefined, 1, this.weather.getWind());
       this.camRig.updateMenuFlyover(elapsed, this.engine.camera);
     } else if (isPlaying) {
       this.fpsAccum += dt;
@@ -411,22 +471,48 @@ export class SceneManager {
       this.edenCheckTimer += dt;
       if (this.edenCheckTimer > 30) {
         this.edenCheckTimer = 0;
-        const warn = shiftWarning();
+        const safeNowMs = sanitizeClockSample(Date.now(), this.lastClockMs);
+        this.lastClockMs = safeNowMs;
+        const nowDate = new Date(safeNowMs);
+        const warn = shiftWarning(safeNowMs);
         if (warn.level !== 'none' && warn.key !== this.shiftWarnKey) {
           this.shiftWarnKey = warn.key;
           const hasAnchor = gameState.placedStructures.some((x) => x.type === 'terrain_anchor');
+          const prefix = warn.kind === 'year' ? 'Zaman Baru' : 'Pergeseran Besar';
           eventBus.emit('toast:show', {
-            text: `Pergeseran Besar dalam ${formatShiftCountdown(warn.msLeft)}: medan berganti.${hasAnchor ? '' : ' Pasang Jangkar Medan untuk melindungi base.'}`,
+            text: `${prefix} dalam ${formatShiftCountdown(warn.msLeft)}: medan berganti.${hasAnchor ? '' : ' Pasang Jangkar Medan untuk melindungi base.'}`,
             type: warn.level === 'imminent' ? 'warn' : 'info',
           });
         }
-        const next = effectivePropSeed(gameState.worldSeed);
+        const next = effectivePropSeed(gameState.worldSeed, nowDate);
         if (next !== this.appliedEdenSeed) {
           this.appliedEdenSeed = next;
+          const waterY = effectiveWaterLevel(WATER_LEVEL, nowDate);
+          this.water.setLevel(waterY);
           this.terrain.setAnchors(collectAnchors(gameState.placedStructures));
-          this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed));
+          this.terrain.setSeed(effectiveTerrainSeed(gameState.worldSeed, nowDate));
+          safeRelocateStructures(
+            gameState.placedStructures,
+            (x, z) => this.terrain.groundHeightAt(x, z),
+            waterY
+          );
+          const safeP = safeRelocatePlayer(
+            { x: pos.x, y: pos.y, z: pos.z },
+            (x, z) => this.terrain.groundHeightAt(x, z),
+            waterY
+          );
+          if (safeP.relocated) {
+            this.controller.resetTo(safeP.x, safeP.z, this.controller.yaw, this.terrain);
+          }
           this.chunks.populate(this.terrain, next);
-          eventBus.emit('toast:show', { text: 'Hari baru: peta berubah mengikuti waktu dunia nyata.', type: 'info' });
+          this.chunks.syncPlacedStructures(gameState.placedStructures);
+          if (nowDate.getUTCFullYear() !== this.appliedYear) {
+            this.appliedYear = nowDate.getUTCFullYear();
+            const newAge = getWorldAge(nowDate);
+            eventBus.emit('toast:show', { text: `⏳ ${newAge.name} (Tahun ${newAge.eraYear}) dimulai!`, type: 'info' });
+          } else {
+            eventBus.emit('toast:show', { text: 'Hari baru: peta berubah mengikuti waktu dunia nyata.', type: 'info' });
+          }
         }
       }
       this.activeEvent = this.worldEvents.update(dt, this.weather.currentWeather);
@@ -447,12 +533,20 @@ export class SceneManager {
           this.lastRegionKey = region.key;
         }
       }
-      this.sky.update(dt, this.engine.scene, pos, this.weather.currentWeather);
+      this.weather.update(dt, this.engine.scene, this.sky, pos, this.terrain);
+      this.terrain.setWetness(gameState.wetness);
+      this.sky.update(dt, this.engine.scene, pos, this.weather.getWeights());
       this.landmarks.update(pos, this.sky.horizonColor);
       this.water.update(dt, pos);
       this.lava.update(dt, elapsed);
-      this.volcano.update(dt, gameState.settings.graphics.particles, pos, this.terrain);
-      this.weather.update(dt, this.engine.scene, this.sky, pos, this.terrain);
+      this.volcano.update(
+        dt,
+        gameState.settings.graphics.particles,
+        pos,
+        this.terrain,
+        getWorldAge().volcanoMult,
+        this.weather.getWind()
+      );
       this.deathBagView.update(elapsed, (x, z) => this.terrain.groundHeightAt(x, z));
 
       const swarmMult = this.activeEvent.type === 'meteor_swarm' ? 2.8 : 1;
@@ -504,7 +598,7 @@ export class SceneManager {
         this.lastBiomeSound = this.survival.currentBiomeId;
         audioSystem.setBiomeAmbience(this.survival.currentBiomeId);
       }
-      audioSystem.updateAmbient(dt, this.weather.currentWeather, this.survival.currentBiomeId);
+      audioSystem.updateAmbient(dt, this.weather.getWeights(), this.survival.currentBiomeId, this.weather.getWind().strength);
 
       this.autosaveAccum += dt;
       if (this.autosaveAccum >= AUTOSAVE_INTERVAL_SEC) {
@@ -674,6 +768,7 @@ export class SceneManager {
       activeQuestId: quest.activeQuestId,
       questProgressText: quest.progressText,
       questsCompletedCount: gameState.completedQuests.length,
+      questsTotalCount: quest.totalCount,
       hotbar: getHotbarSlots(),
       selectedHotbarIdx: gameState.selectedHotbarIdx,
       equippedToolId: getBestMiningToolId(),
@@ -708,6 +803,9 @@ export class SceneManager {
         playerZ: p.z,
         biomeId: biome.id,
         hazard: this.survival.currentHazard,
+        wetness: gameState.wetness,
+        windSpeed: this.weather.getWind().strength,
+        weatherBlend: this.weather.getBlendSummary(),
       },
     };
 

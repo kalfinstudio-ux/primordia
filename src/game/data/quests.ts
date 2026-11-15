@@ -1,7 +1,9 @@
 export interface QuestDefinition {
   id: string;
   order: number;
-  chapter: 1 | 2 | 3 | 4 | 5;
+  chapter: number;
+  /** Tahun zaman minimum untuk membuka misi (bawaan 1 = Era Adam & Hawa). */
+  requiredAge?: number;
 }
 
 export interface AchievementDef {
@@ -12,9 +14,12 @@ export interface AchievementDef {
 export interface JournalEntryDef {
   id: string;
   category: 'biome' | 'mineral' | 'phenomenon';
+  /** Tahun zaman minimum agar entri muncul di Jurnal. */
+  requiredAge?: number;
 }
 
 export const CAMPAIGN_QUESTS: QuestDefinition[] = [
+  // Prolog "Fajar Archean" (22 misi asli)
   { id: 'q1', order: 1, chapter: 1 },
   { id: 'q2', order: 2, chapter: 1 },
   { id: 'q3', order: 3, chapter: 1 },
@@ -37,6 +42,18 @@ export const CAMPAIGN_QUESTS: QuestDefinition[] = [
   { id: 'q20', order: 20, chapter: 5 },
   { id: 'q21', order: 21, chapter: 5 },
   { id: 'q22', order: 22, chapter: 5 },
+  // Bab 6 — Era Adam & Hawa (terbuka di Tahun 1 setelah Benih Kehidupan)
+  { id: 'q23', order: 23, chapter: 6, requiredAge: 1 },
+  { id: 'q24', order: 24, chapter: 6, requiredAge: 1 },
+  { id: 'q25', order: 25, chapter: 6, requiredAge: 1 },
+  { id: 'q26', order: 26, chapter: 6, requiredAge: 1 },
+  { id: 'q27', order: 27, chapter: 6, requiredAge: 1 },
+  { id: 'q28', order: 28, chapter: 6, requiredAge: 1 },
+  { id: 'q29', order: 29, chapter: 6, requiredAge: 1 },
+  // Bab 7 — Era Pasang Pertama (terbuka otomatis saat Tahun 2 dimulai pada 1 Jan UTC)
+  { id: 'q30', order: 30, chapter: 7, requiredAge: 2 },
+  { id: 'q31', order: 31, chapter: 7, requiredAge: 2 },
+  { id: 'q32', order: 32, chapter: 7, requiredAge: 2 },
 ];
 
 export const ACHIEVEMENTS: AchievementDef[] = [
@@ -65,4 +82,17 @@ export const JOURNAL_ENTRIES: JournalEntryDef[] = [
   { id: 'j_quake', category: 'phenomenon' },
   { id: 'j_ash_storm', category: 'phenomenon' },
   { id: 'j_acid_rain', category: 'phenomenon' },
+  { id: 'j_adam_eve', category: 'phenomenon', requiredAge: 1 },
+  { id: 'j_first_garden', category: 'phenomenon', requiredAge: 1 },
+  { id: 'j_moon_tides', category: 'phenomenon', requiredAge: 2 },
 ];
+
+export function questsForAge(eraYear: number): QuestDefinition[] {
+  const safeYear = Math.max(1, eraYear);
+  return CAMPAIGN_QUESTS.filter((q) => (q.requiredAge ?? 1) <= safeYear).sort((a, b) => a.order - b.order);
+}
+
+export function journalEntriesForAge(eraYear: number): JournalEntryDef[] {
+  const safeYear = Math.max(1, eraYear);
+  return JOURNAL_ENTRIES.filter((j) => (j.requiredAge ?? 1) <= safeYear);
+}

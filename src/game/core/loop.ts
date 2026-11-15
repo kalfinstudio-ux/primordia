@@ -7,6 +7,7 @@ const MAX_SUBSTEPS = 5;
 export interface FixedLoopHandlers {
   onFixedStep: (fixedDt: number) => void;
   onRender: (alpha: number, frameDt: number, elapsed: number) => void;
+  isPaused?: () => boolean;
 }
 
 export class GameLoop {
@@ -57,7 +58,7 @@ export class GameLoop {
   private afterDraw(cb: () => void): void {
     const gl = this.renderer.getContext() as WebGL2RenderingContext | null;
     if (!gl || typeof gl.fenceSync !== 'function') {
-      this.frameId = window.setTimeout(cb, 16);
+      this.frameId = window.setTimeout(cb, 55);
       return;
     }
     const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -70,17 +71,23 @@ export class GameLoop {
       }
       const status = sync ? gl.getSyncParameter(sync, gl.SYNC_STATUS) : gl.SIGNALED;
       if (status === gl.UNSIGNALED && performance.now() - startedAt < 250) {
-        this.frameId = window.setTimeout(poll, 8);
+        this.frameId = window.setTimeout(poll, 12);
       } else {
         if (sync) gl.deleteSync(sync);
-        this.frameId = window.setTimeout(cb, 16);
+        this.frameId = window.setTimeout(cb, 55);
       }
     };
-    this.frameId = window.setTimeout(poll, 8);
+    this.frameId = window.setTimeout(poll, 12);
   }
 
   private tick = (): void => {
     if (!this.running || this.disposed) return;
+    if ((typeof document !== 'undefined' && document.hidden) || this.handlers.isPaused?.()) {
+      this.lastTime = performance.now();
+      this.accumulator = 0;
+      this.frameId = window.setTimeout(this.tick, 180);
+      return;
+    }
     const now = performance.now();
     const rawDt = Math.max(0.001, (now - this.lastTime) / 1000);
     this.lastTime = now;

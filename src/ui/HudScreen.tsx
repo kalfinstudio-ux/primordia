@@ -29,6 +29,7 @@ import { eventBus } from '../game/core/eventBus';
 import { input } from '../game/core/input';
 import { gameState, saveSettingsToLocal, setScreen, type HudSnapshot } from '../game/core/state';
 import { dismissTutorial } from '../game/systems/events';
+import { questText, activeCampaignTotal } from '../game/systems/quests';
 import { removeItem, useHotbarSlot } from '../game/systems/inventory';
 import { isTouchDevice } from '../game/utils/device';
 import {
@@ -465,7 +466,7 @@ export function HudScreen() {
                 className="flex w-full items-center justify-between gap-1 text-[11px] font-medium text-orange-400"
               >
                 <span className="truncate">
-                  {t('hud.objective')} <span className="text-stone-500">{snap.questsCompletedCount}/22</span>
+                  {t('hud.objective')} <span className="text-stone-500">{snap.questsCompletedCount}/{snap.questsTotalCount ?? activeCampaignTotal()}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-0.5 font-mono-tabular">
                   {snap.questProgressText}
@@ -476,8 +477,8 @@ export function HudScreen() {
                 <div className={compact ? 'max-h-[26vh] overflow-y-auto' : ''}>
                   {snap.activeQuestId ? (
                     <>
-                      <div className="mt-0.5 text-xs font-semibold text-stone-100">{t(`quests.${snap.activeQuestId}.title`)}</div>
-                      <div className="mt-0.5 text-[11px] leading-snug text-stone-400">{t(`quests.${snap.activeQuestId}.desc`)}</div>
+                      <div className="mt-0.5 text-xs font-semibold text-stone-100">{questText(snap.activeQuestId, 'title')}</div>
+                      <div className="mt-0.5 text-[11px] leading-snug text-stone-400">{questText(snap.activeQuestId, 'desc')}</div>
                     </>
                   ) : (
                     <div className="mt-0.5 text-xs text-emerald-300">{t('quests.completedAll')}</div>

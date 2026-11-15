@@ -47,6 +47,7 @@ export interface SaveData {
   playerPos: { x: number; y: number; z: number; yaw: number };
   playtimeSec: number;
   bornAtMs?: number;
+  deaths?: number;
   distanceExplored: number;
   updatedAt: string;
 }
@@ -150,6 +151,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     playerPos: (raw.playerPos as SaveData['playerPos']) || { x: 0, y: 0, z: 18, yaw: Math.PI },
     playtimeSec: Number(raw.playtimeSec) || 0,
     bornAtMs: raw.bornAtMs === undefined ? undefined : sanitizeBornAt(raw.bornAtMs),
+    deaths: typeof raw.deaths === 'number' && Number.isFinite(raw.deaths) ? Math.max(0, Math.floor(raw.deaths)) : undefined,
     distanceExplored: Number(raw.distanceExplored) || 0,
     updatedAt: String(raw.updatedAt || new Date().toISOString()),
   };
@@ -195,6 +197,7 @@ export function buildCurrentSaveSnapshot(): SaveData {
     playerPos: { ...gameState.playerPos },
     playtimeSec: Math.round(gameState.playtimeSec),
     bornAtMs: gameState.bornAtMs,
+    deaths: gameState.deaths,
     distanceExplored: Math.round(gameState.distanceExplored),
     updatedAt: new Date().toISOString(),
   };
@@ -345,7 +348,8 @@ export function applySaveDataToState(raw: SaveData): void {
   gameState.playerPos = { ...data.playerPos };
   gameState.playtimeSec = data.playtimeSec;
   applyOfflineProgress(data.updatedAt);
-  gameState.bornAtMs = sanitizeBornAt(data.bornAtMs);
+  gameState.bornAtMs = Math.min(gameState.bornAtMs || Date.now(), sanitizeBornAt(data.bornAtMs));
+  if (typeof data.deaths === 'number') gameState.deaths = Math.max(gameState.deaths, data.deaths);
   gameState.distanceExplored = data.distanceExplored;
   gameState.activeWorldLoaded = true;
 }

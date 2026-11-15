@@ -2,7 +2,7 @@
   "app": {
     "title": "PRIMORDIA",
     "subtitle": "Survive Primordial Earth",
-    "version": "Version 0.8.0-Archean"
+    "version": "Version 0.9.0-AdamEve"
   },
   "tips": [
     "Approach steaming shallow pools to refill water before dehydration sets in.",
@@ -30,7 +30,9 @@
     "slide3Body": "Track Health, Stamina, Body Temp, Oxygen, Hydration, Radiation, and Fatigue. Progress through 5 Tech Tiers from stone tools to Archean synthesis and the Seed of Life.",
     "slide4Title": "Automatic Graphics Calibration",
     "slide4Body": "PRIMORDIA detected your hardware and selected a balanced graphics preset for smooth 3D playback. Adaptive quality will protect your framerate automatically.",
-    "detectedPreset": "Detected Preset"
+    "detectedPreset": "Detected Preset",
+    "slideBrukTitle": "Bruk, the Basalt Warden",
+    "slideBrukBody": "Beyond the crater mist stands Bruk — keeper of the ancient clock who held back your ageing so the Seed of Life and the Age of Adam & Eve could take root."
   },
   "menu": {
     "continue": "Continue",
@@ -59,7 +61,26 @@
     "notConfigured": "Supabase is not configured in environment. Local Guest Mode is active.",
     "magicSent": "Magic login link sent to your email.",
     "authSuccess": "Signed in successfully.",
-    "back": "Back"
+    "back": "Back",
+    "or": "or",
+    "busy": "Working…",
+    "signUpConfirm": "Account created. Check your inbox if confirmation is requested.",
+    "base44": "Continue with Google (Base44)",
+    "base44NoCloud": "Base44 sign-in active (without Supabase cloud sync).",
+    "errors": {
+      "confirmEmail": "Email not confirmed yet. Please check your inbox or spam folder.",
+      "emailRequired": "Enter your email address first.",
+      "exists": "This email is already registered. Try signing in.",
+      "generic": "Authentication failed. Please try again.",
+      "invalidCredentials": "Incorrect email or password.",
+      "invalidEmail": "Invalid email format.",
+      "network": "Unable to reach the authentication server.",
+      "passwordRequired": "Enter your password first.",
+      "providerOff": "This sign-in provider is not enabled on the server.",
+      "rateLimit": "Too many attempts. Please wait a moment.",
+      "unavailable": "Account service is not configured.",
+      "weakPassword": "Password is too weak (minimum 6 characters)."
+    }
   },
   "newGame": {
     "title": "Prepare New Expedition",
@@ -105,7 +126,9 @@
     "genders": {
       "male": "Male",
       "female": "Female"
-    }
+    },
+    "overwriteTitle": "Overwrite Current Save?",
+    "overwriteBody": "Launching a new expedition will replace the local world save currently stored on this device."
   },
   "loadGame": {
     "title": "Load Saved Expedition",
@@ -146,6 +169,7 @@
     "viewDistance": "View Distance",
     "shadows": "Dynamic Shadows",
     "particles": "Ash & Weather Particles",
+    "volumetricFog": "Valley & Geyser Fog",
     "fpsLimit": "FPS Cap",
     "masterVol": "Master Volume",
     "musicVol": "Music & Drone",
@@ -195,7 +219,8 @@
     "bagPartial": "Inventory full — some items are still left in the bag.",
     "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar.",
     "autoFilter": "Gas Filter equipped automatically — oxygen almost gone.",
-    "noRefuge": "Toxic air and no shelter nearby! Use a Gas Filter or build a Shelter [B]."
+    "noRefuge": "Toxic air and no shelter nearby! Use a Gas Filter or build a Shelter [B].",
+    "bagFull": "Pack is full! Free up space or store items in a chest first."
   },
   "events": {
     "super_eruption": "SUPER-ERUPTION IMMINENT — SEEK SHELTER",
@@ -259,7 +284,9 @@
       "collect_rain": "Collect Condensed Water",
       "use_beacon": "Open Fast-Travel Map",
       "seed_pool": "Deposit Seed of Life",
-      "rest_shelter": "Rest & Sleep in Shelter"
+      "rest_shelter": "Rest & Sleep in Shelter",
+      "rest_fresh": "You are already well-rested.",
+      "rest_slept": "Rested inside your Shelter — fatigue and warmth restored."
     },
     "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",
@@ -292,7 +319,18 @@
       "meteor": "Meteor crater"
     },
     "questGuideLabel": "Mission",
-    "socialBtn": "Friends"
+    "socialBtn": "Friends",
+    "interactTouch": "Tap ACTION to",
+    "waypointHint": "Waypoint",
+    "nearby": {
+      "title": "Nearby",
+      "alone": "Solo",
+      "connecting": "Connecting…",
+      "count": "Players",
+      "nearest": "Nearest",
+      "none": "No other explorers nearby",
+      "off": "Offline"
+    }
   },
   "map": {
     "title": "Primordial Survey Map (4 km × 4 km)",
@@ -305,13 +343,24 @@
     "clickHint": "Click/Tap terrain on the map to place a waypoint. Click a Beacon to fast-travel.",
     "fastTravel": "Fast-Travel Here",
     "clearWaypoint": "Clear Waypoint",
-    "discoveredChunks": "Explored Sectors"
+    "discoveredChunks": "Explored Sectors",
+    "beaconLabel": "Beacon",
+    "centerPlayer": "Center on Player",
+    "distance": "Distance",
+    "fullWorld": "Full World",
+    "markThis": "Mark This Location",
+    "selected": "Selected",
+    "unknownPoi": "Uncharted Landmark",
+    "unknownPoiHint": "Explore closer to reveal its full details and name.",
+    "waypointReached": "Arrived at your custom waypoint.",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out"
   },
   "journal": {
     "title": "Explorer Journal & Achievements",
     "close": "Close [J]",
     "tabDiscoveries": "Field Discoveries",
-    "tabCampaign": "Campaign (22)",
+    "tabCampaign": "Campaign",
     "tabAchievements": "Achievements",
     "tabContracts": "Survey Contracts",
     "unlocked": "Documented",
@@ -375,6 +424,18 @@
       "j_acid_rain": {
         "title": "Sulfuric Acid Precipitation",
         "body": "Volcanic aerosols condense into corrosive rain; shelter prevents chemical burns."
+      },
+      "j_adam_eve": {
+        "title": "Dawn of Adam & Eve",
+        "body": "The Seed of Life has anchored in the ancient springs. Ageless among the first humans, your calling now turns to settlement, living gardens, and passing down your craft across eras."
+      },
+      "j_first_garden": {
+        "title": "The First Earthly Garden",
+        "body": "Moss and microbial mats thrive in clay plots fed by atmospheric condensers—the first step turning dead basalt into living soil."
+      },
+      "j_moon_tides": {
+        "title": "First High Tides (Year 2)",
+        "body": "The new calendar year brings higher global sea levels and livelier mantle vents. Terrain Anchors keep vital settlements safe on dry ridges."
       }
     }
   },
@@ -460,7 +521,13 @@
     "saveCloud": "Save to Cloud",
     "settings": "Settings",
     "mainMenu": "Return to Main Menu",
-    "savedToast": "Game progress saved."
+    "savedToast": "Game progress saved.",
+    "save": "Save Progress",
+    "saveCloudHint": "Saved locally & synced to Cloud when signed in.",
+    "saveFailedToast": "Could not save progress to local storage.",
+    "exit": "Exit to Homepage",
+    "exitTitle": "Exit to Main Landing Page?",
+    "exitBody": "Your active progress will be saved first before returning to the PRIMORDIA homepage."
   },
   "inventory": {
     "title": "Inventory, Crafting & Blueprints",
@@ -477,7 +544,9 @@
     "craftedToast": "Crafted",
     "unlockedRecipe": "Recipe Unlocked",
     "allTiers": "All",
-    "tierLabel": "Tier"
+    "tierLabel": "Tier",
+    "discardOne": "Drop 1",
+    "discardAll": "Drop All"
   },
   "items": {
     "basalt_rock": {
@@ -750,7 +819,53 @@
       "title": "22. Cradle of Biology",
       "desc": "Travel to a Geothermal Geyser Basin and deposit the Seed of Life [E]."
     },
-    "completedAll": "Campaign Complete! Enjoy Freeform Archean Survival or NG+."
+    "completedAll": "All quests in the current Age are complete! Return on January 1 UTC for the next Age, or continue in Free Survival / NG+.",
+    "q23": {
+      "title": "23. A Hearth for Two",
+      "desc": "Build 2 Lava Hearths and 2 Basalt Shelters so the first settlement can shelter two.",
+      "desc_male": "As Adam, build 2 Lava Hearths and 2 Basalt Shelters to shelter both yourself and your companion on the first Earth.",
+      "desc_female": "As Eve, build 2 Lava Hearths and 2 Basalt Shelters so warmth and refuge endure for two."
+    },
+    "q24": {
+      "title": "24. Naming the Land",
+      "desc": "Explore 1,200 m across the world or chart 6 Points of Interest on the survey map."
+    },
+    "q25": {
+      "title": "25. The First Garden",
+      "desc": "Build 1 Moss Garden and 1 Condensation Collector to nurture living growth.",
+      "desc_male": "Build 1 Moss Garden and 1 Condensation Collector to tend the first living sprouts on bare basalt.",
+      "desc_female": "Build 1 Moss Garden and 1 Condensation Collector so water and living flora flourish side by side."
+    },
+    "q26": {
+      "title": "26. Pulse of Industry",
+      "desc": "Deploy 1 Auto Drill and 1 Smelter Furnace so your outpost keeps producing while you are away."
+    },
+    "q27": {
+      "title": "27. Pillars Against Time",
+      "desc": "Place 1 Terrain Anchor and 2 Fast-Travel Beacons to safeguard your base across the Great Shifts."
+    },
+    "q28": {
+      "title": "28. Citadel of Stone",
+      "desc": "Construct at least 6 modular building pieces (Floors, Walls, Roofs, or Airlock Doors)."
+    },
+    "q29": {
+      "title": "29. Legacy of the First Ones",
+      "desc": "Store 1 Crystal Power Core, 4 Refined Iron, and build a Storage Chest for those who come after.",
+      "desc_male": "As Adam, store 1 Crystal Power Core, 4 Refined Iron, and a Storage Chest as a foundation for future generations.",
+      "desc_female": "As Eve, prepare 1 Crystal Power Core, 4 Refined Iron, and a Storage Chest to pass down into the coming ages."
+    },
+    "q30": {
+      "title": "30. Higher Ground",
+      "desc": "In the Age of Rising Tides (Year 2), deploy 2 Terrain Anchors as global waters rise."
+    },
+    "q31": {
+      "title": "31. Watching the Tides",
+      "desc": "Craft Hazmat Suit Lining and explore 2,000 m across the reshaped coastline."
+    },
+    "q32": {
+      "title": "32. Heart of the New Age",
+      "desc": "Craft a Meteorite Drill and hold 2 Crystal Power Cores in the Age of Rising Tides."
+    }
   },
   "gameOver": {
     "bagNote": "Your items dropped as a bag where you fell and can be recovered.",
@@ -812,7 +927,12 @@
     "addFile": "Try another file in public/models/",
     "add": "Add",
     "invalidName": "Invalid file name (must be .glb/.gltf/.usdz/…, no folders).",
-    "convert": "Needs conversion"
+    "convert": "Needs conversion",
+    "joints": "Joints",
+    "gateTitle": "Character Compatibility Gate",
+    "gatePass": "Within budget & compatible",
+    "gateFail": "Requires asset review",
+    "gateLocked": "Locked to verified default character"
   },
   "social": {
     "title": "Players & Friends",
@@ -862,7 +982,8 @@
     "errTooFast": "Too fast, wait a moment.",
     "errMigration": "Social features are not enabled on the server (run migration-social.sql).",
     "errTooMany": "Too many pending requests.",
-    "errGeneric": "Something went wrong. Try again."
+    "errGeneric": "Something went wrong. Try again.",
+    "wisdom": "Wisdom"
   },
   "info": {
     "sections": {
@@ -873,7 +994,7 @@
       "terms": "Terms",
       "privacy": "Privacy Policy"
     },
-    "updated": "Effective 14 November 2026",
+    "updated": "Effective 15 November 2026",
     "description": {
       "title": "About PRIMORDIA",
       "p1": "PRIMORDIA is a browser-based 3D open-world survival game set on primordial Hadean–Archean Earth — before plants, animals, or other humans existed. You explore a 4 km × 4 km world of basalt plains, active volcanoes, lava rivers, sulfur flats, obsidian fields, geyser basins, meteorite impact zones, and shallow steaming oceans.",
@@ -908,12 +1029,12 @@
         "b": "Press [B]: Floor, Wall, and Roof modules snap to a 3 m grid (R rotates). Available: Shelter, Storage Chest, Condensation Collector, Moss Garden, Auto Drill (works while you are offline), Beacon, and the Terrain Anchor that locks terrain within a 60 m radius. Storms damage buildings without cover, but structures are never destroyed completely."
       },
       "s7": {
-        "t": "Era of Adam & Eve",
-        "b": "Your age counts from your character's birth date (server for accounts, local for guests). Wisdom Points are earned at ages 7, 30, 100, and 365 days (1/2/3/5 points) for permanent perks in the Pause menu: Lasting Filter, Ash Skin, Ancestral Recipe, Eternal Filter. Four seasons (Dry, Rain, Ash, Cold — 3 months each) affect weather, water, gardens, and temperature. A warning appears before the Great Shift on the 1st of each month."
+        "t": "Era of Adam & Eve & Yearly Ages",
+        "b": "Your age counts immortally from birth (server for accounts, local for guests). Wisdom Points unlock at {wisdom}. Four seasons ({seasons}) shape weather and growth, terrain shifts on the 1st of each month (with {anchorR} m Terrain Anchors & safe relocation), and every January 1 UTC begins a new Age."
       },
       "s8": {
-        "t": "Score & Campaign",
-        "b": "Your expedition score is sent to the leaderboard with server validation (accounts). Finishing all 22 campaign missions triggers the Archean Dawn; continue in Free Survival or start New Game+, which carries over recipes and journal."
+        "t": "Score & Multi-Era Campaign",
+        "b": "Expedition scores are server-validated. After the 22-mission Archean Dawn prologue, continue into Chapter 6 (Age of Adam & Eve) and yearly Age chapters."
       },
       "s9": {
         "t": "Online & Social",
@@ -922,11 +1043,30 @@
       "s10": {
         "t": "Character",
         "b": "Choose Male or Female, height, build, skin and hair colors, 7 hairstyles, suit color, and 3 pack models. Your appearance is visible to other players in the same world."
-      }
+      },
+      "heading": "Core Mechanics",
+      "blocks": [
+        {
+          "title": "Survival & Difficulty",
+          "items": [
+            "Difficulty multipliers — Explorer ×{multExplorer}, Survivor ×{multSurvivor}, Hadean ×{multHadean}.",
+            "First {safeMin} min safe zone within {safeRadius} m; early grace {easeMin} min (−{easePct}%).",
+            "Auto Gas Filter activates below {autoFilterPct}% oxygen."
+          ]
+        },
+        {
+          "title": "Economy & Building",
+          "items": [
+            "{items} items across {tiers} tiers (tier counts: {tierCounts}) and {recipes} recipes.",
+            "Moss Gardens mature in ~{gardenHours} h; Auto Drills mine {drillPerH}/h (cap {drillCap}); base carry weight {carry} kg.",
+            "Autosave every {autosaveSec}s; offline progress {offlineMinMin} min–{offlineMaxH} h; perks: {perks}."
+          ]
+        }
+      ]
     },
     "missions": {
       "title": "Missions & Achievements",
-      "intro": "The \"Seed of Life\" campaign has 22 missions across 5 chapters. The active mission shows on the HUD, and a guide arrow helps with early missions.",
+      "intro": "The 22-mission Archean Dawn prologue (Chapters 1–5) opens into Chapter 6 ({era}) and yearly Age chapters ({chapters} chapters, {quests} total quests, {achievements} achievements, {journal} journal entries).",
       "chapter1": "Chapter 1 — Survival Basics",
       "chapter2": "Chapter 2 — Tools & Exploration",
       "chapter3": "Chapter 3 — Iron Age & Outpost",
@@ -936,7 +1076,48 @@
       "extra": "Extra Missions",
       "contract": "Repeatable Survey Contract: extract 1 Primordial Crystal or 2 Meteoric Iron and explore 250 m to send telemetry and earn score (Journal [J] → Survey Contracts).",
       "journal": "The Journal [J] records 14 field discoveries: biomes, minerals, and natural phenomena unlocked as you explore.",
-      "ngplus": "New Game+: after finishing the campaign, restart with recipes and journal carried over."
+      "ngplus": "New Game+: after finishing the campaign, restart with recipes and journal carried over.",
+      "chapter6": "Chapter 6 — Age of Adam & Eve",
+      "chapter7": "Chapter 7 — Age of Rising Tides (Year 2+)",
+      "achievementsTitle": "Achievements",
+      "active": "Active",
+      "done": "Done",
+      "chapters": {
+        "1": {
+          "title": "Chapter 1 — Survive",
+          "desc": "Warm pools, basalt, stone tools, shelter, and first crystal."
+        },
+        "2": {
+          "title": "Chapter 2 — Tools & Exploration",
+          "desc": "Workbench, obsidian blades, gas filters, and storage."
+        },
+        "3": {
+          "title": "Chapter 3 — Iron Age & Outpost",
+          "desc": "Smelter furnace, refined iron, and modular habitats."
+        },
+        "4": {
+          "title": "Chapter 4 — Archean Research",
+          "desc": "Research lab, meteorite iron, crystal cores, and beacons."
+        },
+        "5": {
+          "title": "Chapter 5 — Seed of Life",
+          "desc": "Prebiotic synthesis and planting the Seed of Life."
+        },
+        "6": {
+          "title": "Chapter 6 — Age of Adam & Eve",
+          "desc": "Settle for two, name the land, tend the first garden, anchor time, and pass down tools."
+        },
+        "7": {
+          "title": "Chapter 7 — Age of Rising Tides",
+          "desc": "Unlocks January 1 (Year 2 UTC) as sea levels rise."
+        }
+      },
+      "blocks": [
+        {
+          "title": "Survey Contracts & Journal",
+          "body": "Alongside the story, complete repeatable Survey Contracts and log {journal} Journal discoveries across the {worldKm} km world ({chunk} m chunks)."
+        }
+      ]
     },
     "guide": {
       "title": "How to Play",
@@ -960,7 +1141,32 @@
       "ti5": "Build near a Terrain Anchor so your base is not buried by the monthly Great Shift.",
       "ti6": "Save to a local slot or the Cloud. On a conflict, choose Keep Local, Keep Cloud, or Keep Both.",
       "ti7": "Low FPS? Open Settings → Graphics and lower the preset, view distance, shadows, or particles.",
-      "ti8": "In online mode, use Signals to communicate, and open the Friends panel to view other players' profiles."
+      "ti8": "In online mode, use Signals to communicate, and open the Friends panel to view other players' profiles.",
+      "heading": "Steps & Quick Tips",
+      "controlsDesktop": "Desktop Key Bindings",
+      "controlsMobile": "Mobile: Left joystick to move, drag screen right side to look, tap RUN / BUILD / ACT / JUMP.",
+      "keys": {
+        "forward": "Forward",
+        "backward": "Back",
+        "left": "Left",
+        "right": "Right",
+        "jump": "Jump",
+        "sprint": "Sprint",
+        "interact": "Action",
+        "inventory": "Bag / Craft",
+        "build": "Build",
+        "map": "Map",
+        "journal": "Journal"
+      },
+      "blocks": [
+        {
+          "title": "First 10 Minutes",
+          "items": [
+            "Collect water at steaming pools, gather basalt and sulfur, and raise a Basalt Shelter before storms arrive.",
+            "Deploy a {anchorR} m Terrain Anchor before the 1st of each month to safeguard your base across the Great Shift."
+          ]
+        }
+      ]
     },
     "terms": {
       "title": "Terms of Service",
@@ -999,7 +1205,14 @@
       "c9": {
         "t": "9. Changes & Contact",
         "b": "These terms may be updated; the latest version applies from the date shown. Continuing to play means accepting the changes. Contact the developer through the project page on GitHub (kalfinstudio-ux/primordia)."
-      }
+      },
+      "heading": "Terms Summary",
+      "blocks": [
+        {
+          "title": "Fair Play & Accounts",
+          "body": "Playing as a guest or signed-in user means respecting other players and refraining from tampering with scores, device clocks, or server RPCs."
+        }
+      ]
     },
     "privacy": {
       "title": "Privacy Policy",
@@ -1038,7 +1251,117 @@
       "c9": {
         "t": "9. Children, Changes & Contact",
         "b": "This game is not intended for children under 13 without a parent or guardian. This policy may be updated; the effective date is shown above. Questions: GitHub kalfinstudio-ux/primordia."
+      },
+      "heading": "Privacy Summary",
+      "blocks": [
+        {
+          "title": "Local & Cloud Data",
+          "body": "Guest saves stay on your device. When signed in, only character name, immortal age, deaths, score, cloud saves, and friend messages are stored in Supabase. Your email is never shown to other players."
+        }
+      ]
+    },
+    "title": "PRIMORDIA Game Info",
+    "subtitle": "All figures below come straight from live game data and the Age of Adam & Eve calendar.",
+    "nav": {
+      "about": "About",
+      "scheme": "Systems",
+      "missions": "Missions",
+      "guide": "Guide",
+      "terms": "Terms",
+      "privacy": "Privacy"
+    },
+    "about": {
+      "heading": "World & Living Ages",
+      "blocks": [
+        {
+          "title": "Early Earth to the Age of Adam & Eve",
+          "body": "PRIMORDIA ({version}) spans a {worldKm} × {worldKm} km open world with {biomes} biomes. Complete the Archean Dawn prologue, then enter the {era} and yearly Ages."
+        },
+        {
+          "title": "Real-Time Calendar: Day, Month, Year",
+          "body": "Resources regrow daily, terrain & POIs shift monthly (Great Shift, protected by {anchorR} m Terrain Anchors and safe relocation), and every January 1 UTC unlocks a new Age."
+        }
+      ]
+    },
+    "legal": {
+      "updated": "Updated: {updatedAt}",
+      "owner": "Developer: {owner}",
+      "contact": "Contact: {contact}"
+    }
+  },
+  "save": {
+    "local": "Local Save",
+    "cloud": "Cloud Save",
+    "conflictTitle": "Resolve Save Conflict",
+    "conflictBody": "Your local save and cloud save differ. Choose which progress to keep.",
+    "keepLocal": "Keep Local Save",
+    "keepCloud": "Keep Cloud Save",
+    "legacyTitle": "Legacy Saves Found",
+    "legacyBody": "Pick one expedition from your old save slots to migrate into the unified save format.",
+    "legacyNewest": "Newest"
+  },
+  "bruk": {
+    "name": "Bruk · Basalt Warden",
+    "hintLabel": "Bruk’s Counsel",
+    "lines": {
+      "first_fire": "A small spark upon cold stone. It proves nothing yet—though I see it.",
+      "first_shelter": "Four basalt walls against a poisoned sky. Perhaps you are sturdier than you look.",
+      "storm_survived": "The storm passed and you still stand. The crust remembers your name now.",
+      "fire_third": "Three hearths lit. The night no longer belongs entirely to the ash.",
+      "chapter_1": "Water and shelter are yours. Now the eastern crater awaits.",
+      "chapter_2": "Your pick bites through volcanic glass. Do not grow careless—the sulfur flats remain hungry.",
+      "chapter_3": "Refined iron and modular walls. At last you build things meant to endure.",
+      "chapter_4": "Starfall alloy and beacons ablaze. Only one threshold separates stone from life.",
+      "ending": "The Seed of Life beats beneath the spring. I held back your time until this hour—choose now: release time so Adam & Eve enter the human age, or hold eternity a little longer."
+    },
+    "hints": {
+      "level1": "Bruk quietly watches your hearth from the ridge.",
+      "level2": "Bruk’s amber eye softens slightly at your resilience.",
+      "level3": "The warden begins to trust you with the balance of early Earth.",
+      "level4": "The Basalt Warden stands beside you as witness to a new dawn."
+    },
+    "choice": {
+      "release": {
+        "label": "Release Time (Enter the Age of Adam & Eve)",
+        "reply": "The clock turns forward while your immortal chronicle endures. The Age of Adam & Eve now opens before you."
+      },
+      "hold": {
+        "label": "Hold Eternity Longer (Remain in the Early Earth)",
+        "reply": "So be it. I will steady the horizon a while longer, yet new eras wait whenever you are ready."
       }
     }
+  },
+  "regions": {
+    "format": "{dir} {tier}",
+    "current": "Current Region",
+    "danger": "Hazard",
+    "entered": "Entered region",
+    "tier": {
+      "0": "Safe Cradle Basin",
+      "1": "Frontier Plains",
+      "2": "Inner Ash Reaches",
+      "3": "Harsh Volcanic Ring",
+      "4": "Primordial Rim"
+    },
+    "dir": {
+      "n": "North",
+      "ne": "Northeast",
+      "e": "East",
+      "se": "Southeast",
+      "s": "South",
+      "sw": "Southwest",
+      "w": "West",
+      "nw": "Northwest"
+    }
+  },
+  "poiNames": {
+    "volcano": "Caldera Peak",
+    "geyser": "Geyser Basin",
+    "crater": "Crystal Crater",
+    "obsidian_crevasse": "Obsidian Crevasse",
+    "meteor_site": "Meteor Impact Site",
+    "water_spring": "Warm Spring",
+    "lava_tube": "Lava Tube",
+    "hot_spring": "Thermal Hot Spring"
   }
 }

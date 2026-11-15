@@ -17,6 +17,6 @@ export function setAssignment(role: string, file: string | null): Record<string,
   return parseAssignments(next);
 }
 
-export function currentPlayerModelUrl(): string {
-  return playerModelUrl(getAssignments());
+export function currentPlayerModelUrl(gender: 'male' | 'female' = 'male'): string {
+  return playerModelUrl(getAssignments(), gender);
 }

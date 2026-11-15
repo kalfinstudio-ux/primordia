@@ -39,7 +39,7 @@ export interface InfoBlock {
   items?: string[];
 }
 
-export const NUM_CHAPTERS = 5;
+export const NUM_CHAPTERS = 7;
 
 /** Nilai pengganti untuk {placeholder} di teks i18n bagian `info`. */
 export function buildInfoVars(opts: { biomeCount: number; contactEmail?: string; ownerName?: string; updatedAt: string }): Record<string, string> {

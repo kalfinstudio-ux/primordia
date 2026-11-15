@@ -76,12 +76,21 @@ export class VolcanoSystem {
     scene.add(this.group);
   }
 
-  update(dt: number, showParticles: boolean, playerPos?: THREE.Vector3, terrain?: TerrainSystem): void {
+  update(
+    dt: number,
+    showParticles: boolean,
+    playerPos?: THREE.Vector3,
+    terrain?: TerrainSystem,
+    activityMult = 1,
+    wind?: { x: number; z: number }
+  ): void {
     this.plumeMesh.visible = showParticles;
     if (showParticles) {
+      const wx = wind ? wind.x * 0.65 : 0;
+      const wz = wind ? wind.z * 0.65 : 0;
       for (let i = 0; i < PLUME_COUNT; i++) {
         const p = this.particles[i];
-        p.age += dt;
+        p.age += dt * Math.max(0.6, Math.min(1.6, activityMult));
         if (p.age >= p.life) {
           p.age = 0;
           const a = (i * 1.7 + performance.now() * 0.001) % (Math.PI * 2);
@@ -89,9 +98,9 @@ export class VolcanoSystem {
           p.y = 13.5;
           p.z = VOLCANO_MAIN.z + Math.sin(a) * 2.6;
         } else {
-          p.x += p.vx * dt;
+          p.x += (p.vx + wx) * dt;
           p.y += p.vy * dt;
-          p.z += p.vz * dt;
+          p.z += (p.vz + wz) * dt;
         }
         const t = p.age / p.life;
         const scale = 0.9 + t * 3.2;
@@ -113,7 +122,7 @@ export class VolcanoSystem {
       }
     }
 
-    this.eruptionTimer -= dt;
+    this.eruptionTimer -= dt * Math.max(0.5, activityMult);
     if (this.eruptionTimer <= 0) {
       this.eruptionTimer = 28 + Math.random() * 18;
       eventBus.emit('world:quake', { intensity: 0.42 });

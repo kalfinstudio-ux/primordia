@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createConfiguredGltfLoader } from '../core/gltfLoader';
 import { WATER_LEVEL } from '../config';
 import { gameState } from '../core/state';
 import type { SpatialHashGrid } from '../core/spatialHash';
@@ -131,7 +131,7 @@ export class BrukBody {
     if (this.rig || this.loading) return;
     this.loading = true;
     try {
-      const gltf = await new GLTFLoader().loadAsync(assetUrl(BRUK_MODEL_FILE));
+      const gltf = await createConfiguredGltfLoader().loadAsync(assetUrl(BRUK_MODEL_FILE));
       const rig = this.buildRig(gltf.scene);
       if (!rig) {
         disposeObject3D(gltf.scene as unknown as Parameters<typeof disposeObject3D>[0]);

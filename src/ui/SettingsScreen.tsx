@@ -26,7 +26,7 @@ export function SettingsScreen() {
   const [confirmClear, setConfirmClear] = useState(false);
   const { canInstall, promptInstall } = usePWAInstall();
 
-  const returnTarget = gameState.previousScreen === 'pause' ? 'pause' : 'menu';
+  const returnTarget = gameState.activeWorldLoaded ? 'pause' : 'menu';
 
   const applyAndSave = (next: GameSettings) => {
     setDraft(next);
@@ -37,9 +37,10 @@ export function SettingsScreen() {
     const viewDistance = preset === 'low' ? 85 : preset === 'medium' ? 125 : 175;
     const shadows = preset !== 'low';
     const particles = preset !== 'low';
+    const volumetricFog = preset !== 'low';
     applyAndSave({
       ...draft,
-      graphics: { ...draft.graphics, preset, viewDistance, shadows, particles },
+      graphics: { ...draft.graphics, preset, viewDistance, shadows, particles, volumetricFog },
     });
   };
 
@@ -145,6 +146,19 @@ export function SettingsScreen() {
                 enabled={draft.graphics.particles}
                 onToggle={() =>
                   applyAndSave({ ...draft, graphics: { ...draft.graphics, particles: !draft.graphics.particles } })
+                }
+              />
+              <ToggleRow
+                label={t('settings.volumetricFog')}
+                enabled={draft.graphics.preset !== 'low' && draft.graphics.volumetricFog}
+                onToggle={() =>
+                  applyAndSave({
+                    ...draft,
+                    graphics: {
+                      ...draft.graphics,
+                      volumetricFog: draft.graphics.preset === 'low' ? false : !draft.graphics.volumetricFog,
+                    },
+                  })
                 }
               />
 
@@ -407,6 +421,14 @@ export function SettingsScreen() {
                 className="min-h-[44px] w-full rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-left text-sm font-medium text-stone-200 hover:bg-stone-800"
               >
                 {t('settings.syncNow')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScreen('assets')}
+                className="min-h-[44px] w-full rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-left text-sm font-medium text-stone-200 hover:bg-stone-800"
+              >
+                {t('menu.assets')}
               </button>
 
               <button

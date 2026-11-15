@@ -106,6 +106,9 @@ export interface DebugTelemetry {
   playerZ: number;
   biomeId: string;
   hazard: HazardType;
+  wetness?: number;
+  windSpeed?: number;
+  weatherBlend?: string;
 }
 
 export interface HudSnapshot {
@@ -123,6 +126,7 @@ export interface HudSnapshot {
   activeQuestId: string | null;
   questProgressText: string;
   questsCompletedCount: number;
+  questsTotalCount?: number;
   hotbar: Array<InventorySlot | null>;
   selectedHotbarIdx: number;
   equippedToolId: string | null;
@@ -170,6 +174,8 @@ export interface RuntimeGameState {
   worldSeed: string;
   /** Waktu lahir (ms epoch, waktu nyata). Umur abadi dihitung dari sini dan tidak pernah direset. */
   bornAtMs: number;
+  /** Jumlah kematian akibat bahaya (tidak pernah mereset umur abadi). */
+  deaths: number;
   avatar: AvatarConfig;
   settings: GameSettings;
   user: UserSession;
@@ -202,6 +208,8 @@ export interface RuntimeGameState {
   newGamePlusCount: number;
   campaignComplete: boolean;
   sootLevel: number; // 0..1 ash accumulation on suit
+  wetness: number; // 0..1 ground wetness around player
+  wind: { x: number; z: number; strength: number };
   playtimeSec: number;
   distanceExplored: number;
   deathReason: string;
@@ -228,6 +236,7 @@ function loadInitialSettings(): GameSettings {
       preset: recommended,
       shadows: recommended !== 'low',
       particles: recommended !== 'low',
+      volumetricFog: recommended !== 'low',
       ...saved.graphics,
     },
     audio: { ...DEFAULT_SETTINGS.audio, ...saved.audio },
@@ -264,7 +273,8 @@ export const gameState: RuntimeGameState = {
   previousScreen: 'menu',
   onboardingDone: readStorage<boolean>('onboarding_done', false),
   worldSeed: 'HADEAN-01',
-  bornAtMs: Date.now(),
+  bornAtMs: readStorage<number>('immortal_born_at', Date.now()),
+  deaths: readStorage<number>('immortal_deaths', 0),
   avatar: { ...DEFAULT_AVATAR, ...readStorage<Partial<AvatarConfig>>('last_avatar', {}) },
   settings: loadInitialSettings(),
   user: { mode: 'guest', userId: null, email: null },
@@ -294,6 +304,8 @@ export const gameState: RuntimeGameState = {
   newGamePlusCount: readStorage<number>('ng_plus_count', 0),
   campaignComplete: false,
   sootLevel: 0,
+  wetness: 0,
+  wind: { x: 1.8, z: 0, strength: 1.8 },
   playtimeSec: 0,
   distanceExplored: 0,
   deathReason: 'reasonGeneric',
@@ -339,7 +351,8 @@ export function saveSettingsToLocal(next: GameSettings): void {
 
 export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowledge = false): void {
   gameState.worldSeed = seed || 'HADEAN-01';
-  if (!preserveKnowledge) gameState.bornAtMs = Date.now();
+  if (!Number.isFinite(gameState.bornAtMs) || gameState.bornAtMs <= 0) gameState.bornAtMs = Date.now();
+  writeStorage('immortal_born_at', gameState.bornAtMs);
   gameState.avatar = { ...DEFAULT_AVATAR, ...avatar };
   writeStorage('last_avatar', gameState.avatar);
   gameState.vitals = createInitialVitals();
@@ -374,6 +387,10 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
   gameState.buildRotOffset = 0;
   gameState.campaignComplete = false;
   gameState.sootLevel = 0;
+  gameState.wetness = 0;
+  gameState.wind.x = 1.8;
+  gameState.wind.z = 0;
+  gameState.wind.strength = 1.8;
   gameState.playtimeSec = 0;
   gameState.distanceExplored = 0;
   gameState.deathReason = 'reasonGeneric';

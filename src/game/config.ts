@@ -48,6 +48,7 @@ export interface GameSettings {
     viewDistance: number; // 70 - 220
     shadows: boolean;
     particles: boolean;
+    volumetricFog: boolean;
     fpsLimit: number; // 30 | 60 | 120
   };
   audio: {
@@ -141,6 +142,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
     viewDistance: 135,
     shadows: true,
     particles: true,
+    volumetricFog: true,
     fpsLimit: 60,
   },
   audio: {

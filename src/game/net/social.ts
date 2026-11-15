@@ -4,6 +4,7 @@ import { readStorage, writeStorage } from '../utils/storage';
 import { t } from '../utils/i18n';
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
 import { isUuid } from './multiplayerProtocol';
+import { wisdomPointsEarned } from '../data/eden';
 
 /**
  * Fitur sosial (profil publik, teman, pesan). Semua lewat RPC Postgres (lihat
@@ -18,6 +19,7 @@ export interface PublicProfile {
   bornAt: string | null;
   ageSeconds: number;
   deaths: number;
+  wisdomPoints: number;
   score: number;
   friendStatus: FriendStatus;
 }
@@ -91,13 +93,19 @@ export async function fetchProfile(userId: string): Promise<Result<PublicProfile
   const r = rows(res.data)[0];
   if (!r) return { ok: true, data: null };
   const status = String(r.friend_status);
+  const ageSeconds = num(r.age_seconds);
+  const wisdomPoints =
+    r.wisdom_points !== undefined && r.wisdom_points !== null
+      ? num(r.wisdom_points)
+      : wisdomPointsEarned(ageSeconds);
   return {
     ok: true,
     data: {
       displayName: String(r.display_name ?? 'Penjelajah'),
       bornAt: typeof r.born_at === 'string' ? r.born_at : null,
-      ageSeconds: num(r.age_seconds),
+      ageSeconds,
       deaths: num(r.deaths),
+      wisdomPoints,
       score: num(r.score),
       friendStatus: (['none', 'friends', 'sent', 'received', 'self'].includes(status) ? status : 'none') as FriendStatus,
     },

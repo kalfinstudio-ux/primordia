@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { ACHIEVEMENTS, CAMPAIGN_QUESTS, JOURNAL_ENTRIES } from '../game/config';
+import { ACHIEVEMENTS } from '../game/config';
+import { getWorldAge } from '../game/data/eden';
+import { journalEntriesForAge, questsForAge } from '../game/data/quests';
+import { questText } from '../game/systems/quests';
 import { gameState, setScreen } from '../game/core/state';
 import { completeSurveyContract } from '../game/main';
 import { t } from '../game/utils/i18n';
@@ -9,6 +12,10 @@ type JournalTab = 'discoveries' | 'campaign' | 'achievements' | 'contracts';
 export function JournalModal() {
   const [tab, setTab] = useState<JournalTab>('discoveries');
   const [, setRefresh] = useState(0);
+  const eraYear = getWorldAge().eraYear;
+  const eraQuests = questsForAge(eraYear);
+  const eraEntries = journalEntriesForAge(eraYear);
+  const activeQuestId = eraQuests[gameState.activeQuestIdx]?.id ?? null;
 
   const canClaimContract =
     (gameState.crystalsExtractedCount >= 1 || gameState.meteorIronCollectedCount >= 2) &&
@@ -50,14 +57,14 @@ export function JournalModal() {
                 tab === id ? 'bg-orange-600 text-white' : 'text-stone-300 hover:bg-stone-800'
               }`}
             >
-              {t(`journal.${labelKey}`)}
+              {id === 'campaign' ? `${t('journal.tabCampaign')} (${eraQuests.length})` : t(`journal.${labelKey}`)}
             </button>
           ))}
         </div>
 
         <div className="primordia-scroll flex-1 space-y-3 overflow-y-auto p-5">
           {tab === 'discoveries' &&
-            JOURNAL_ENTRIES.map((entry) => {
+            eraEntries.map((entry) => {
               const unlocked = gameState.journalUnlocked.includes(entry.id);
               return (
                 <div
@@ -82,9 +89,9 @@ export function JournalModal() {
             })}
 
           {tab === 'campaign' &&
-            CAMPAIGN_QUESTS.map((q) => {
+            eraQuests.map((q) => {
               const done = gameState.completedQuests.includes(q.id);
-              const active = !done && CAMPAIGN_QUESTS[gameState.activeQuestIdx]?.id === q.id;
+              const active = !done && activeQuestId === q.id;
               return (
                 <div
                   key={q.id}
@@ -97,8 +104,8 @@ export function JournalModal() {
                   }`}
                 >
                   <div>
-                    <div className="text-sm font-semibold text-stone-100">{t(`quests.${q.id}.title`)}</div>
-                    <div className="mt-0.5 text-xs text-stone-400">{t(`quests.${q.id}.desc`)}</div>
+                    <div className="text-sm font-semibold text-stone-100">{questText(q.id, 'title')}</div>
+                    <div className="mt-0.5 text-xs text-stone-400">{questText(q.id, 'desc')}</div>
                   </div>
                   <span className={`font-mono-tabular shrink-0 text-xs font-semibold ${done ? 'text-emerald-400' : 'text-stone-400'}`}>
                     {done ? '✓' : `Ch.${q.chapter}`}

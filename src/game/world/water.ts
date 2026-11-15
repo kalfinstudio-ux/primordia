@@ -42,6 +42,10 @@ export class WaterSystem {
     scene.add(this.mesh);
   }
 
+  setLevel(y: number): void {
+    this.mesh.position.y = y;
+  }
+
   update(dt: number, centerPos?: THREE.Vector3): void {
     this.timeUniform.value += dt;
     if (centerPos) {

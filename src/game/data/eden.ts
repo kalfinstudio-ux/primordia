@@ -71,13 +71,98 @@ export function getEdenCalendar(date: Date = new Date()): EdenCalendar {
   };
 }
 
+export interface WorldAge {
+  eraYear: number;
+  id: string;
+  name: string;
+  nameEn: string;
+  seaLevelOffsetM: number;
+  volcanoMult: number;
+  resourceMult: number;
+  unlockedChapter: number;
+}
+
+export const WORLD_AGES: readonly Omit<WorldAge, 'eraYear'>[] = [
+  {
+    id: 'age_adam_eve',
+    name: 'Era Adam & Hawa',
+    nameEn: 'Age of Adam & Eve',
+    seaLevelOffsetM: 0,
+    volcanoMult: 1.0,
+    resourceMult: 1.0,
+    unlockedChapter: 6,
+  },
+  {
+    id: 'age_rising_tides',
+    name: 'Era Pasang Pertama',
+    nameEn: 'Age of Rising Tides',
+    seaLevelOffsetM: 0.35,
+    volcanoMult: 1.15,
+    resourceMult: 1.15,
+    unlockedChapter: 7,
+  },
+  {
+    id: 'age_ember_crowns',
+    name: 'Era Mahkota Bara',
+    nameEn: 'Age of Ember Crowns',
+    seaLevelOffsetM: 0.15,
+    volcanoMult: 1.35,
+    resourceMult: 1.25,
+    unlockedChapter: 8,
+  },
+  {
+    id: 'age_living_stone',
+    name: 'Era Batu Hidup',
+    nameEn: 'Age of Living Stone',
+    seaLevelOffsetM: -0.15,
+    volcanoMult: 0.9,
+    resourceMult: 1.3,
+    unlockedChapter: 9,
+  },
+];
+
+/** Zaman tahunan: berganti setiap 1 Januari pukul 00:00 UTC. Tahun 1 = Era Adam & Hawa. */
+export function getWorldAge(date: Date = new Date()): WorldAge {
+  const eraYear = Math.max(1, date.getUTCFullYear() - ERA_START_YEAR + 1);
+  const template = WORLD_AGES[(eraYear - 1) % WORLD_AGES.length];
+  return { ...template, eraYear };
+}
+
+export interface DailyMicroDetails {
+  dayKey: string;
+  steamVentsPerChunk: number;
+  ashDriftStrength: number;
+  emberClusterCount: number;
+  regrowthSeed: number;
+}
+
+/** Detail mikro harian yang deterministik dari tanggal UTC (uap panas, timbunan abu, titik sumber daya). */
+export function dailyMicroDetails(date: Date = new Date()): DailyMicroDetails {
+  const c = getEdenCalendar(date);
+  const seed = c.year * 10000 + c.month * 100 + c.day;
+  const r = mulberry(seed ^ 0x517cc1b7);
+  return {
+    dayKey: `${c.year}-${String(c.month).padStart(2, '0')}-${String(c.day).padStart(2, '0')}`,
+    steamVentsPerChunk: r() < 0.55 ? 1 : 2,
+    ashDriftStrength: Math.round((0.35 + r() * 0.65) * 100) / 100,
+    emberClusterCount: c.volcanoActivity >= 0.6 ? 2 : 1,
+    regrowthSeed: seed,
+  };
+}
+
+/** Tinggi permukaan air efektif = dasar + pengubah zaman tahunan + pasang-surut harian. */
+export function effectiveWaterLevel(baseWaterLevel: number, date: Date = new Date()): number {
+  const age = getWorldAge(date);
+  const cal = getEdenCalendar(date);
+  return Math.round((baseWaterLevel + age.seaLevelOffsetM + cal.tideOffset * 0.25) * 100) / 100;
+}
+
 /**
- * Seed efektif untuk medan: berubah tiap BULAN (dan otomatis tiap tahun).
+ * Seed efektif untuk medan: berubah tiap BULAN dan tiap TAHUN (1 Januari UTC).
  * Props/sumber daya memakai seed harian, jadi vegetasi & batu tumbuh ulang tiap hari.
- * `MONTHLY_TERRAIN_SHIFT=false` (bawaan sejak audit): medan TIDAK diacak tiap bulan, agar bangunan tidak terkubur.
- * Penggantinya (lapisan Era) direncanakan di Fase 2 roadmap. Semua kalender di file ini memakai UTC.
+ * Dilindungi oleh Jangkar Medan (60 m) serta aturan relokasi aman agar base/pemain tidak pernah terkubur.
  */
-export const MONTHLY_TERRAIN_SHIFT = false;
+export const MONTHLY_TERRAIN_SHIFT = true;
 
 export function effectiveTerrainSeed(worldSeed: string, date: Date = new Date(), shift: boolean = MONTHLY_TERRAIN_SHIFT): string {
   if (!shift) return worldSeed;
@@ -121,6 +206,15 @@ export function sanitizeBornAt(value: unknown, nowMs: number = Date.now()): numb
   const n = typeof value === 'number' ? value : Date.parse(String(value ?? ''));
   if (!Number.isFinite(n) || n > nowMs || n < Date.UTC(ERA_START_YEAR, 0, 1)) return nowMs;
   return n;
+}
+
+/** Pelindung jam perangkat: cegah mundur waktu kalender > 5 dtk (anti-tamper DST/mundur jam). */
+export function sanitizeClockSample(sampleMs: number, prevObservedMs: number = 0): number {
+  const safe = Number.isFinite(sampleMs) ? sampleMs : Date.now();
+  if (Number.isFinite(prevObservedMs) && prevObservedMs > 0 && safe < prevObservedMs - 5000) {
+    return prevObservedMs;
+  }
+  return Math.max(Date.UTC(ERA_START_YEAR, 0, 1), safe);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -342,6 +436,7 @@ export function msUntilMonthShift(nowMs: number = Date.now()): number {
 
 export interface ShiftWarning {
   level: 'none' | 'soon' | 'imminent';
+  kind: 'month' | 'year';
   msLeft: number;
   /** Kunci unik per (bulan tujuan, level) agar toast tidak berulang. */
   key: string;
@@ -350,8 +445,12 @@ export interface ShiftWarning {
 export function shiftWarning(nowMs: number = Date.now(), enabled: boolean = MONTHLY_TERRAIN_SHIFT): ShiftWarning {
   const msLeft = msUntilMonthShift(nowMs);
   const next = new Date(nowMs + msLeft);
+  const kind: 'month' | 'year' = next.getUTCMonth() === 0 ? 'year' : 'month';
   const level = !enabled ? 'none' : msLeft <= SHIFT_WARN_IMMINENT_MS ? 'imminent' : msLeft <= SHIFT_WARN_SOON_MS ? 'soon' : 'none';
-  return { level, msLeft, key: `${next.getUTCFullYear()}-${next.getUTCMonth() + 1}:${level}` };
+  const key = kind === 'year'
+    ? `${next.getUTCFullYear()}-${next.getUTCMonth() + 1}:year:${level}`
+    : `${next.getUTCFullYear()}-${next.getUTCMonth() + 1}:${level}`;
+  return { level, kind, msLeft, key };
 }
 
 export function formatShiftCountdown(ms: number): string {
@@ -359,6 +458,99 @@ export function formatShiftCountdown(ms: number): string {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return h > 0 ? `${h}j ${m}m` : `${m}m`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Relokasi aman: Pergeseran Besar / Zaman Baru tak pernah mengubur bangunan atau menjebak pemain
+// ─────────────────────────────────────────────────────────────
+export interface RelocatableStruct {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  z: number;
+  anchorSeed?: string;
+}
+
+function findDrySpotNear(
+  ox: number,
+  oz: number,
+  heightAt: (x: number, z: number) => number,
+  minY: number,
+  maxRadius = 64
+): { x: number; y: number; z: number } | null {
+  const y0 = heightAt(ox, oz);
+  if (y0 >= minY) return { x: ox, y: y0, z: oz };
+  for (let r = 4; r <= maxRadius; r += 4) {
+    const steps = 12;
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const cx = Math.round((ox + Math.cos(a) * r) * 10) / 10;
+      const cz = Math.round((oz + Math.sin(a) * r) * 10) / 10;
+      const cy = heightAt(cx, cz);
+      if (cy >= minY) return { x: cx, y: cy, z: cz };
+    }
+  }
+  return null;
+}
+
+/**
+ * Pastikan bangunan di luar jangkar (atau yang terendam kenaikan laut Zaman baru)
+ * dipindahkan ke permukaan tanah kering terdekat sehingga tidak terkubur atau melayang.
+ */
+export function safeRelocateStructures<T extends RelocatableStruct>(
+  structs: T[],
+  heightAt: (x: number, z: number) => number,
+  waterLevel: number
+): { structs: T[]; relocatedCount: number } {
+  const minDryY = waterLevel + 0.15;
+  const anchors = collectAnchors(structs);
+  let relocatedCount = 0;
+
+  for (const s of structs) {
+    const anchored = anchors.some((a) => Math.hypot(s.x - a.x, s.z - a.z) <= a.r * 0.75);
+    const curGround = heightAt(s.x, s.z);
+    if (anchored && curGround >= minDryY && Math.abs(s.y - curGround) <= 0.35) continue;
+
+    if (curGround >= minDryY) {
+      if (Math.abs(s.y - curGround) > 0.12) {
+        s.y = curGround;
+        relocatedCount++;
+      }
+      continue;
+    }
+
+    const dry = findDrySpotNear(s.x, s.z, heightAt, minDryY, 72);
+    if (dry) {
+      s.x = dry.x;
+      s.y = dry.y;
+      s.z = dry.z;
+      relocatedCount++;
+    } else if (s.y < curGround) {
+      s.y = curGround;
+      relocatedCount++;
+    }
+  }
+  return { structs, relocatedCount };
+}
+
+/** Pastikan posisi pemain tidak terjebak di bawah tanah/air setelah pergeseran peta atau pergantian Zaman. */
+export function safeRelocatePlayer(
+  pos: { x: number; y: number; z: number },
+  heightAt: (x: number, z: number) => number,
+  waterLevel: number
+): { x: number; y: number; z: number; relocated: boolean } {
+  const minSafeY = waterLevel + 0.25;
+  const groundY = heightAt(pos.x, pos.z);
+  if (groundY >= minSafeY && pos.y >= groundY - 0.15 && pos.y <= groundY + 18) {
+    return { ...pos, y: Math.max(pos.y, groundY + 0.08), relocated: pos.y < groundY };
+  }
+  const dry = findDrySpotNear(pos.x, pos.z, heightAt, minSafeY, 96);
+  if (dry) {
+    return { x: dry.x, y: dry.y + 0.15, z: dry.z, relocated: true };
+  }
+  const spawnY = Math.max(minSafeY, heightAt(0, 18));
+  return { x: 0, y: spawnY + 0.15, z: 18, relocated: true };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -551,6 +743,13 @@ export function buildAwayReport(
   if (days > 0) report.entries.push({ icon: '🌅', text: `Hari berganti ${days}×: vegetasi dan sumber daya tumbuh ulang` });
   if (maxVolcano >= 0.85 && maxVolcanoDay) {
     report.entries.push({ icon: '🔥', text: `Gunung berapi sangat aktif pada ${String(maxVolcanoDay.getUTCDate()).padStart(2, '0')}/${String(maxVolcanoDay.getUTCMonth() + 1).padStart(2, '0')}` });
+  }
+  if (dFrom.getUTCFullYear() !== dTo.getUTCFullYear()) {
+    const newAge = getWorldAge(dTo);
+    report.entries.push({
+      icon: '⏳',
+      text: `Era berubah: ${newAge.name} (Tahun ${newAge.eraYear}) dimulai!`,
+    });
   }
   if (terrainShift && dFrom.getUTCFullYear() * 12 + dFrom.getUTCMonth() !== dTo.getUTCFullYear() * 12 + dTo.getUTCMonth()) {
     const anchors = collectAnchors(structs);

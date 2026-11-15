@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import { gameState } from '../game/core/state';
-import { formatShiftCountdown, getEdenCalendar, getImmortalAge, seasonEffects, shiftWarning } from '../game/data/eden';
+import {
+  formatShiftCountdown,
+  getEdenCalendar,
+  getImmortalAge,
+  getWorldAge,
+  seasonEffects,
+  shiftWarning,
+} from '../game/data/eden';
+import { getLanguage } from '../game/utils/i18n';
 
-/** Jam nyata, tanggal, dan umur abadi — ringkas, sebaris-dua di panel kiri atas. */
+/** Jam nyata, tanggal, zaman, dan umur abadi — ringkas di panel kiri atas. */
 export function EdenClock({ compact = false }: { compact?: boolean }) {
   const [, tick] = useState(0);
   useEffect(() => {
@@ -11,6 +19,8 @@ export function EdenClock({ compact = false }: { compact?: boolean }) {
   }, []);
   const now = new Date();
   const cal = getEdenCalendar(now);
+  const worldAge = getWorldAge(now);
+  const ageName = getLanguage() === 'en' ? worldAge.nameEn : worldAge.name;
   const age = getImmortalAge(gameState.bornAtMs);
   const fx = seasonEffects(now);
   const warn = shiftWarning(now.getTime());
@@ -19,19 +29,19 @@ export function EdenClock({ compact = false }: { compact?: boolean }) {
     <div
       className={`rounded-lg border border-stone-800 px-2 ${compact ? 'py-0.5' : 'py-1'} text-[9px] sm:text-[10px] leading-tight text-stone-200 shadow-lg`}
       style={{ backgroundColor: 'rgba(15, 12, 11, 0.88)' }}
-      title={cal.label}
+      title={`${ageName} · ${cal.label}`}
     >
       <div className="flex justify-between font-semibold">
         <span>🕒 {hhmm}</span>
         <span>{String(cal.day).padStart(2, '0')}/{String(cal.month).padStart(2, '0')}/{cal.year}</span>
       </div>
       <div className="truncate text-amber-300">
-        ♾ {age.years}th {age.days}h {age.hours}j{compact ? '' : ` · Thn ${cal.eraYear}`}
+        ♾ {age.years}th {age.days}h {age.hours}j{compact ? '' : ` · ${ageName}`}
       </div>
-      {!compact && <div className="truncate text-stone-400">🍂 {fx.label}</div>}
+      {!compact && <div className="truncate text-stone-400">🍂 {fx.label} · Thn {cal.eraYear}</div>}
       {warn.level !== 'none' && (
         <div className={`truncate font-semibold ${warn.level === 'imminent' ? 'text-red-400 animate-pulse' : 'text-orange-300'}`}>
-          ⚠ Pergeseran Besar {formatShiftCountdown(warn.msLeft)}
+          ⚠ {warn.kind === 'year' ? 'Zaman Baru' : 'Pergeseran Besar'} {formatShiftCountdown(warn.msLeft)}
         </div>
       )}
     </div>

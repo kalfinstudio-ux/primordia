@@ -25,9 +25,10 @@ export interface AssetRole {
 }
 
 export const ASSET_ROLES: readonly AssetRole[] = [
-  { id: 'player', label: 'Karakter pemain', wired: true },
-  { id: 'adam', label: 'Adam', wired: false },
-  { id: 'hawa', label: 'Hawa', wired: false },
+  { id: 'player', label: 'Karakter pemain (Pria)', wired: true },
+  { id: 'player_female', label: 'Karakter pemain (Wanita)', wired: true },
+  { id: 'adam', label: 'Adam', wired: true },
+  { id: 'hawa', label: 'Hawa', wired: true },
   { id: 'cave', label: 'Gua', wired: false },
   { id: 'animal', label: 'Hewan', wired: false },
   { id: 'enemy', label: 'Musuh', wired: false },
@@ -36,19 +37,22 @@ export const ASSET_ROLES: readonly AssetRole[] = [
 export interface AssetEntry {
   file: string;
   note: string;
+  roleHint?: string;
 }
 
-/** Daftar model di public/play/models/. Tambah/ganti nama file di sini bila formatnya berubah. */
+/** Daftar model di public/play/models/ (semua terkompresi/sesuai anggaran). */
 export const ASSET_FILES: readonly AssetEntry[] = [
-  { file: 'primordia_adam.glb', note: 'Adam — karya asli PRIMORDIA, 19 sendi, 10 klip' },
-  { file: 'primordia_hawa.glb', note: 'Hawa — karya asli PRIMORDIA, 19 sendi, 10 klip' },
-  { file: 'naked_dude.glb', note: 'Ringan (0,23 MB)' },
-  { file: 'party_starter_-_layered_t-shirts.glb', note: 'Sedang (0,93 MB)' },
-  { file: 'daren_-_lod_man_character.glb', note: 'Berat (3,0 MB)' },
+  { file: 'primordia_adam.glb', note: 'Adam / pemain pria — 125 KB, 1.300 tris, 19 sendi, 10 klip', roleHint: 'player / adam' },
+  { file: 'primordia_hawa.glb', note: 'Hawa / pemain wanita — 128 KB, 1.400 tris, 19 sendi, 10 klip', roleHint: 'player_female / hawa' },
+  { file: 'primordia_bruk.glb', note: 'Bruk (golem rim kawah) — 215 KB, 2.871 tris, 8 node', roleHint: 'companion' },
+  { file: 'naked_dude.glb', note: 'Figur dasar terkompresi — 122 KB (awal 225 KB), 2.054 tris, WebP+meshopt', roleHint: 'prop / npc' },
+  { file: 'party_starter_-_layered_t-shirts.glb', note: 'Pakaian berlapis terkompresi — 187 KB (awal 912 KB), 9.495 tris, WebP+meshopt', roleHint: 'prop' },
+  { file: 'daren_-_lod_man_character.glb', note: 'Daren terkompresi — 404 KB (awal 2,88 MB), 19.093 tris, WebP+meshopt', roleHint: 'npc (tanpa klip)' },
 ];
 
-/** Model bawaan untuk peran pemain bila tidak ada pilihan (perilaku lama). */
-export const DEFAULT_PLAYER_MODEL = 'explorer.glb';
+/** Model bawaan untuk peran pemain (pria & wanita) bila tidak ada pilihan kustom. */
+export const DEFAULT_PLAYER_MODEL = 'primordia_adam.glb';
+export const DEFAULT_FEMALE_MODEL = 'primordia_hawa.glb';
 export const MODELS_DIR = './models/';
 
 /** Nama file aman: tanpa path, tanpa "..", dengan ekstensi model yang dikenal. */
@@ -74,8 +78,9 @@ export function parseAssignments(raw: unknown): Record<string, string> {
   return out;
 }
 
-/** URL model karakter pemain: pilihan pemain bila ada, kalau tidak model bawaan. */
-export function playerModelUrl(assignments: Record<string, string>): string {
+/** URL model karakter pemain: mengikuti pilihan kustom per peran atau gender bawaan (Adam/Hawa). */
+export function playerModelUrl(assignments: Record<string, string>, gender: 'male' | 'female' = 'male'): string {
+  if (gender === 'female') return assetUrl(assignments.player_female || DEFAULT_FEMALE_MODEL);
   return assetUrl(assignments.player || DEFAULT_PLAYER_MODEL);
 }
 
@@ -133,7 +138,7 @@ export function assetWarnings(info: AssetInfo): string[] {
 
 // ── Gerbang karakter (Fase 1 / Gerbang 2) ──
 // Target perangkat: HP murah/lama (keputusan pemilik, 15 Nov 2026). Ubah angka di sini bila target berubah.
-export const CHARACTER_ROLES: readonly string[] = ['player', 'adam', 'hawa'];
+export const CHARACTER_ROLES: readonly string[] = ['player', 'player_female', 'adam', 'hawa'];
 
 export const CHARACTER_BUDGET = {
   /** Segitiga maksimum model yang dipasang (LOD0). LOD1 ≈ 3.000, LOD2 ≈ 1.000 menyusul. */
@@ -160,6 +165,7 @@ export interface AssetLicense {
 export const ASSET_LICENSES: Readonly<Record<string, AssetLicense>> = {
   'primordia_adam.glb': { license: 'CC0 (karya asli)', source: 'PRIMORDIA — tools/make_character.py' },
   'primordia_hawa.glb': { license: 'CC0 (karya asli)', source: 'PRIMORDIA — tools/make_character.py' },
+  'primordia_bruk.glb': { license: 'CC0 (karya asli)', source: 'PRIMORDIA — golem basal' },
 };
 
 export interface CharacterInfo extends AssetInfo {

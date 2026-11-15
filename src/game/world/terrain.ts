@@ -72,6 +72,7 @@ export class TerrainSystem {
   private dirty = false; // butuh replan walau pemain belum pindah chunk
   private lastCenterKey = '';
   private lastRadius = -1;
+  private wetnessUniform = { value: 0 };
 
   constructor(seed: string, assets: ProceduralAssets) {
     this.seed = seed;
@@ -84,9 +85,26 @@ export class TerrainSystem {
       bumpScale: 0.35,
       roughnessMap: assets.basaltRoughnessMap,
     });
+    this.material.customProgramCacheKey = () => 'primordia-terrain-wet-v1';
+    this.material.onBeforeCompile = (shader) => {
+      shader.uniforms.uWetness = this.wetnessUniform;
+      shader.fragmentShader = `uniform float uWetness;\n${shader.fragmentShader}`
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>\ndiffuseColor.rgb *= mix(1.0, 0.58, clamp(uWetness, 0.0, 1.0));`
+        )
+        .replace(
+          '#include <roughnessmap_fragment>',
+          `#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, max(0.18, roughnessFactor * 0.42), clamp(uWetness, 0.0, 1.0));`
+        );
+    };
 
     this.createWorkers();
     this.updateStreaming(0, 18, true);
+  }
+
+  setWetness(v: number): void {
+    this.wetnessUniform.value = Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
   }
 
   getActiveChunkCount(): number {

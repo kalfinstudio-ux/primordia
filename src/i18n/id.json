@@ -2,7 +2,7 @@
   "app": {
     "title": "PRIMORDIA",
     "subtitle": "Bertahan Hidup di Bumi Purba",
-    "version": "Versi 0.8.0-Archean"
+    "version": "Versi 0.9.0-AdamHawa"
   },
   "tips": [
     "Dekati genangan air hangat untuk mengisi wadah air sebelum dehidrasi.",
@@ -30,7 +30,9 @@
     "slide3Body": "Pantau Kesehatan, Stamina, Suhu Tubuh, Oksigen, Hidrasi, Radiasi, dan Kelelahan. Naikkan 5 Tingkat Teknologi dari kapak batu hingga sintesis Benih Kehidupan.",
     "slide4Title": "Kalibrasi Grafis Otomatis",
     "slide4Body": "Sistem mendeteksi perangkat Anda dan memilih preset grafis seimbang. Kualitas adaptif juga otomatis menjaga kelancaran framerate.",
-    "detectedPreset": "Preset Terdeteksi"
+    "detectedPreset": "Preset Terdeteksi",
+    "slideBrukTitle": "Bruk, Penjaga Basal",
+    "slideBrukBody": "Di balik kabut kawah ada Bruk — penjaga waktu purba yang menahan penuaanmu agar Benih Kehidupan dan Era Adam & Hawa punya waktu untuk tumbuh."
   },
   "menu": {
     "continue": "Lanjutkan",
@@ -59,7 +61,26 @@
     "notConfigured": "Supabase belum dikonfigurasi. Mode Tamu Lokal aktif sepenuhnya.",
     "magicSent": "Tautan masuk telah dikirim ke email Anda.",
     "authSuccess": "Berhasil masuk ke akun.",
-    "back": "Kembali"
+    "back": "Kembali",
+    "or": "atau",
+    "busy": "Memproses…",
+    "signUpConfirm": "Pendaftaran berhasil. Periksa emailmu bila diminta konfirmasi.",
+    "base44": "Masuk lewat Google (Base44)",
+    "base44NoCloud": "Masuk lewat Base44 aktif (tanpa sinkronisasi cloud Supabase).",
+    "errors": {
+      "confirmEmail": "Email belum dikonfirmasi. Cek kotak masuk atau folder spam.",
+      "emailRequired": "Masukkan alamat email terlebih dahulu.",
+      "exists": "Email ini sudah terdaftar. Silakan masuk.",
+      "generic": "Terjadi gangguan autentikasi. Coba lagi.",
+      "invalidCredentials": "Email atau kata sandi salah.",
+      "invalidEmail": "Format email tidak valid.",
+      "network": "Gagal terhubung ke server autentikasi.",
+      "passwordRequired": "Masukkan kata sandi terlebih dahulu.",
+      "providerOff": "Metode masuk ini belum diaktifkan di server.",
+      "rateLimit": "Terlalu banyak percobaan. Tunggu beberapa saat.",
+      "unavailable": "Layanan akun belum dikonfigurasi.",
+      "weakPassword": "Kata sandi terlalu lemah (minimal 6 karakter)."
+    }
   },
   "newGame": {
     "title": "Persiapan Ekspedisi Baru",
@@ -105,7 +126,9 @@
     "genders": {
       "male": "Pria",
       "female": "Wanita"
-    }
+    },
+    "overwriteTitle": "Timpa Simpanan Saat Ini?",
+    "overwriteBody": "Memulai ekspedisi baru akan mengganti progres dunia yang sedang tersimpan di perangkat ini."
   },
   "loadGame": {
     "title": "Muat Ekspedisi Tersimpan",
@@ -146,6 +169,7 @@
     "viewDistance": "Jarak Pandang",
     "shadows": "Bayangan Dinamis",
     "particles": "Partikel Abu & Cuaca",
+    "volumetricFog": "Kabut Lembah & Geyser",
     "fpsLimit": "Batas FPS",
     "masterVol": "Volume Utama",
     "musicVol": "Musik & Drone",
@@ -195,7 +219,8 @@
     "bagPartial": "Inventaris penuh — sebagian barang masih tertinggal di kantong.",
     "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning.",
     "autoFilter": "Filter Gas dipasang otomatis — oksigen hampir habis.",
-    "noRefuge": "Udara beracun & tak ada tempat berlindung! Pakai Filter Gas atau bangun Shelter [B]."
+    "noRefuge": "Udara beracun & tak ada tempat berlindung! Pakai Filter Gas atau bangun Shelter [B].",
+    "bagFull": "Tas penuh! Kosongkan atau simpan barang ke peti terlebih dahulu."
   },
   "events": {
     "super_eruption": "ERUPSI SUPER SEGERA TERJADI — CARI PERLINDUNGAN",
@@ -259,7 +284,9 @@
       "collect_rain": "Ambil Air Kondensasi",
       "use_beacon": "Buka Peta Teleportasi",
       "seed_pool": "Tanam Benih Kehidupan",
-      "rest_shelter": "Istirahat & Tidur di Shelter"
+      "rest_shelter": "Istirahat & Tidur di Shelter",
+      "rest_fresh": "Kamu sudah cukup segar untuk melanjutkan penjelajahan.",
+      "rest_slept": "Beristirahat di dalam Shelter — energi dan suhu tubuh pulih."
     },
     "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas · B Bangun · M Peta · J Jurnal · F3 Debug",
     "pauseBtn": "Jeda",
@@ -292,7 +319,18 @@
       "meteor": "Kawah meteor"
     },
     "questGuideLabel": "Misi",
-    "socialBtn": "Teman"
+    "socialBtn": "Teman",
+    "interactTouch": "Ketuk AKSI untuk",
+    "waypointHint": "Penanda",
+    "nearby": {
+      "title": "Sekitar",
+      "alone": "Sendirian",
+      "connecting": "Menghubungkan…",
+      "count": "Pemain",
+      "nearest": "Terdekat",
+      "none": "Tidak ada pemain lain",
+      "off": "Offline"
+    }
   },
   "map": {
     "title": "Peta Survei Primordial (4 km × 4 km)",
@@ -305,13 +343,24 @@
     "clickHint": "Klik/Sentuh area peta untuk menaruh penanda. Klik Suar untuk berpindah cepat.",
     "fastTravel": "Teleportasi ke Sini",
     "clearWaypoint": "Hapus Penanda",
-    "discoveredChunks": "Sektor Terjelajahi"
+    "discoveredChunks": "Sektor Terjelajahi",
+    "beaconLabel": "Suar",
+    "centerPlayer": "Pusat ke Pemain",
+    "distance": "Jarak",
+    "fullWorld": "Seluruh Dunia",
+    "markThis": "Tandai Lokasi Ini",
+    "selected": "Terpilih",
+    "unknownPoi": "Wilayah Belum Terpetakan",
+    "unknownPoiHint": "Dekati titik ini untuk mengungkap detail dan namanya.",
+    "waypointReached": "Kamu tiba di penanda pribadi.",
+    "zoomIn": "Perbesar",
+    "zoomOut": "Perkecil"
   },
   "journal": {
     "title": "Jurnal Penjelajah & Pencapaian",
     "close": "Tutup [J]",
     "tabDiscoveries": "Temuan Lapangan",
-    "tabCampaign": "Kampanye (22)",
+    "tabCampaign": "Kampanye",
     "tabAchievements": "Pencapaian",
     "tabContracts": "Kontrak Survei",
     "unlocked": "Tercatat",
@@ -375,6 +424,18 @@
       "j_acid_rain": {
         "title": "Hujan Asam Sulfat",
         "body": "Aerosol vulkanik turun menjadi hujan korosif; berlindunglah di shelter."
+      },
+      "j_adam_eve": {
+        "title": "Fajar Adam & Hawa",
+        "body": "Benih Kehidupan telah berakar di mata air purba. Sebagai manusia pertama yang tak menua, tugasmu kini adalah menetap, menumbuhkan kebun, dan mewariskan perkakas lintas generasi."
+      },
+      "j_first_garden": {
+        "title": "Kebun Pertama di Bumi",
+        "body": "Lumut dan mikroba mulai tumbuh subur di petak lempung abu yang dilembapkan penampung kondensasi—langkah awal mengubah batu mati menjadi tanah hidup."
+      },
+      "j_moon_tides": {
+        "title": "Pasang Pertama Tahun Kedua",
+        "body": "Tahun baru membawa siklus pasang air lebih tinggi dan kerak gunung api yang lebih aktif. Jangkar Medan menjaga bangunan penting tetap aman di daratan kering."
       }
     }
   },
@@ -460,7 +521,13 @@
     "saveCloud": "Simpan ke Cloud",
     "settings": "Pengaturan",
     "mainMenu": "Kembali ke Menu Utama",
-    "savedToast": "Progres permainan tersimpan."
+    "savedToast": "Progres permainan tersimpan.",
+    "save": "Simpan Progres",
+    "saveCloudHint": "Tersimpan lokal & otomatis sinkron ke Cloud saat masuk akun.",
+    "saveFailedToast": "Gagal menyimpan progres ke perangkat.",
+    "exit": "Keluar ke Beranda",
+    "exitTitle": "Keluar ke Halaman Utama?",
+    "exitBody": "Progres aktif akan disimpan lebih dulu sebelum kembali ke halaman utama PRIMORDIA."
   },
   "inventory": {
     "title": "Inventaris, Perakitan & Cetak Biru",
@@ -477,7 +544,9 @@
     "craftedToast": "Berhasil merakit",
     "unlockedRecipe": "Resep Terbuka",
     "allTiers": "Semua",
-    "tierLabel": "Tingkat"
+    "tierLabel": "Tingkat",
+    "discardOne": "Buang 1",
+    "discardAll": "Buang Semua"
   },
   "items": {
     "basalt_rock": {
@@ -750,7 +819,53 @@
       "title": "22. Buaian Biologi",
       "desc": "Pergi ke Cekungan Geyser dan tanam Benih Kehidupan [E]."
     },
-    "completedAll": "Kampanye Selesai! Lanjutkan Survival Bebas atau NG+."
+    "completedAll": "Semua misi zaman saat ini selesai! Nantikan 1 Januari UTC untuk zaman berikutnya atau lanjutkan Survival Bebas / NG+.",
+    "q23": {
+      "title": "23. Bara Untuk Berdua",
+      "desc": "Bangun 2 Perapian Lava dan 2 Shelter Basalt agar pemukiman pertama cukup untuk berdua.",
+      "desc_male": "Sebagai Adam, bangun 2 Perapian Lava dan 2 Shelter Basalt untuk melindungi dirimu dan pasanganmu di tanah awal.",
+      "desc_female": "Sebagai Hawa, bangun 2 Perapian Lava dan 2 Shelter Basalt agar bara tetap hidup untuk berdua."
+    },
+    "q24": {
+      "title": "24. Menamai Tanah",
+      "desc": "Jelajahi dunia hingga 1.200 m atau temukan 6 Titik Penting di peta survei."
+    },
+    "q25": {
+      "title": "25. Kebun Eden Pertama",
+      "desc": "Bangun 1 Kebun Lumut dan 1 Penampung Kondensasi untuk memulai kehidupan mandiri.",
+      "desc_male": "Bangun 1 Kebun Lumut dan 1 Penampung Kondensasi untuk merawat tunas pertama di kerak basalt.",
+      "desc_female": "Bangun 1 Kebun Lumut dan 1 Penampung Kondensasi agar air dan kehidupan tumbuh berdampingan."
+    },
+    "q26": {
+      "title": "26. Nadi Mesin",
+      "desc": "Dirikan 1 Bor Otomatis dan 1 Tungku Peleburan agar pos bekerja bahkan saat kamu pergi."
+    },
+    "q27": {
+      "title": "27. Pilar Waktu",
+      "desc": "Pasang 1 Jangkar Medan dan 2 Suar Teleportasi untuk menjaga base melintasi Pergeseran Besar."
+    },
+    "q28": {
+      "title": "28. Benteng Modular",
+      "desc": "Pasang minimal 6 modul bangunan (Lantai, Dinding, Atap, atau Pintu)."
+    },
+    "q29": {
+      "title": "29. Warisan Manusia Pertama",
+      "desc": "Simpan 1 Inti Energi Kristal, 4 Besi Murni, dan bangun Peti Penyimpanan bagi generasi berikutnya.",
+      "desc_male": "Sebagai Adam, kumpulkan 1 Inti Energi Kristal, 4 Besi Murni, dan Peti Penyimpanan sebagai bekal bagi pewaris berikutnya.",
+      "desc_female": "Sebagai Hawa, siapkan 1 Inti Energi Kristal, 4 Besi Murni, dan Peti Penyimpanan untuk diwariskan ke zaman berikutnya."
+    },
+    "q30": {
+      "title": "30. Dataran Lebih Tinggi",
+      "desc": "Di Era Pasang Pertama (Tahun 2), pasang 2 Jangkar Medan untuk menghadapi kenaikan permukaan laut."
+    },
+    "q31": {
+      "title": "31. Pengamat Langit",
+      "desc": "Rakit Lapisan Suit Hazmat dan jelajahi hingga jarak 2.000 m di peta zaman baru."
+    },
+    "q32": {
+      "title": "32. Jantung Zaman Baru",
+      "desc": "Rakit Bor Meteorit dan miliki 2 Inti Energi Kristal di Era Pasang Pertama."
+    }
   },
   "gameOver": {
     "bagNote": "Barangmu jatuh sebagai kantong di lokasi tumbang dan bisa diambil kembali.",
@@ -812,7 +927,12 @@
     "addFile": "Coba file lain di public/models/",
     "add": "Tambah",
     "invalidName": "Nama file tidak valid (harus .glb/.gltf/.usdz/…, tanpa folder).",
-    "convert": "Perlu konversi"
+    "convert": "Perlu konversi",
+    "joints": "Sendi",
+    "gateTitle": "Gerbang Kelayakan Karakter",
+    "gatePass": "Lolos anggaran & kompatibel",
+    "gateFail": "Perlu peninjauan aset",
+    "gateLocked": "Terkunci pada karakter bawaan terverifikasi"
   },
   "social": {
     "title": "Pemain & Teman",
@@ -862,7 +982,8 @@
     "errTooFast": "Terlalu cepat, tunggu sebentar.",
     "errMigration": "Fitur sosial belum aktif di server (jalankan migration-social.sql).",
     "errTooMany": "Terlalu banyak permintaan tertunda.",
-    "errGeneric": "Terjadi masalah. Coba lagi."
+    "errGeneric": "Terjadi masalah. Coba lagi.",
+    "wisdom": "Kebijaksanaan"
   },
   "info": {
     "sections": {
@@ -873,7 +994,7 @@
       "terms": "Ketentuan",
       "privacy": "Kebijakan Privasi"
     },
-    "updated": "Berlaku sejak 14 November 2026",
+    "updated": "Berlaku sejak 15 November 2026",
     "description": {
       "title": "Tentang PRIMORDIA",
       "p1": "PRIMORDIA adalah game survival 3D dunia terbuka di browser, berlatar Bumi purba era Hadean–Archean — masa sebelum ada tumbuhan, hewan, atau manusia lain. Kamu menjelajahi dunia seluas 4 km × 4 km berisi dataran basalt, gunung api aktif, sungai lava, dataran sulfur, ladang obsidian, cekungan geyser, zona tumbukan meteorit, dan samudra dangkal yang mengepul.",
@@ -908,12 +1029,12 @@
         "b": "Tekan [B]: modul Lantai, Dinding, dan Atap menempel pada grid 3 m (R memutar). Tersedia Shelter, Peti Penyimpanan, Penampung Kondensasi, Kebun Lumut, Bor Otomatis (bekerja saat kamu offline), Suar, dan Jangkar Medan yang mengunci medan radius 60 m. Badai merusak bangunan tanpa tempat berteduh, tetapi bangunan tidak pernah hancur total."
       },
       "s7": {
-        "t": "Era Adam & Hawa",
-        "b": "Umurmu dihitung dari tanggal lahir karakter (server untuk akun, lokal untuk tamu). Poin Kebijaksanaan didapat pada umur 7, 30, 100, dan 365 hari (1/2/3/5 poin) untuk perk permanen di menu Jeda: Filter Awet, Kulit Abu, Resep Leluhur, Filter Abadi. Empat musim (Kering, Hujan, Abu, Dingin — masing-masing 3 bulan) memengaruhi cuaca, air, kebun, dan suhu. Peringatan muncul sebelum Pergeseran Besar tiap tanggal 1."
+        "t": "Era Adam & Hawa & Zaman Tahunan",
+        "b": "Umurmu dihitung abadi dari lahir (server untuk akun, lokal untuk tamu). Poin Kebijaksanaan didapat di {wisdom}. Empat musim ({seasons}) memengaruhi cuaca dan kebun, medan berganti tiap tanggal 1 (dengan Jangkar Medan {anchorR} m & relokasi aman), dan tiap 1 Januari UTC membuka Zaman Baru."
       },
       "s8": {
-        "t": "Skor & Kampanye",
-        "b": "Skor ekspedisi dikirim ke papan skor dengan validasi server (akun). Menamatkan 22 misi kampanye memunculkan Fajar Archean; lanjutkan Survival Bebas atau mulai New Game+ yang membawa resep dan jurnal."
+        "t": "Skor & Kampanye Lintas Zaman",
+        "b": "Skor ekspedisi dikirim dengan validasi server. Setelah 22 misi prolog Fajar Archean, lanjutkan ke Bab 6 (Era Adam & Hawa) dan bab zaman tahunan berikutnya."
       },
       "s9": {
         "t": "Online & Sosial",
@@ -922,11 +1043,30 @@
       "s10": {
         "t": "Karakter",
         "b": "Pilih Pria atau Wanita, tinggi, postur, warna kulit dan rambut, 7 gaya rambut, warna suit, dan 3 model ransel. Penampilanmu terlihat oleh pemain lain di dunia yang sama."
-      }
+      },
+      "heading": "Mekanik Utama",
+      "blocks": [
+        {
+          "title": "Survival & Kesulitan",
+          "items": [
+            "Pengali kesulitan — Penjelajah ×{multExplorer}, Penyintas ×{multSurvivor}, Hadean ×{multHadean}.",
+            "Masa awal aman {safeMin} menit dalam radius {safeRadius} m; keringanan awal {easeMin} menit (−{easePct}%).",
+            "Filter Gas otomatis aktif di bawah oksigen {autoFilterPct}%."
+          ]
+        },
+        {
+          "title": "Ekonomi & Konstruksi",
+          "items": [
+            "{items} item di {tiers} tingkat (sebaran tier: {tierCounts}) dan {recipes} resep.",
+            "Kebun Lumut panen dalam ~{gardenHours} jam; Bor Otomatis {drillPerH}/jam (maks {drillCap}); beban dasar {carry} kg.",
+            "Simpan otomatis tiap {autosaveSec} dtk; kemajuan offline dihitung {offlineMinMin} mnt–{offlineMaxH} jam; perk: {perks}."
+          ]
+        }
+      ]
     },
     "missions": {
       "title": "Misi & Pencapaian",
-      "intro": "Kampanye \"Benih Kehidupan\" terdiri dari 22 misi dalam 5 bab. Misi aktif tampil di HUD, dan panah tujuan membantu pada misi awal.",
+      "intro": "Prolog Fajar Archean memiliki 22 misi (Bab 1–5), dilanjutkan Bab 6 ({era}) dan bab Zaman Baru ({chapters} bab, total {quests} misi, {achievements} pencapaian, {journal} entri jurnal).",
       "chapter1": "Bab 1 — Dasar Bertahan Hidup",
       "chapter2": "Bab 2 — Alat & Jelajah",
       "chapter3": "Bab 3 — Zaman Besi & Pos",
@@ -936,11 +1076,52 @@
       "extra": "Misi Tambahan",
       "contract": "Kontrak Survei Ulang: ekstrak 1 Kristal Primordial atau 2 Besi Meteorit lalu jelajahi 250 m untuk mengirim telemetri dan mendapat skor (Jurnal [J] → Kontrak Survei).",
       "journal": "Jurnal [J] mencatat 14 temuan lapangan: bioma, mineral, dan fenomena alam yang terbuka saat kamu menjelajah.",
-      "ngplus": "New Game+: setelah kampanye tamat, mulai ulang dengan resep dan jurnal terbawa."
+      "ngplus": "New Game+: setelah kampanye tamat, mulai ulang dengan resep dan jurnal terbawa.",
+      "chapter6": "Bab 6 — Era Adam & Hawa",
+      "chapter7": "Bab 7 — Era Pasang Pertama (Tahun 2+)",
+      "achievementsTitle": "Pencapaian",
+      "active": "Aktif",
+      "done": "Selesai",
+      "chapters": {
+        "1": {
+          "title": "Bab 1 — Bertahan Hidup",
+          "desc": "Air hangat, basalt, kapak batu, shelter, dan kristal pertama."
+        },
+        "2": {
+          "title": "Bab 2 — Perkakas & Jelajah",
+          "desc": "Meja kerja, obsidian, filter gas, dan peti penyimpanan."
+        },
+        "3": {
+          "title": "Bab 3 — Zaman Besi & Pos",
+          "desc": "Tungku peleburan, besi murni, dan pos modular."
+        },
+        "4": {
+          "title": "Bab 4 — Riset Archean",
+          "desc": "Lab riset, besi meteorit, inti kristal, dan suar teleportasi."
+        },
+        "5": {
+          "title": "Bab 5 — Benih Kehidupan",
+          "desc": "Sintesis prebiotik hingga menanam Benih Kehidupan."
+        },
+        "6": {
+          "title": "Bab 6 — Era Adam & Hawa",
+          "desc": "Menetap berdua, menamai peta, kebun pertama, jangkar waktu, dan warisan manusia."
+        },
+        "7": {
+          "title": "Bab 7 — Era Pasang Pertama",
+          "desc": "Terbuka 1 Januari Tahun 2 UTC saat permukaan air naik."
+        }
+      },
+      "blocks": [
+        {
+          "title": "Kontrak Survei & Jurnal",
+          "body": "Selain kampanye, selesaikan Kontrak Survei berulang dan kumpulkan {journal} entri Jurnal di dunia seluas {worldKm} km (chunk {chunk} m)."
+        }
+      ]
     },
     "guide": {
       "title": "Panduan Bermain",
-      "controlsTitle": "Kontrol",
+      "controlsTitle": "Kontrol Bermain",
       "desktop": "Desktop: WASD gerak · Mouse kamera · Spasi lompat · Shift lari · E aksi · I tas · B bangun (R putar) · M peta · J jurnal · H mode HUD · F3 debug. Tombol dapat diubah di Pengaturan → Kontrol.",
       "mobile": "Ponsel: joystick multi-sentuh untuk gerak, geser layar untuk kamera, tombol LARI / BANGUN / AKSI / LOMPAT. Tahan slot hotbar untuk melihat atau membuang barang. Tombol mata mengganti mode HUD (Penuh, Ringkas, Bersih).",
       "stepsTitle": "Langkah Awal",
@@ -960,7 +1141,32 @@
       "ti5": "Bangun di dekat Jangkar Medan agar basemu tidak terkubur Pergeseran Besar tiap bulan.",
       "ti6": "Simpan ke slot lokal atau Cloud. Jika terjadi konflik, pilih Simpan Lokal, Simpan Cloud, atau Simpan Keduanya.",
       "ti7": "FPS turun? Buka Pengaturan → Grafis lalu turunkan preset, jarak pandang, bayangan, atau partikel.",
-      "ti8": "Di mode online, pakai Isyarat untuk berkomunikasi, dan buka panel Teman untuk melihat profil pemain lain."
+      "ti8": "Di mode online, pakai Isyarat untuk berkomunikasi, dan buka panel Teman untuk melihat profil pemain lain.",
+      "heading": "Langkah & Tips Cepat",
+      "controlsDesktop": "Pemetaan Tombol Desktop",
+      "controlsMobile": "Ponsel: Joystick kiri untuk bergerak, geser sisi kanan untuk memutar kamera, gunakan LARI / BANGUN / AKSI / LOMPAT.",
+      "keys": {
+        "forward": "Maju",
+        "backward": "Mundur",
+        "left": "Kiri",
+        "right": "Kanan",
+        "jump": "Lompat",
+        "sprint": "Lari",
+        "interact": "Aksi",
+        "inventory": "Tas / Rakit",
+        "build": "Bangun",
+        "map": "Peta",
+        "journal": "Jurnal"
+      },
+      "blocks": [
+        {
+          "title": "Prioritas 10 Menit Pertama",
+          "items": [
+            "Isi air di kolam dangkal, kumpulkan basalt dan sulfur, lalu pasang Shelter Basalt sebelum badai.",
+            "Gunakan Jangkar Medan radius {anchorR} m sebelum tanggal 1 agar base aman saat Pergeseran Besar."
+          ]
+        }
+      ]
     },
     "terms": {
       "title": "Ketentuan Layanan",
@@ -999,7 +1205,14 @@
       "c9": {
         "t": "9. Perubahan & Kontak",
         "b": "Ketentuan dapat diperbarui; versi terbaru berlaku sejak tanggal yang tertera. Melanjutkan bermain berarti menerima perubahan. Hubungi pengembang lewat halaman proyek di GitHub (kalfinstudio-ux/primordia)."
-      }
+      },
+      "heading": "Ringkasan Ketentuan Layanan",
+      "blocks": [
+        {
+          "title": "Aturan Akun & Bermain Jujur",
+          "body": "Bermain sebagai tamu atau masuk akun berarti menyetujui perilaku sopan tanpa manipulasi skor, jam perangkat, atau layanan."
+        }
+      ]
     },
     "privacy": {
       "title": "Kebijakan Privasi",
@@ -1038,7 +1251,117 @@
       "c9": {
         "t": "9. Anak, Perubahan & Kontak",
         "b": "Game ini tidak ditujukan bagi anak di bawah 13 tahun tanpa pendampingan orang tua atau wali. Kebijakan ini dapat diperbarui; tanggal berlaku tercantum di atas. Pertanyaan: GitHub kalfinstudio-ux/primordia."
+      },
+      "heading": "Ringkasan Kebijakan Privasi",
+      "blocks": [
+        {
+          "title": "Data Lokal & Akun",
+          "body": "Simpanan tamu berada di perangkatmu. Saat masuk akun, hanya nama tampil, umur abadi, kematian, skor, simpanan cloud, dan pesan teman yang disimpan di Supabase. Emailmu tidak pernah dibuka ke pemain lain."
+        }
+      ]
+    },
+    "title": "Info Game PRIMORDIA",
+    "subtitle": "Semua angka di bawah mengikuti data game langsung termasuk kalender Era Adam & Hawa.",
+    "nav": {
+      "about": "Tentang",
+      "scheme": "Sistem Game",
+      "missions": "Misi",
+      "guide": "Panduan",
+      "terms": "Ketentuan",
+      "privacy": "Privasi"
+    },
+    "about": {
+      "heading": "Tentang Dunia & Zaman",
+      "blocks": [
+        {
+          "title": "Bumi Purba Menuju Era Adam & Hawa",
+          "body": "PRIMORDIA ({version}) berlangsung di dunia terbuka {worldKm} × {worldKm} km dengan {biomes} bioma. Selesaikan prolog Fajar Archean, lalu masuki {era} dan zaman tahunan berikutnya."
+        },
+        {
+          "title": "Kalender Nyata: Hari, Bulan, Tahun",
+          "body": "Sumber daya tumbuh ulang setiap hari, medan dan POI bergeser setiap bulan (Pergeseran Besar, terlindungi Jangkar Medan {anchorR} m dan relokasi aman), dan setiap 1 Januari UTC membuka Zaman Baru."
+        }
+      ]
+    },
+    "legal": {
+      "updated": "Diperbarui: {updatedAt}",
+      "owner": "Pengembang: {owner}",
+      "contact": "Kontak: {contact}"
+    }
+  },
+  "save": {
+    "local": "Simpanan Lokal",
+    "cloud": "Simpanan Cloud",
+    "conflictTitle": "Pilih Data Simpanan",
+    "conflictBody": "Data simpanan lokal dan cloud berbeda. Pilih mana yang ingin dilanjutkan.",
+    "keepLocal": "Gunakan Simpanan Lokal",
+    "keepCloud": "Gunakan Simpanan Cloud",
+    "legacyTitle": "Simpanan Lama Ditemukan",
+    "legacyBody": "Pilih satu ekspedisi dari slot lama untuk dipindahkan ke format simpanan tunggal baru.",
+    "legacyNewest": "Terbaru"
+  },
+  "bruk": {
+    "name": "Bruk · Penjaga Basal",
+    "hintLabel": "Bisikan Bruk",
+    "lines": {
+      "first_fire": "Api kecil di atas batu dingin. Belum berarti apa-apa, tapi aku melihatnya.",
+      "first_shelter": "Empat dinding basalt melawan langit beracun. Kau tidak selemah kelihatannya.",
+      "storm_survived": "Badai lewat dan kau masih berdiri. Kerak Bumi mengenal namamu sekarang.",
+      "fire_third": "Tiga tungku menyala. Malam tidak lagi sepenuhnya milik abu.",
+      "chapter_1": "Air dan perlindungan sudah di tanganmu. Sekarang kawah timur menunggu.",
+      "chapter_2": "Beliungmu membelah kaca vulkanik. Jangan terlena—gas sulfur masih lapar.",
+      "chapter_3": "Besi purba ditempa dan dinding berdiri. Kau mulai membangun sesuatu yang bertahan.",
+      "chapter_4": "Logam bintang dan suar menyala. Tinggal satu langkah sebelum kehidupan berakar.",
+      "ending": "Benih Kehidupan telah berdenyut. Aku menahan waktumu sampai di sini—kini pilihlah: lepaskan waktu agar Adam & Hawa melangkah ke zaman manusia, atau tahan keabadian lebih lama."
+    },
+    "hints": {
+      "level1": "Bruk diam-diam mengawasi api unggunmu dari kejauhan.",
+      "level2": "Mata ambar Bruk sedikit melunak melihat ketahananmu.",
+      "level3": "Bruk mulai mempercayaimu menjaga keseimbangan tanah purba.",
+      "level4": "Penjaga Basal berdiri di sisimu sebagai saksi fajar baru."
+    },
+    "choice": {
+      "release": {
+        "label": "Lepaskan Waktu (Mulai Era Adam & Hawa)",
+        "reply": "Waktu mengalir kembali, tetapi umurmu tetap abadi sebagai saksi sejarah. Era Adam & Hawa terbuka di hadapanmu."
+      },
+      "hold": {
+        "label": "Tahan Keabadian Lebih Lama (Tetap Jelajahi Bumi Awal)",
+        "reply": "Baiklah. Aku akan menjaga cakrawala tetap diam sedikit lebih lama, namun babak baru tetap menunggumu saat kau siap."
       }
     }
+  },
+  "regions": {
+    "format": "{tier} {dir}",
+    "current": "Wilayah Saat Ini",
+    "danger": "Bahaya",
+    "entered": "Memasuki wilayah",
+    "tier": {
+      "0": "Lembah Kelahiran Aman",
+      "1": "Dataran Perbatasan",
+      "2": "Zona Abu Dalam",
+      "3": "Lingkar Vulkanik Keras",
+      "4": "Tepi Dunia Purba"
+    },
+    "dir": {
+      "n": "Utara",
+      "ne": "Timur Laut",
+      "e": "Timur",
+      "se": "Tenggara",
+      "s": "Selatan",
+      "sw": "Barat Daya",
+      "w": "Barat",
+      "nw": "Barat Laut"
+    }
+  },
+  "poiNames": {
+    "volcano": "Gunung Api Utama",
+    "geyser": "Mata Air Geyser",
+    "crater": "Kawah Kristal",
+    "obsidian_crevasse": "Celah Obsidian",
+    "meteor_site": "Lokasi Meteorit",
+    "water_spring": "Mata Air Hangat",
+    "lava_tube": "Terowongan Lava",
+    "hot_spring": "Kolam Termal"
   }
 }

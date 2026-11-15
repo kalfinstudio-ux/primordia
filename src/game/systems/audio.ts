@@ -1,5 +1,7 @@
 import { gameState } from '../core/state';
 import { eventBus } from '../core/eventBus';
+import type { WeatherType } from '../config';
+import { thunderDelaySec, type WeatherWeights } from '../data/weather';
 
 /**
  * Audio prosedural (Web Audio) — tanpa berkas aset, jadi tanpa unduhan dan tanpa soal lisensi.
@@ -35,9 +37,11 @@ class ProceduralAudioSystem {
   private nextBeatAt = 0;
   private nextBellAt = 0;
   private tickAccum = 0;
+  private biomeBaseWindFreq = 320;
 
   constructor() {
     eventBus.on<string>('audio:sfx', (kind) => this.playSfx(kind));
+    eventBus.on<{ dist?: number }>('world:lightning', (data) => this.scheduleThunder(data?.dist));
     eventBus.on('settings:updated', () => this.syncVolumes());
   }
 
@@ -103,6 +107,7 @@ class ProceduralAudioSystem {
           : biomeId === 'sulfur_flats'
             ? 520
             : 320;
+    this.biomeBaseWindFreq = freq;
     this.windFilter.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.4);
     if (this.rumbleGain) {
       const lava = LAVA_BIOMES.has(biomeId) ? 1 : biomeId === 'sulfur_flats' ? 0.45 : 0.18;
@@ -111,10 +116,31 @@ class ProceduralAudioSystem {
   }
 
   /**
+   * Distance-delayed thunder triggered by 'world:lightning' events (120 m/s speed of sound).
+   */
+  scheduleThunder(distM = 20): void {
+    if (!this.ctx || !this.sfxGain || gameState.settings.audio.muted) return;
+    if (this.ctx.state === 'suspended') return;
+    const safeDist = Number.isFinite(distM) && distM >= 0 ? distM : 20;
+    const delay = thunderDelaySec(safeDist);
+    const t = this.ctx.currentTime + delay;
+    const atten = Math.max(0.28, Math.min(1.0, 1 - safeDist / 120));
+
+    this.noise('highpass', 3000, 800, 0.7, t, 0.12, 0.35 * atten, 0.002);
+    this.noise('lowpass', 420, 60, 0.6, t + 0.05, 1.9, 0.55 * atten, 0.15);
+    this.tone('sine', 70, 28, t + 0.1, 1.2, 0.3 * atten, 0.1);
+  }
+
+  /**
    * Dipanggil tiap frame dari SceneManager (murah: bekerja ±5 kali/detik).
    * Mengatur lapisan cuaca, detak jantung saat kritis, bunyi luka, dan lonceng musik.
    */
-  updateAmbient(dt: number, weather: string, biomeId: string): void {
+  updateAmbient(
+    dt: number,
+    weatherOrWeights: WeatherType | WeatherWeights | string,
+    biomeId: string,
+    windStrength = 1.8
+  ): void {
     if (!this.ctx || !this.droneStarted || this.ctx.state !== 'running') return;
     this.tickAccum += dt;
     if (this.tickAccum < 0.2) return;
@@ -122,18 +148,43 @@ class ProceduralAudioSystem {
     const now = this.ctx.currentTime;
     const hud = gameState.screen === 'hud';
 
-    // Cuaca: angin makin kencang saat badai abu, desis saat hujan asam.
+    const clearW =
+      typeof weatherOrWeights === 'string'
+        ? weatherOrWeights === 'clear_haze'
+          ? 1
+          : 0
+        : weatherOrWeights.clear_haze ?? 0;
+    const rainW =
+      typeof weatherOrWeights === 'string'
+        ? weatherOrWeights === 'acid_rain'
+          ? 1
+          : weatherOrWeights === 'electrical_storm'
+            ? 0.8
+            : 0
+        : Math.min(1, (weatherOrWeights.acid_rain ?? 0) + (weatherOrWeights.electrical_storm ?? 0) * 0.8);
+    const stormW =
+      typeof weatherOrWeights === 'string'
+        ? weatherOrWeights === 'ash_storm' || weatherOrWeights === 'electrical_storm'
+          ? 1
+          : 0
+        : Math.min(1, (weatherOrWeights.ash_storm ?? 0) + (weatherOrWeights.electrical_storm ?? 0));
+
+    // Cuaca & angin global: windGain & filter frequency smoothly follow windStrength.
     if (this.windGain) {
-      const w = weather === 'ash_storm' ? 2.2 : weather === 'electrical_storm' ? 1.5 : weather === 'meteor_shower' ? 1.2 : weather === 'acid_rain' ? 1.3 : 1;
-      this.windGain.gain.setTargetAtTime(w, now, 0.8);
+      const targetWindGain = Math.max(0.75, Math.min(2.6, 0.58 + windStrength * 0.22));
+      this.windGain.gain.setTargetAtTime(targetWindGain, now, 0.6);
+    }
+    if (this.windFilter) {
+      const freqShift = Math.min(340, Math.max(0, windStrength * 26));
+      this.windFilter.frequency.setTargetAtTime(this.biomeBaseWindFreq + freqShift, now, 0.6);
     }
     if (this.rainGain) {
-      this.rainGain.gain.setTargetAtTime(weather === 'acid_rain' ? 0.9 : 0, now, 0.8);
+      this.rainGain.gain.setTargetAtTime(rainW * 0.9, now, 0.6);
     }
     if (this.padGain) {
       // Musik menyingkir saat bahaya/badai agar efek dan angin terdengar.
-      const quiet = weather === 'ash_storm' || weather === 'electrical_storm' || gameState.vitals.health < 30;
-      this.padGain.gain.setTargetAtTime(quiet ? 0.35 : 1, now, 1.5);
+      const padTarget = gameState.vitals.health < 30 ? 0.35 : 1 - stormW * 0.65;
+      this.padGain.gain.setTargetAtTime(padTarget, now, 1.2);
     }
 
     if (!hud) {
@@ -157,7 +208,7 @@ class ProceduralAudioSystem {
 
     // Lonceng musik jarang, hanya saat tenang.
     if (hp >= 30 && now >= this.nextBellAt) {
-      if (this.nextBellAt > 0 && weather === 'clear_haze') this.playBell();
+      if (this.nextBellAt > 0 && clearW >= 0.6) this.playBell();
       this.nextBellAt = now + 9 + Math.random() * 9;
     }
     void biomeId;

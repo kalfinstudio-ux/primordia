@@ -58,9 +58,18 @@ export default defineConfig(() => {
           play: path.resolve(__dirname, 'play/index.html'),
           studio: path.resolve(__dirname, 'studio/index.html'),
         },
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/three/')) return 'vendor-three';
+            if (id.includes('node_modules/@supabase/')) return 'vendor-supabase';
+            if (id.includes('node_modules/@base44/')) return 'vendor-base44';
+            if (id.includes('node_modules/lucide-react/')) return 'vendor-icons';
+          },
+        },
       },
     },
     server: {
+      allowedHosts: true,
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },

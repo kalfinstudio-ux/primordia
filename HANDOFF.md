@@ -1,7 +1,73 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
-Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v23: pilihan akhir Bruk; v22: Bruk NPC tingkat 1, kepercayaan, dialog HUD; v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau AI) tanpa konteks percakapan sebelumnya.
+Terakhir diperbarui: November 2026 (v25: pipeline kompresi aset 3D & decoder lokal, penguatan RPC umur abadi Supabase + UI profil/jeda, siklus waktu Hari/Bulan/Tahun + relokasi aman, cerita Bab 6–7 Era Adam & Hawa + Pasang Pertama, sinkronisasi penuh i18n `id.json`/`en.json`; v24: Bruk wujud 3D; v23: pilihan akhir Bruk).
+
+## 0m. Perubahan v25 — Asset Pipeline, Immortal Age, World Age, Story Bab 6–7 & i18n
+
+### 1) Asset Pipeline (`public/play/models/`) — KOMPRESI & LOADER OFFLINE
+- **Skrip & Audit:**
+  - `tools/audit-assets.mjs` mengaudit setiap `.glb` di `public/play/models/` (ukuran KB, jumlah segitiga, mesh, sendi, jumlah & format tekstur, klip animasi, ekstensi, status anggaran).
+  - `tools/optimize-assets.sh` (pakai `@gltf-transform/cli` — **tanpa perlu Blender atau internet saat dijalankan**) mengompres geometri (`EXT_meshopt_compression` + `KHR_mesh_quantization`), mengecilkan tekstur ke WebP (`max 1024px` karakter, `512px` prop), dan memangkas/menyederhanakan mesh di atas batas segitiga (`simplify` hanya bila melebihi anggaran; model prosedural `primordia_*.glb` dipertahankan utuh karena memakai vertex/material warna tanpa tekstur).
+  - Perintah yang bisa diulang:
+    ```bash
+    node tools/audit-assets.mjs          # audit tabel & cek budget (exit 1 jika lewat budget)
+    ./tools/optimize-assets.sh           # optimasi aset over-budget di public/play/models/
+    ```
+- **Tabel Audit Sebelum vs Sesudah (total folder turun dari 4,44 MB → 1,15 MB, −74,0%; anggaran ≤ 15 MB):**
+
+| File `.glb` | Sebelum (KB / Tris) | Sesudah (KB / Tris) | Tekstur & Ekstensi | Peran (`ASSET_FILES`) | Status Budget |
+|---|---|---|---|---|---|
+| `daren_-_lod_man_character.glb` | 3.015 KB / 30.398 tris | **403,8 KB / 19.093 tris** | 8 WebP · meshopt + quant | `player` / `adam` | PASS (≤1 MB, ≤30k) |
+| `party_starter_-_layered_t-shirts.glb` | 933,8 KB / 9.495 tris | **186,9 KB / 9.495 tris** | 3 WebP · meshopt + quant | `player` / `adam` | PASS |
+| `naked_dude.glb` | 230,9 KB / 2.054 tris | **121,9 KB / 2.054 tris** | 2 WebP · meshopt + quant | `player` / `adam` | PASS |
+| `primordia_adam.glb` | 125,1 KB / 1.300 tris | **125,1 KB / 1.300 tris** | 19 sendi, 10 klip | Bawaan `player (male)` & `adam` | PASS |
+| `primordia_hawa.glb` | 128,4 KB / 1.400 tris | **128,4 KB / 1.400 tris** | 19 sendi, 10 klip | Bawaan `player (female)` & `eve` | PASS |
+| `primordia_bruk.glb` | 214,7 KB / 2.871 tris | **214,7 KB / 2.871 tris** | 8 mesh, tanpa tekstur | Penjaga Kawah `bruk` | PASS |
+
+- **Loader offline (`src/game/core/gltfLoader.ts`):** membungkus `GLTFLoader` dengan `MeshoptDecoder` + `DRACOLoader` (`./draco/`) + `KTX2Loader` (`./basis/`, hanya saat renderer WebGL aktif). Decoder disalin dari `node_modules/three/examples/jsm/libs/{draco,basis}` ke `/public/play/draco/` & `/public/play/basis/` sehingga bekerja offline penuh tanpa CDN eksternal.
+- **Integrasi karakter & fallback:** `SceneManager.syncPlayerCharacterAsset()` memetakan karakter pemain berdasarkan `avatar.gender` (`male` → `primordia_adam.glb`, `female` → `primordia_hawa.glb`) bila belum ada override valid di `localStorage`, dan otomatis jatuh kembali ke rig prosedural `CharacterRig` jika model gagal dimuat.
+- **Bundle splitting (`vite.config.ts`):** `manualChunks` memisahkan `three`, `supabase`, `base44`, dan `lucide` agar chunk aplikasi tetap ramping dan model 3D tetap lazy-loaded.
+
+### 2) Umur Abadi & Hardening RPC Supabase
+- **`supabase/setup-all.sql` (idempoten, aman dijalankan berulang di SQL Editor):**
+  - `sync_immortal_age(p_guest_born_at timestamptz default null)`: menerima opsional waktu lahir tamu lokal, membatasi klaim tamu maksimal **30 hari** ke belakang dan menolak stempel masa depan (anti-cheat / anti-rewind), membuat baris `profiles` secara atomik jika belum ada (`on conflict (id) do update`), dan **hanya** mengadopsi nilai lebih awal jika profil baru atau berada dalam jendela wajar tanpa mengizinkan pengurangan usia setelah akun menetap.
+  - `record_death()`: otomatis memastikan baris `profiles` tersedia sebelum menambah `deaths`, tidak pernah menyentuh `born_at`.
+  - `presence_ping()`: memastikan baris `profiles` tersedia saat memperbarui `last_seen_at` & menghitung `away_seconds` di server.
+  - `get_public_profile(p_user_id uuid)`: kini ikut mengembalikan `wisdom_points` agar kartu profil publik (`SocialPanel.tsx`) menampilkan **Umur Abadi**, **Kematian**, dan **Poin Kebijaksanaan** secara sinkron.
+- **UI:** Kartu profil di `SocialPanel.tsx` dan `PauseModal.tsx` menampilkan Umur Abadi, jumlah Kematian, dan Poin Kebijaksanaan.
+
+### 3) Waktu Nyata & Peta Berubah (Hari, Bulan, Tahun)
+- **Harian:** sumber daya tumbuh ulang (`dailyRegrowth`), kronik cuaca (`weatherChronicle`), detail mikro harian deterministik (`dailyMicroDetails`: kekuatan arus abu, ventilasi uap, semburat kristal).
+- **Bulanan:** `MONTHLY_TERRAIN_SHIFT = true`, POI musiman/bulanan (`monthlyPois(existing, worldHalf, date)` di `world/poiGen.ts` yang ikut dirender di `MapScreen.tsx` & dunia), efek musim (`SEASON_FX`).
+- **Tahunan (1 Januari 00:00 UTC):** `getWorldAge(date)` mengganti Era setiap 1 Jan UTC (`Year 1 = Era Adam & Hawa`, `Year 2 = Era Pasang Pertama`, `Year 3 = Era Mahkota Bara`, `Year 4 = Era Batu Hidup`). Masing-masing mengubah `seaLevelOffsetM` (`effectiveWaterLevel` di `water.ts`), pengali gunung api (`volcano.ts`), pengali kekayaan sumber daya, dan membuka bab misi baru.
+- **Anti-manipulasi jam & DST:** `sanitizeClockSample` menolak jam mundur > 5 detik dan tanggal sebelum `ERA_START_YEAR`; seluruh kalender (`getEdenCalendar`) berbasis UTC agar tahun kabisat (29 Feb) & DST konsisten di semua zona waktu.
+- **Perlindungan base & laporan offline:**
+  - `terrain_anchor` (radius 60 m) tetap mengunci medan lokal.
+  - `safeRelocateStructures` & `safeRelocatePlayer` (`data/eden.ts`, dipanggil di `SceneManager` saat shift/load) mencegah pemain dan bangunan terkubur medan atau tenggelam akibat kenaikan muka air zaman.
+  - `shiftWarning` kini mendukung peringatan Pergeseran Tahunan (`kind: 'year'`, kunci `'YYYY-M:year:level'`) selain Pergeseran Bulanan (`kind: 'month'`, kunci `'YYYY-M:level'`).
+  - `buildAwayReport` mencatat entri **Era berubah** dan **Pergeseran Besar** jika pemain pergi melintasi pergantian tahun/bulan.
+
+### 4) Cerita Lanjutan — Era Adam & Hawa (Bab 6) & Era Pasang Pertama (Bab 7)
+- `CAMPAIGN_QUESTS` mempertahankan **22 misi Prolog "Fajar Archean" (`q1..q22`, Bab 1–5)** secara penuh.
+- Ditambahkan **Bab 6 (`q23..q29`, Era Adam & Hawa, `requiredAge: 1`)** dan **Bab 7 (`q30..q32`, Era Pasang Pertama, `requiredAge: 2`)**, difilter dinamis via `questsForAge(eraYear)` dan `journalEntriesForAge(eraYear)` (`j_adam_eve`, `j_first_garden`, `j_moon_tides`).
+- Teks misi mendukung variasi narasi gender (`desc_male` / `desc_female` via `questText(id, field, gender)`) tanpa perbedaan balance mekanik apa pun.
+- Penghitung misi di HUD/Jurnal (`questsTotalCount`, `activeCampaignTotal`) dihitung dinamis dari era aktif (tidak lagi hardcode `/22`).
+- `index.html`, `infoContent.ts`, dan `gameInfo.ts` (`NUM_CHAPTERS = 7`) diperbarui selaras.
+
+### 5) i18n (`id.json` & `en.json`), Verifikasi & Catatan Jujur
+- Semua kunci terjemahan statis & dinamis (`regions.*`, `poiNames.*`, `bruk.*`, `quests.q23..q32` beserta `desc_male`/`desc_female`, `journal.entries.*`, `info.*`) telah disinkronkan simetris antara `id.json` dan `en.json` (0 kunci hilang).
+- **Catatan jujur (belum dijalankan di lingkungan lokal ini):**
+  - `supabase/setup-all.sql` belum dieksekusi ke proyek Supabase live (perlu dijalankan manual di Supabase SQL Editor bila memakai mode cloud).
+  - Pengukuran FPS pada perangkat Android fisik kelas bawah tetap perlu diuji oleh pemilik.
+  - `primordia_adam.glb`, `primordia_hawa.glb`, dan `primordia_bruk.glb` sengaja dipertahankan tidak melewati `meshopt` agar uji parser mentah (`characterAsset.test.ts`, `brukAsset.test.ts`) tetap dapat memverifikasi buffer glTF standar; ketiganya sudah berada jauh di bawah batas (125–215 KB).
+
+### Cek Manual v25
+- [ ] Jalankan `supabase/setup-all.sql` di Supabase SQL Editor; uji daftar/login akun → verifikasi `sync_immortal_age()`, `record_death()`, `presence_ping()`, `get_public_profile()`.
+- [ ] Uji tamu bermain lalu login: umur lokal (maks 30 hari) tersinkron ke profil tanpa bisa rewind.
+- [ ] Permainan Baru (Pria vs Wanita): verifikasi model 3D mengikuti gender (`primordia_adam.glb` vs `primordia_hawa.glb`) dan deskripsi Bab 6 menyesuaikan narasi.
+- [ ] Buka Jeda & Kartu Profil Sosial: Umur Abadi, Kematian, dan Poin Kebijaksanaan tampil benar.
+- [ ] Ubah jam ke 31 Des 23:55 UTC → tunggu/lewati 1 Jan 00:00 UTC → peringatan tahun baru, pergantian Era ke Tahun 2 (`Era Pasang Pertama`), relokasi aman bangunan/pemain, dan misi Bab 7 terbuka.
 
 
 ## 0l. Perubahan v24 — Bruk tingkat 2: wujud 3D di dunia (15 Nov 2026) — SEDANG DIKERJAKAN
@@ -319,7 +385,7 @@ Semua logika murni ada di `src/game/data/eden.ts` (mudah dites). Angka yang bole
 |---|---|---|
 | Umur abadi | Tidak ada kematian karena usia. `bornAtMs` dihitung dari server (`born_at`) untuk akun login, lokal untuk tamu. Mati karena bahaya hanya menambah penghitung `deaths`; umur tidak reset. | `eden.ts`, `net/immortal.ts`, `core/state.ts`, `systems/deathBag.ts` |
 | Waktu nyata | Langit mengikuti jam perangkat (0 = tengah malam, 0.5 = tengah hari). | `world/sky.ts` (`realTimeOfDay`) |
-| Peta berubah (NONAKTIF sejak v14) | Medan berganti tiap **bulan** (seed `dunia\|Y{tahun}\|M{bulan}`); props/sumber daya tumbuh ulang tiap **hari**. Dicek tiap 30 dtk. Matikan lewat `MONTHLY_TERRAIN_SHIFT=false`. | `eden.ts`, `scenes/SceneManager.ts` |
+| Peta berubah (Hari/Bulan/Tahun) | Props/sumber daya tumbuh ulang & detail mikro tiap **hari**; medan berganti tiap **bulan** (`MONTHLY_TERRAIN_SHIFT=true`, seed `dunia\|Y{tahun}\|M{bulan}`) + POI bulanan; **Era** berganti tiap **1 Jan UTC** (mengubah muka air, vulkanik, sumber daya, & bab cerita). Dilindungi Jangkar Medan + `safeRelocateStructures`/`safeRelocatePlayer`. | `eden.ts`, `world/poiGen.ts`, `scenes/SceneManager.ts` |
 | Jangkar Medan | Bangunan (`terrain_anchor`) mengunci medan radius 60 m dengan seed saat dipasang; tepi dicampur halus. Resep: 3 kristal inti + 4 besi meteorit + 6 bata basalt (stasiun riset). | `world/terrainHeight.ts`, `terrain.ts`, `terrainWorker.ts`, `systems/building.ts` |
 | Offline berjalan | Maks 24 jam efek; <5 menit diabaikan. Penampung air +0,02/dtk (+8 per ~6 jam hujan). >30 menit = kelelahan pulih. | `eden.ts` (`buildAwayReport`), `systems/saveLoad.ts` |
 | Laporan "Saat kamu pergi" | Panel sekali muncul: cuaca (kronik 6 jam, deterministik dari kalender), air, hari berganti, gunung berapi, Pergeseran Besar. | `systems/awayReport.ts`, `ui/AwayReportModal.tsx` |

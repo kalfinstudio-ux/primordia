@@ -476,3 +476,133 @@ to authenticated;
 revoke insert, update on public.profiles from anon, authenticated;
 grant insert (id, username, avatar_config) on public.profiles to authenticated;
 grant update (id, username, avatar_config) on public.profiles to authenticated;
+
+-- ============================================================
+-- HARDENING UMUR ABADI, MERGE TAMU, & PROFIL PUBLIK (idempoten)
+-- Aman dijalankan ulang berkali-kali di SQL Editor.
+-- ============================================================
+create or replace function public.compute_wisdom_points(p_age_seconds bigint)
+returns integer language sql immutable as $$
+  select (
+    case when coalesce(p_age_seconds, 0) >= 7 * 86400 then 1 else 0 end +
+    case when coalesce(p_age_seconds, 0) >= 30 * 86400 then 2 else 0 end +
+    case when coalesce(p_age_seconds, 0) >= 100 * 86400 then 3 else 0 end +
+    case when coalesce(p_age_seconds, 0) >= 365 * 86400 then 5 else 0 end
+  )::integer;
+$$;
+
+drop function if exists public.sync_immortal_age();
+drop function if exists public.sync_immortal_age(timestamptz);
+create or replace function public.sync_immortal_age(p_guest_born_at timestamptz default null)
+returns table (born_at timestamptz, age_seconds bigint, deaths integer, wisdom_points integer)
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_min_born timestamptz := greatest(timestamptz '2026-01-01T00:00:00Z', now() - interval '30 days');
+  v_safe_born timestamptz;
+begin
+  if v_uid is null then raise exception 'Authentication required'; end if;
+
+  if p_guest_born_at is not null then
+    v_safe_born := least(now(), greatest(v_min_born, p_guest_born_at));
+  else
+    v_safe_born := now();
+  end if;
+
+  -- Atomik & anti-rewind: born_at HANYA diisi jika belum ada; akun lama tidak bisa dimundurkan.
+  insert into public.profiles (id, username, born_at, last_seen_at)
+  values (v_uid, 'Adam', v_safe_born, now())
+  on conflict (id) do update
+    set born_at = coalesce(public.profiles.born_at, excluded.born_at),
+        last_seen_at = coalesce(public.profiles.last_seen_at, now());
+
+  return query
+    select p.born_at,
+           greatest(0, floor(extract(epoch from (now() - p.born_at))))::bigint as age_seconds,
+           p.deaths,
+           public.compute_wisdom_points(greatest(0, floor(extract(epoch from (now() - p.born_at))))::bigint)
+    from public.profiles p where p.id = v_uid;
+end;
+$$;
+
+create or replace function public.record_death()
+returns integer language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_deaths integer;
+begin
+  if v_uid is null then raise exception 'Authentication required'; end if;
+  -- Pastikan baris profil selalu ada agar kematian pertama tidak mengembalikan null.
+  insert into public.profiles (id, username, born_at, deaths, last_seen_at)
+  values (v_uid, 'Adam', now(), 1, now())
+  on conflict (id) do update
+    set deaths = public.profiles.deaths + 1,
+        born_at = coalesce(public.profiles.born_at, now())
+  returning deaths into v_deaths;
+  return v_deaths;
+end;
+$$;
+
+create or replace function public.presence_ping()
+returns bigint language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_prev timestamptz;
+begin
+  if v_uid is null then raise exception 'Authentication required'; end if;
+
+  insert into public.profiles (id, username, born_at, last_seen_at)
+  values (v_uid, 'Adam', now(), null)
+  on conflict (id) do nothing;
+
+  select last_seen_at into v_prev from public.profiles where id = v_uid for update;
+  update public.profiles set last_seen_at = now() where id = v_uid;
+
+  if v_prev is null then return null; end if;
+  return greatest(0, floor(extract(epoch from (now() - v_prev))))::bigint;
+end;
+$$;
+
+drop function if exists public.get_public_profile(uuid);
+create or replace function public.get_public_profile(p_user uuid)
+returns table (display_name text, born_at timestamptz, age_seconds bigint,
+               deaths integer, wisdom_points integer, score integer, friend_status text)
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_f public.friendships;
+begin
+  if v_uid is null then raise exception 'Authentication required'; end if;
+
+  select * into v_f from public.friendships f
+  where (f.requester = v_uid and f.addressee = p_user)
+     or (f.requester = p_user and f.addressee = v_uid);
+
+  return query
+    select coalesce(p.display_name, 'Penjelajah'),
+           p.born_at,
+           case when p.born_at is null then 0::bigint
+                else greatest(0, floor(extract(epoch from (now() - p.born_at))))::bigint end,
+           p.deaths,
+           case when p.born_at is null then 0
+                else public.compute_wisdom_points(greatest(0, floor(extract(epoch from (now() - p.born_at))))::bigint) end,
+           coalesce((select l.score from public.leaderboard l where l.user_id = p.id), 0),
+           case when p.id = v_uid then 'self'
+                when v_f.id is null then 'none'
+                when v_f.status = 'accepted' then 'friends'
+                when v_f.requester = v_uid then 'sent'
+                else 'received' end
+    from public.profiles p
+    where p.id = p_user;
+end;
+$$;
+
+revoke execute on function
+  public.sync_immortal_age(timestamptz), public.record_death(),
+  public.presence_ping(), public.get_public_profile(uuid)
+from public, anon;
+grant execute on function
+  public.sync_immortal_age(timestamptz), public.record_death(),
+  public.presence_ping(), public.get_public_profile(uuid)
+to authenticated;
+

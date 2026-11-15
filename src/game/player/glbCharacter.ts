@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createConfiguredGltfLoader } from '../core/gltfLoader';
 import { CLIP_ALIASES } from '../data/assets';
 
 export type GlbAnimState = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'swim' | 'mine' | 'craft' | 'hurt' | 'death';
@@ -31,7 +31,10 @@ export function fitModelToHeight(model: THREE.Object3D, target = TARGET_HEIGHT_M
   return wrapper;
 }
 
-export async function tryLoadExplorerGlb(url = './models/explorer.glb'): Promise<GlbExplorerHandle | null> {
+export async function tryLoadExplorerGlb(
+  url = './models/primordia_adam.glb',
+  renderer?: THREE.WebGLRenderer
+): Promise<GlbExplorerHandle | null> {
   if (typeof window === 'undefined' || typeof fetch === 'undefined') return null;
   try {
     const head = await fetch(url, { method: 'HEAD' });
@@ -41,7 +44,7 @@ export async function tryLoadExplorerGlb(url = './models/explorer.glb'): Promise
   }
 
   try {
-    const loader = new GLTFLoader();
+    const loader = createConfiguredGltfLoader(renderer);
     const gltf = await loader.loadAsync(url);
     const model = gltf.scene;
     model.traverse((obj) => {

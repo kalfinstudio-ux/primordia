@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CAMPAIGN_QUESTS, RECIPES, SAVE_VERSION } from './config';
+import { questsForAge } from './data/quests';
 import { SpatialHashGrid, resolveCapsuleObstacles } from './core/spatialHash';
 import { createInitialVitals, type PlacedStructure } from './core/state';
 import { createNoise2D } from './world/noise';
@@ -88,7 +89,7 @@ test('Inventory weight and 5-tier station crafting checks work across all tiers'
   assert.equal(canCraftIn(bag, furnaceRecipe, structures, 0, 0, true), true);
 });
 
-test('All 22 campaign quests evaluate properly through Seed of Life completion', () => {
+test('All campaign quests (Archean Dawn + Adam & Eve + later eras) evaluate properly', () => {
   const allItems = new Set([
     'stone_axe',
     'water_vessel',
@@ -102,6 +103,8 @@ test('All 22 campaign quests evaluate properly through Seed of Life completion',
     'amino_compound',
     'lipid_membrane',
     'seed_of_life',
+    'hazmat_lining',
+    'meteor_drill',
   ]);
   const fullSnap: QuestEvalInput = {
     waterCollectedCount: 3,
@@ -110,26 +113,41 @@ test('All 22 campaign quests evaluate properly through Seed of Life completion',
     obsidianCount: 4,
     meteorIronCount: 4,
     crystalsExtractedCount: 3,
-    distanceExplored: 1200,
+    distanceExplored: 2200,
+    discoveredPoiCount: 8,
     campaignComplete: true,
     hasItem: (id) => allItems.has(id),
     countItem: (id) => (allItems.has(id) ? 5 : 0),
     structures: [
       { id: 's1', type: 'basic_shelter', x: 0, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
+      { id: 's1b', type: 'basic_shelter', x: 25, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
+      { id: 'f1', type: 'campfire_kit', x: 2, y: 0, z: 0, rotY: 0, hp: 100, maxHp: 100 },
+      { id: 'f2', type: 'campfire_kit', x: 27, y: 0, z: 0, rotY: 0, hp: 100, maxHp: 100 },
       { id: 's2', type: 'workbench', x: 3, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
       { id: 's3', type: 'storage_chest', x: 6, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
       { id: 's4', type: 'smelter_furnace', x: 9, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
       { id: 's5', type: 'research_station', x: 12, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
       { id: 's6', type: 'fast_beacon', x: 15, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
+      { id: 's7', type: 'fast_beacon', x: 35, y: 0, z: 0, rotY: 0, hp: 160, maxHp: 160 },
+      { id: 's8', type: 'garden_plot', x: 18, y: 0, z: 0, rotY: 0, hp: 120, maxHp: 120 },
+      { id: 's9', type: 'water_collector', x: 21, y: 0, z: 0, rotY: 0, hp: 120, maxHp: 120 },
+      { id: 's10', type: 'auto_drill', x: 24, y: 0, z: 0, rotY: 0, hp: 140, maxHp: 140 },
+      { id: 's11', type: 'terrain_anchor', x: 30, y: 0, z: 0, rotY: 0, hp: 200, maxHp: 200 },
+      { id: 's12', type: 'terrain_anchor', x: 90, y: 0, z: 0, rotY: 0, hp: 200, maxHp: 200 },
       { id: 'm1', type: 'floor_tile', x: 0, y: 0, z: 3, rotY: 0, hp: 250, maxHp: 250 },
       { id: 'm2', type: 'wall_panel', x: 0, y: 0, z: 6, rotY: 0, hp: 250, maxHp: 250 },
       { id: 'm3', type: 'roof_panel', x: 0, y: 0, z: 9, rotY: 0, hp: 250, maxHp: 250 },
+      { id: 'm4', type: 'floor_tile', x: 3, y: 0, z: 3, rotY: 0, hp: 250, maxHp: 250 },
+      { id: 'm5', type: 'wall_panel', x: 3, y: 0, z: 6, rotY: 0, hp: 250, maxHp: 250 },
+      { id: 'm6', type: 'door_frame', x: 3, y: 0, z: 9, rotY: 0, hp: 250, maxHp: 250 },
     ],
   };
 
   for (const q of CAMPAIGN_QUESTS) {
     assert.equal(isQuestSatisfied(q.id, fullSnap), true, `Expected ${q.id} to be satisfied`);
   }
+  assert.equal(questsForAge(1).length, 29);
+  assert.equal(questsForAge(2).length, 32);
 });
 
 test('Save migration upgrades Stage 1 saves to v2 and detects cloud conflicts', () => {

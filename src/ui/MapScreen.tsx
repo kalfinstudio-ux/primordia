@@ -4,6 +4,7 @@ import { CHUNK_SIZE, WORLD_HALF_EXTENT } from '../game/config';
 import { gameState, setScreen } from '../game/core/state';
 import { fastTravelToBeacon } from '../game/main';
 import { WORLD_POIS } from '../game/world/biomes';
+import { monthlyPois } from '../game/world/poiGen';
 import {
   type MapView,
   clampToWorld,
@@ -180,10 +181,11 @@ export function MapScreen() {
       ctx.textAlign = 'start';
     }
 
-    // Titik penting
+    // Titik penting (permanen + bulanan)
+    const activePois = [...WORLD_POIS, ...monthlyPois(WORLD_POIS, WORLD_HALF_EXTENT)];
     ctx.font = '600 11px system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    for (const poi of WORLD_POIS) {
+    for (const poi of activePois) {
       const s = worldToScreen(v, size, poi.x, poi.z);
       if (s.x < -20 || s.y < -20 || s.x > size + 20 || s.y > size + 20) continue;
       const found = gameState.discoveredPois.some((d) => d.id === poi.id);
@@ -352,7 +354,7 @@ export function MapScreen() {
       setSelected({ type: 'beacon', id: hitBeacon.id, x: hitBeacon.x, z: hitBeacon.z });
       return;
     }
-    const pois = WORLD_POIS.map((p) => ({ ...p }));
+    const pois = [...WORLD_POIS, ...monthlyPois(WORLD_POIS, WORLD_HALF_EXTENT)].map((p) => ({ ...p }));
     const hitPoi = pickTarget(v, size, sx, sy, pois, HIT_RADIUS_PX);
     if (hitPoi) {
       const discovered = gameState.discoveredPois.some((d) => d.id === hitPoi.id);
@@ -556,7 +558,10 @@ export function MapScreen() {
               </div>
               <div className="flex items-center gap-2 text-amber-300">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>{t('map.poi')} ({gameState.discoveredPois.length}/{WORLD_POIS.length})</span>
+                <span>
+                  {t('map.poi')} ({gameState.discoveredPois.length}/
+                  {WORLD_POIS.length + monthlyPois(WORLD_POIS, WORLD_HALF_EXTENT).length})
+                </span>
               </div>
               <div className="text-stone-300">
                 {t('regions.current')}: <span className="font-semibold text-stone-100">{regionLabel(myRegion, t)}</span>{' '}

@@ -32,7 +32,7 @@
     {"@type":"Organization","@id":"__SITE_URL__/#studio","name":"Jurkon Studio","url":"__SITE_URL__/","logo":"__SITE_URL__/mascot-512.png","sameAs":["https://jurkon.my.id/","https://smartphone-empire.my.id/","https://boombastis.my.id/"]},
     {"@type":"WebSite","@id":"__SITE_URL__/#website","url":"__SITE_URL__/","name":"PRIMORDIA","publisher":{"@id":"__SITE_URL__/#studio"},"inLanguage":"en"},
     {"@type":"VideoGame","@id":"__SITE_URL__/#game","name":"PRIMORDIA","alternateName":"PRIMORDIA — Survive the First Earth",
-     "description":"A 3D open-world survival game that runs in your browser, set on primordial Earth. Build an outpost, craft across five tiers, finish a 22-mission campaign and plant the first seed of life.",
+     "description":"A 3D open-world survival game that runs in your browser, set on primordial Earth. Build an outpost, craft across five tiers, finish the Archean Dawn prologue and continue through the Age of Adam & Eve.",
      "url":"__SITE_URL__/","image":"__SITE_URL__/og-image.jpg","genre":["Survival","Open world","Exploration"],
      "gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any (WebGL browser)","playMode":["SinglePlayer","MultiPlayer"],
      "inLanguage":"id","author":{"@id":"__SITE_URL__/#studio"},"publisher":{"@id":"__SITE_URL__/#studio"},
@@ -165,7 +165,7 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
   <div>
     <h1>Wake up on the first Earth.</h1>
     <p class="lead">PRIMORDIA is a 3D survival game that runs in your browser. Volcanoes burn, lava rivers cut the plains and the air can kill you. Stay alive, build an outpost and plant the first seed of life.</p>
-    <div class="cta"><a class="btn" data-play href="./play/">Play now</a><a class="btn alt" href="#missions">See the 22 missions</a></div>
+    <div class="cta"><a class="btn" data-play href="./play/">Play now</a><a class="btn alt" href="#missions">See the chapters</a></div>
     <p class="clock">The sky in the game follows your device clock. Right now: <b id="clk">–</b></p>
   </div>
   <div class="mascot" role="img" aria-label="Bruk, the basalt warden: a horned stone creature with a glowing amber eye and lava cracks">
@@ -192,14 +192,14 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
 
 <section id="features"><div class="wrap">
   <h2>Features</h2>
-  <p class="sub">Every number here comes from the game data of version 0.8.0-Archean.</p>
+  <p class="sub">Every number here comes from the game data of version 0.9.0-Archean.</p>
   <div class="rows">
     <div class="row"><h3>Open world, 4 × 4 km</h3><p>Ten biomes: steaming ocean, basalt plains, lava rifts, sulfur flats, obsidian fields, geyser basin, crystal crater, ash dunes, meteor zone and volcanic ridges. The world streams in 64 m chunks. Open the map to see named regions and landmarks, and spot far-off peaks by their silhouettes.</p></div>
     <div class="row"><h3>Survival</h3><p>Watch your health, water and oxygen. Survive toxic gas, ash storms, acid rain, lightning and meteors. Gas filters and shelters save your life. The first 10 minutes are safe and beginner friendly.</p></div>
     <div class="row"><h3>Five-tier crafting</h3><p>45 items and 36 recipes, from a stone axe to an Archean research lab. Recipes unlock as you find new materials.</p></div>
     <div class="row"><h3>Modular building</h3><p>Place floors, walls, roofs, storage chests, furnaces, Moss Gardens and Auto Drills that keep working while you are offline. A full bag now blocks the action instead of silently losing your items, and you can drop items from the bag.</p></div>
-    <div class="row"><h3>Adam &amp; Eve era</h3><p>Immortal age, a real-time sky and four seasons (Dry, Rain, Ash, Cold). The monthly terrain change (the Great Shift) is switched off for now so your outpost stays safe. The Terrain Anchor will lock a 60 m area when it returns.</p></div>
-    <div class="row"><h3>Adam &amp; Hawa, in motion</h3><p>Pick a male or female survivor. Arms and legs now bend at the elbows and knees, faces blink, and your character mines, gathers, drinks and builds with its own movement.</p></div>
+    <div class="row"><h3>Adam &amp; Eve era</h3><p>Immortal age, a real-time sky, four seasons (Dry, Rain, Ash, Cold), daily resource regrowth, monthly Great Shifts (protected by a 60 m Terrain Anchor and safe relocation), and yearly Ages that reshape sea level, volcanic activity, and story chapters every January 1 UTC.</p></div>
+    <div class="row"><h3>Adam &amp; Hawa, in motion</h3><p>Pick a male or female survivor (optimized Adam &amp; Hawa GLB models with procedural rig fallback). Arms and legs bend, faces blink, and your character mines, gathers, drinks and builds with its own movement.</p></div>
     <div class="row"><h3>One save, one button</h3><p>The game autosaves to a single save, and the main menu shows Continue with your name, play time and date. Old multi-slot saves are moved over safely.</p></div>
     <div class="row"><h3>Wisdom</h3><p>The longer you live, the more Wisdom points you earn. Spend them on perks such as Lasting Filter and Ancestral Recipes.</p></div>
     <div class="row"><h3>Optional accounts</h3><p>Play as a guest, or sign in for cloud saves, leaderboard, friends and messages.</p></div>
@@ -211,25 +211,27 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
   <h2>Roadmap</h2>
   <p class="sub">The game grows in small stages. Dashed cards are planned and not released yet.</p>
   <div class="road">
-    <div class="stage done"><span class="st">Released · Stage 1</span><h3>Survival foundation</h3><p>Chunk world, physics, character, five-tier crafting, building, the 22-mission campaign, journal and achievements.</p></div>
+    <div class="stage done"><span class="st">Released · Stage 1</span><h3>Survival foundation</h3><p>Chunk world, physics, character, five-tier crafting, building, the 22-mission Archean Dawn prologue, journal and achievements.</p></div>
     <div class="stage done"><span class="st">Released · Stage 2</span><h3>Mobile, cloud and PWA</h3><p>Responsive HUD, multi-touch joystick, cloud saves, leaderboard and offline mode.</p></div>
-    <div class="stage done"><span class="st">Released · Stage 3</span><h3>Adam &amp; Eve era</h3><p>Immortal age, real-time sky, seasons, offline economy and server-side anti-cheat for time away. The monthly map shift was built but is paused.</p></div>
+    <div class="stage done"><span class="st">Released · Stage 3</span><h3>Adam &amp; Eve era</h3><p>Immortal age, real-time sky, seasons, offline economy, monthly Great Shifts with safe relocation, and server-side anti-cheat.</p></div>
     <div class="stage done"><span class="st">Released · v0.8.0-Archean</span><h3>Comfort and looks</h3><p>Mission arrows, a gentler first 10 minutes, HUD modes, new terrain and sky colors, in-game Game Info, Base44 sign-in, friends and messages.</p></div>
-    <div class="stage now"><span class="st">Current · v0.9.0-Archean</span><h3>Simpler saves and a living world</h3><p>One autosave with Continue, an interactive map with named regions, biome atmosphere, human movement and new faces, a bag-full fix, and an easier start for new players.</p></div>
-    <div class="stage plan"><span class="st">Planned</span><h3>Full 3D assets</h3><p>Caves, ancient animals and enemies, and the finished Adam and Hawa models. The 3D Asset Gallery (Settings → Account &amp; Data) exists, but only the player model is connected to the game today.</p></div>
+    <div class="stage now"><span class="st">Current · v0.9.0-Archean</span><h3>Era of Adam &amp; Hawa + Living Calendar</h3><p>Chapters 6 &amp; 7 beyond the Seed of Life, yearly World Ages, compressed 3D GLB pipeline (Adam &amp; Hawa wired), interactive map with monthly POIs, and hardened Supabase age sync.</p></div>
+    <div class="stage plan"><span class="st">Planned</span><h3>Prehistoric wildlife &amp; caves</h3><p>Caves, prehistoric animals and enemies are queued for the optimized 3D Asset Gallery pipeline alongside the active Adam &amp; Hawa player models.</p></div>
     <div class="stage plan"><span class="st">Planned</span><h3>Wider multiplayer</h3><p>A steadier shared world, plus balance tuning for Moss Gardens and Auto Drills based on player feedback.</p></div>
   </div>
 </div></section>
 
 <section id="missions"><div class="wrap">
-  <h2>Mission: Seed of Life</h2>
-  <p class="sub">A 22-mission campaign in 5 chapters. A blue arrow on screen points to the current objective. After the ending you can continue in free survival or New Game+.</p>
+  <h2>Missions: Archean Dawn &amp; Beyond</h2>
+  <p class="sub">A 22-mission Archean Dawn prologue (Chapters 1–5), followed by the Age of Adam &amp; Eve (Chapter 6) and yearly World Age chapters (Chapter 7+). A blue arrow on screen points to the current objective.</p>
   <div class="chapters">
     <div class="ch"><h3>Chapter 1: Survive</h3><p>Water, materials, tools, shelter.</p><ol><li>First Water Trail</li><li>Basalt Foundation</li><li>Survivor’s Tools</li><li>Shelter</li><li>Heart of the Crater</li></ol></div>
     <div class="ch"><h3>Chapter 2: Supplies</h3><p>Better tools and dangerous ground.</p><ol start="6"><li>Field Workshop</li><li>Volcanic Glass</li><li>Obsidian Pick</li><li>Breath Protection</li><li>Supply Store</li></ol></div>
     <div class="ch"><h3>Chapter 3: Iron Age</h3><p>Smelting and your first outpost.</p><ol start="11"><li>Dawn of the Iron Age</li><li>Ancient Metallurgy</li><li>Modular Outpost</li><li>Master of Heat</li></ol></div>
     <div class="ch"><h3>Chapter 4: Fallen Stars</h3><p>Meteor metal and crystal power.</p><ol start="15"><li>Archean Laboratory</li><li>Metal from the Stars</li><li>Core Ignition</li><li>Beacon Network</li></ol></div>
     <div class="ch"><h3>Chapter 5: Seed of Life</h3><p>Prebiotic chemistry, then the moment that matters.</p><ol start="19"><li>Amino Synthesis</li><li>Protocell Membrane</li><li>Seed of Life</li><li>Cradle of Biology</li></ol></div>
+    <div class="ch"><h3>Chapter 6: Adam &amp; Eve</h3><p>The first humans settle, garden, anchor time, and pass down tools.</p><ol start="23"><li>A Hearth for Two</li><li>Naming the Land</li><li>The First Garden</li><li>Pulse of Industry</li><li>Pillars Against Time</li><li>Citadel of Stone</li><li>Legacy of the First Ones</li></ol></div>
+    <div class="ch"><h3>Chapter 7: Rising Tides</h3><p>Unlocked on January 1 (Year 2 UTC) as sea levels rise.</p><ol start="30"><li>Higher Ground</li><li>Watching the Tides</li><li>Heart of the New Age</li></ol></div>
   </div>
 </div></section>
 

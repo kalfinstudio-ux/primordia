@@ -47,10 +47,10 @@ export function CharacterPreviewCanvas({ avatar }: { avatar: AvatarConfig }) {
 
     let raf = 0;
     const tick = () => {
-      rig.root.rotation.y += 0.012;
+      rig.root.rotation.y += isSoft ? 0.06 : 0.012;
       renderer.render(scene, camera);
       if (!isSoft) raf = requestAnimationFrame(tick);
-      else raf = window.setTimeout(tick, 120);
+      else raf = window.setTimeout(tick, 240);
     };
     tick();
 

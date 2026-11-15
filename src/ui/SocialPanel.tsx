@@ -285,10 +285,14 @@ export function SocialPanel() {
                 <dd>{profile.deaths}</dd>
               </div>
               <div>
+                <dt className="text-[11px] text-stone-400">{t('social.wisdom')}</dt>
+                <dd className="font-semibold text-amber-300">{profile.wisdomPoints} WP</dd>
+              </div>
+              <div>
                 <dt className="text-[11px] text-stone-400">{t('social.score')}</dt>
                 <dd>{profile.score}</dd>
               </div>
-              <div>
+              <div className="col-span-2">
                 <dt className="text-[11px] text-stone-400">{t('social.status')}</dt>
                 <dd>{t(`social.st_${status}`)}</dd>
               </div>

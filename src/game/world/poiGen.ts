@@ -117,3 +117,40 @@ export function generatePois(
   out.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
   return out;
 }
+
+/**
+ * Titik penting musiman/bulanan (4–6 titik) yang muncul dan menghilang mengikuti bulan UTC kalender nyata.
+ * Deterministik untuk semua pemain di bulan yang sama.
+ */
+export function monthlyPois(
+  existing: ReadonlyArray<{ x: number; z: number }>,
+  worldHalf: number,
+  date: Date = new Date()
+): WorldPoi[] {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const seed = `${LAYOUT_SEED}|M|${year}-${month}`;
+  const rng = mulberry32(hash32(seed));
+  const count = 4 + Math.floor(rng() * 3); // 4..6 POI bulanan
+  const limit = worldHalf - WORLD_MARGIN;
+  const kinds: PoiKind[] = ['hot_spring', 'lava_tube', 'meteor_site', 'crater', 'geyser'];
+  const placed: Array<{ x: number; z: number }> = [...existing];
+  const out: WorldPoi[] = [];
+
+  for (let attempt = 0; attempt < 80 && out.length < count; attempt++) {
+    const x = Math.round((rng() * 2 - 1) * limit);
+    const z = Math.round((rng() * 2 - 1) * limit);
+    if (Math.hypot(x - SPAWN_POINT.x, z - SPAWN_POINT.z) < SPAWN_CLEAR_RADIUS) continue;
+    if (placed.some((p) => Math.hypot(p.x - x, p.z - z) < MIN_SEPARATION)) continue;
+    const kind = kinds[Math.floor(rng() * kinds.length)];
+    out.push({
+      id: `poi_month_${year}_${month}_${out.length}`,
+      kind,
+      x,
+      z,
+      labelKey: POI_LABEL_KEY[kind],
+    });
+    placed.push({ x, z });
+  }
+  return out;
+}
