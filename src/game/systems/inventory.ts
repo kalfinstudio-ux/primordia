@@ -55,6 +55,49 @@ export function addItemTo(slots: InventorySlot[], itemId: string, qty: number): 
   return next;
 }
 
+/** Murni: cek apakah semua `drops` muat di tas (28 slot) berurutan, tanpa mengubah apa pun. */
+export function canAddAll(slots: InventorySlot[], drops: ReadonlyArray<readonly [string, number]>): boolean {
+  let cur = slots;
+  for (const [itemId, qty] of drops) {
+    if (qty <= 0) continue;
+    const before = getItemCountIn(cur, itemId);
+    cur = addItemTo(cur, itemId, qty);
+    if (getItemCountIn(cur, itemId) - before < qty) return false;
+  }
+  return true;
+}
+
+/**
+ * Murni: pindahkan SATU unit `itemId` dari `from` ke `to` dengan membawa data aslinya (mis. durability alat),
+ * sehingga alat aus tidak "diperbaiki" lewat peti. Null bila tidak ada barangnya atau `to` penuh (`toCap` slot).
+ */
+export function transferOne(
+  from: InventorySlot[],
+  to: InventorySlot[],
+  itemId: string,
+  toCap: number = Infinity
+): { from: InventorySlot[]; to: InventorySlot[] } | null {
+  const idx = from.findIndex((s) => s.itemId === itemId && s.qty > 0);
+  if (idx < 0) return null;
+  const src = from[idx];
+  const def = ITEMS[itemId];
+  const nextTo = to.map((s) => ({ ...s }));
+  const stackTarget =
+    def?.stackable && src.durability === undefined
+      ? nextTo.find((s) => s.itemId === itemId && s.durability === undefined && s.qty < def.maxStack)
+      : undefined;
+  if (stackTarget) {
+    stackTarget.qty += 1;
+  } else {
+    if (nextTo.length >= toCap) return null;
+    nextTo.push({ ...src, qty: 1 });
+  }
+  const nextFrom = from.map((s) => ({ ...s }));
+  if (nextFrom[idx].qty <= 1) nextFrom.splice(idx, 1);
+  else nextFrom[idx].qty -= 1;
+  return { from: nextFrom, to: nextTo };
+}
+
 export function removeItemFrom(slots: InventorySlot[], itemId: string, qty: number): InventorySlot[] {
   let remaining = qty;
   const next: InventorySlot[] = [];
@@ -82,6 +125,15 @@ export function damageToolDurability(itemId: string, amount = 1): void {
   }
 }
 
+/** Buang barang dari tas (mis. agar tidak terkunci saat tas penuh). Mengembalikan jumlah yang dibuang. */
+export function discardItem(itemId: string, all = false): number {
+  const have = getItemCountIn(gameState.inventory, itemId);
+  if (have <= 0 || itemId === 'seed_of_life') return 0;
+  const qty = all ? have : 1;
+  removeItem(itemId, qty);
+  return qty;
+}
+
 export function getItemCount(itemId: string): number {
   return getItemCountIn(gameState.inventory, itemId);
 }
@@ -90,6 +142,12 @@ export function hasItem(itemId: string): boolean {
   return getItemCount(itemId) > 0;
 }
 
+/** Tampilkan pesan "tas penuh" (dipakai saat pengambilan/pembuatan ditolak agar tidak ada barang hilang). */
+export function notifyBagFull(): void {
+  eventBus.emit('toast:show', { text: t('survival.bagFull'), type: 'warn' });
+}
+
+/** Tambah barang. Peringatan: barang di luar kapasitas tas hilang — panggil `canAddAll` dulu bila itu tidak boleh terjadi. */
 export function addItem(itemId: string, qty = 1): void {
   gameState.inventory = addItemTo(gameState.inventory, itemId, qty);
 

@@ -8,7 +8,13 @@
 - **4 km × 4 km Chunk-Streamed Open World (`src/game/world/`)**: 64 m LOD chunks with edge skirts and off-thread Web Worker generation (`terrainWorker.ts`), 10 primordial biomes, 12 regional POIs, moving ocean mesh, ground lightning strike telegraphs, seismic fissure decals, and `[M]` interactive Survey Map with fog-of-war, waypoints, and Fast-Travel Beacons.
 - **Character System & Optional `.glb` Explorer (`src/game/player/`)**: Articulated procedural humanoid (`CapsuleGeometry`, 4 hair/hood styles, 3 body builds, 3 pack styles, live 3D customization preview, surface-aware footstep audio, ash soot accumulation) plus automatic drop-in `.glb` loader. To use a custom humanoid character (e.g. Ready Player Me / Mixamo export), place your rigged model with `Idle`, `Walk`, `Run`, `Jump`, `Swim`, and `Mine` clips at `public/play/models/explorer.glb` (served as `./models/explorer.glb` from `/play/`; the three current models also live in `public/play/models/`).
 - **5-Tier Crafting, Modular Building & Campaign (`src/game/data/`, `systems/`)**: 42 items across 5 tech tiers, 33 recipes with station proximity & material unlocks, snap-grid modular building (`3m` ghost preview), persistent Storage Chests, 22-quest **"Seed of Life"** campaign + Victory/New Game+, `[J]` Discovery Journal / Achievements / Repeatable Survey Contracts, and timed world events.
-- **PWA, Save Migration & Hardened Supabase Sync (`public/`, `src/game/systems/saveLoad.ts`, `supabase/`)**: Offline Service Worker, install prompt, v1 → v2 save migration, Cloud Save Conflict resolution (`Keep Local / Keep Cloud / Keep Both`), and validated server-side Postgres RPC leaderboard (`submit_validated_score`).
+- **PWA, Save Migration & Hardened Supabase Sync (`public/`, `src/game/systems/saveLoad.ts`, `supabase/`)**: Offline Service Worker, install prompt, v1/v2 → v3 save migration, single autosave with a one-time legacy-slot picker, and Cloud Save conflict resolution (`Continue from This Device / Continue from Cloud`), and validated server-side Postgres RPC leaderboard (`submit_validated_score`).
+
+## Simpanan Tunggal, Audit & Navigasi (v21)
+- **Satu simpanan otomatis** (tanpa Slot 1/2/3): menu utama menampilkan **Lanjutkan** (nama · waktu main · tanggal) hanya bila ada simpanan; **Permainan Baru** meminta konfirmasi bila akan menimpa simpanan. Save lama dimigrasi otomatis; bila ada beberapa slot lama berbeda, pemain memilih satu kali (tidak ada yang dihapus diam-diam).
+- **Konflik cloud** disederhanakan menjadi "Lanjutkan dari Perangkat Ini / dari Cloud".
+- **Bug diperbaiki**: barang hilang saat tas penuh (menambang, membuat, mengambil dari peti), peti yang "memperbaiki" alat aus, simpan kosong dari menu utama, kematian yang bisa dibatalkan dengan menutup game, cloud tidak membawa umur & perk kebijaksanaan, save rusak (NaN/barang tak dikenal), joystick/Lari tersangkut. Tombol **Buang** di Tas.
+- Detail & daftar yang belum teruji: [`HANDOFF.md`](./HANDOFF.md) §0h.
 
 ## Gerak Manusia, Wajah & Bruk (v20)
 - **Gerak seperti manusia** (`src/game/player/pose.ts`, `animator.ts`): rig kini punya siku, lutut, pergelangan, serta pinggul/dada yang berputar berlawanan. Ayunan tangan lebar, lutut menekuk saat lari, kepala stabil, idle bernapas & menoleh, lompat/mendarat/renang punya pose sendiri. Aksi berbeda per benda: menambang (ayun dua tangan), memungut, minum, membuka, membangun (palu). Pemain jauh memakai poser yang sama.
@@ -25,7 +31,7 @@ Lapisan cerita dan sistem baru: awal era manusia pertama, tanpa tua dan tanpa ak
 - **Nama karakter** acak dengan tombol 🎲; pemain bebas menggantinya.
 - **Server anti-mati**: `./tools/keepalive.sh` (restart otomatis + watchdog), konfigurasi Codespace di `.devcontainer/`.
 - **v9:** anti-curang offline (server `presence_ping`), Kebun Lumut & Bor Otomatis yang bekerja saat offline, kerusakan badai pada bangunan tanpa tempat berteduh, musim yang memengaruhi gameplay, dan peringatan "Pergeseran Besar". Jalankan juga `supabase/migration-presence.sql`.
-- **v10:** Galeri Aset 3D di menu utama (pratinjau, statistik, peringatan) dan pilihan model karakter pemain tanpa edit kode. Daftar file: `src/game/data/assets.ts`.
+- **v10:** Galeri Aset 3D (sekarang di Pengaturan → Akun & Data; pratinjau, statistik, peringatan) dan pilihan model karakter pemain tanpa edit kode. Daftar file: `src/game/data/assets.ts`.
 - Semua rincian, risiko, dan backlog ada di [`HANDOFF.md`](./HANDOFF.md). Migrasi database: `supabase/migration-eden.sql`.
 
 ## Info Game & Login Base44 (v12)

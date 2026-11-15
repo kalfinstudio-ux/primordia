@@ -1,8 +1,41 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0h. Perubahan v21 — Simpanan tunggal, audit bug, navigasi pemain baru (15 Nov 2026) — logika teruji (tsx), UI & visual BELUM diuji di browser
+
+Dikerjakan di sandbox tanpa `vite`/`three`/`@types/react`: `npm test` (dengan paket `@supabase/supabase-js` di-stub sementara) **161/161 lulus**; `npm run lint` dan `npm run build` **belum dijalankan** (jalankan di Codespace). Semua file `.tsx` baru/diubah belum dicek tipe.
+
+### A. Slot 1/2/3 dihapus → satu simpanan
+- Kunci localStorage baru `primordia_save` (satu objek). `save_slots` dan `last_slot` hanya dibaca untuk migrasi lalu dihapus. `SAVE_VERSION` = 3; tipe `SaveSlotData` → `SaveData` (tanpa field `slot`).
+- API (`systems/saveLoad.ts`): `saveGame(syncCloud)`, `getLocalSave()`, `migrateLegacySlots()`, `resolveLegacyChoice()`, `decideContinue()` (murni), `resolveContinue()` (lokal + cloud, timeout 4 dtk), `applyConflictChoice()`. Dihapus: `saveGameToSlot`, `getLocalSaves`, `getLatestLocalSave`, `getAllAvailableSaves`, `deleteSaveSlot`, `listCloudSaves`, `deleteCloudSave`, `SAVE_SLOT_COUNT`, layar `loadGame` (`LoadGameScreen.tsx`).
+- **Migrasi**: satu save lama → dipindah diam-diam. Beberapa save lama berbeda → dialog `LegacySavePicker` di menu utama (terbaru di atas); sebelum dipilih TIDAK ada data lama yang dihapus; setelah dipilih, kunci lama dihapus. Entri rusak diabaikan; kunci lama baru dihapus setelah penulisan kunci baru sukses.
+- **Cloud**: tabel `game_saves` tidak diubah (SQL tak perlu dijalankan ulang); selalu menulis `slot = 1` (`CLOUD_SAVE_SLOT`). Membaca = baris dengan `updated_at` terbaru (baris slot 2/3 lama dibiarkan yatim di server). Konflik (`detectSaveConflict`) → dialog dua pilihan; "Simpan Keduanya" dihapus. Tidak ada cadangan otomatis save yang ditimpa.
+- UI: `MainMenuScreen` (Lanjutkan hanya bila ada save, ringkasan, Enter/Spasi = aksi utama), `PauseModal` (satu tombol "Simpan Sekarang"; tombol cloud terpisah dihapus karena duplikat), `NewGameScreen` (konfirmasi menimpa), i18n `save.*`, `pause.save*`, `newGame.overwrite*`.
+- `saveGame()` mengembalikan null (dan tidak menyimpan) bila `activeWorldLoaded` false → mencegah keluar-game dari menu utama menimpa save dengan keadaan kosong.
+
+### B. Bug yang ditemukan & diperbaiki (tes di `audit.test.ts` dan `stage2.test.ts`)
+1. **Barang hilang saat tas penuh (28 slot)**: menambang/ambil dari kebun, bor, penampung air, garam; `craftItem` memakai bahan lalu hasil lenyap; ambil dari peti menghapus dari peti tapi tak masuk tas. Kini `canAddAll()` dicek dulu: node tidak habis, bahan tidak terpakai, muncul toast `survival.bagFull`. Penghitung misi (kristal/obsidian/meteor) tidak naik bila gagal.
+2. **Peti memperbaiki alat**: `transferOne()` memindahkan slot asli (durability ikut).
+3. **Kematian bisa dibatalkan**: `handlePlayerDeath` kini `saveGame()` seketika; memuat save dengan nyawa 0 (atau Lanjutkan dari Game Over lewat menu) membuka layar Game Over lagi (`openLoadedWorld` di `main.ts`) — kematian tidak dihitung dua kali.
+4. **Cloud kehilangan data**: `bornAtMs` (umur) dan `wisdomPerks` kini ikut dikirim/dimuat.
+5. **Save rusak**: `sanitizeSlots`/`sanitizeVitals` membuang barang tak dikenal, qty tak valid, dan vital NaN/null (nilai awal dipakai).
+6. **Joystick/Lari tersangkut** bila HUD hilang saat jempol menekan: dilepas saat HudScreen unmount.
+7. Baru: tombol **Buang 1 / Buang Semua** di Tas (Benih Kehidupan dikecualikan) agar tas penuh tidak mengunci pemain.
+
+### C. Navigasi pemain baru
+- Onboarding selesai → langsung ke Permainan Baru bila belum ada save (Skip → Mulai = 2 ketukan sebelum bermain; sebelumnya 3). Menu: Lanjutkan (bila ada save) / Permainan Baru / Pengaturan / Akun / Kredit. Galeri Aset pindah ke Pengaturan → Akun & Data.
+- HUD sentuh: petunjuk konteks "Ketuk AKSI untuk …" (bukan "[E]") di perangkat sentuh; ikon menu HUD 48×48 px.
+- Label tombol HUD (LARI/LOMPAT/AKSI/Bangun) ternyata sudah mengikuti bahasa (`hud.*Btn` di id/en).
+
+### D. BELUM teruji / diketahui
+- [ ] `npm run lint` & `npm run build` di Codespace (tipe semua `.tsx`: `MainMenuScreen`, `LegacySavePicker`, `CloudConflictDialog`, `NewGameScreen`, `PauseModal`, `StorageModal`, `InventoryModal`, `SettingsScreen`, `HudScreen`).
+- [ ] Alur browser penuh: menu → Lanjutkan; Game Baru → konfirmasi timpa; migrasi dengan save lama 1/2/3 slot di localStorage asli; akun login dengan konflik cloud.
+- [ ] Tata letak HP portrait 390×844 & landscape 844×390 belum dilihat: tombol aksi (74–97 px) sudah ≥48 px, tetapi tombol **Tas/Peta masih di kanan atas** (jauh dari jempol); kandidat v22: tombol Tas dekat klaster AKSI atau gestur geser. Lebar baris atas dengan ikon 48 px bisa membungkus ke dua baris.
+- [ ] Verifikasi visual v20 (gerak manusia + wajah) belum bisa dilakukan di sandbox: daftar cek v20 di bawah masih berlaku.
+- Tidak diubah: `hotbarItemIds` tidak ikut disimpan; `detectSaveConflict` tetap menandai konflik bila waktu beda >15 dtk dan isi beda (akun login di dua perangkat bisa sering melihat dialog); baris `game_saves` slot 2/3 lama tetap di server.
 
 ## 0g. Perubahan v20 — Gerak manusia, wajah baru, lore Bruk (15 Nov 2026) — BELUM diuji di browser/Codespace
 - **Rig** (`player/character.ts`): lengan = bahu+siku, kaki = pinggul+lutut+pergelangan, `torsoGroup` = pinggul, `chestGroup` = dada+kepala (berputar berlawanan). Alat kini ikut siku kanan.
@@ -281,7 +314,7 @@ Ditulis di sandbox tanpa vite/three/react: hanya `gameInfo.test.ts` (9 tes, lulu
 
 ## 4c. Perubahan v13 (15 Nov 2026) — BELUM diuji di browser
 - **Panel Info Game** (Pengaturan → Info Game) sebelumnya menampilkan kunci mentah (`info.title`, dst.) karena bagian `info` hilang dari `src/i18n/id.json` & `en.json`. Kini lengkap (Tentang, Mekanik, Misi, Panduan, Ketentuan, Privasi) + `settings.tabs.info`, `auth.base44`, `auth.base44NoCloud`. `npm test` (gameInfo.test.ts) memeriksa struktur kedua bahasa & placeholder.
-- **Keluar Game**: `ui/ExitGameButton.tsx` (dengan konfirmasi) di menu Jeda dan Pengaturan → Akun & Data. `exitGame()` di `game/main.ts`: simpan slot 1 (hanya bila dibuka dari Jeda), keluar layar penuh, lalu ke `../` (landing).
+- **Keluar Game**: `ui/ExitGameButton.tsx` (dengan konfirmasi) di menu Jeda dan Pengaturan → Akun & Data. `exitGame()` di `game/main.ts`: simpan (hanya bila ada dunia aktif; sejak v21 `saveGame()` menolak menyimpan tanpa dunia aktif), keluar layar penuh, lalu ke `../` (landing).
 - **Detektor pemain sekitar**: `ui/NearbyPlayers.tsx` di bawah jam HUD (mode Penuh): jumlah pemain dalam 120 m, jarak & panah arah pemain terdekat; ketuk membuka panel Pemain & Teman. Perlu Mode Online aktif.
 - HUD atas: pil kompas/bioma tidak lagi menimpa panel jam & tombol kanan (dipotong dengan elipsis).
 - `LEGAL_CONFIG`: pengelola bawaan "Jurkon Studio", tanggal 2026-11-15.

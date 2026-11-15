@@ -1,7 +1,7 @@
 import { RECIPES, type CraftingRecipe, type StationType } from '../config';
 import { gameState, type InventorySlot, type PlacedStructure } from '../core/state';
 import { eventBus } from '../core/eventBus';
-import { addItemTo, getItemCountIn, removeItemFrom } from './inventory';
+import { addItemTo, canAddAll, getItemCountIn, notifyBagFull, removeItemFrom } from './inventory';
 import { distance2D } from '../utils/math';
 import { t } from '../utils/i18n';
 
@@ -53,6 +53,11 @@ export function craftItem(recipeId: string): boolean {
   let next = gameState.inventory;
   for (const ing of recipe.ingredients) {
     next = removeItemFrom(next, ing.itemId, ing.qty);
+  }
+  // Tas penuh: batalkan SEBELUM mengubah apa pun, jangan sampai bahan habis tapi hasil hilang.
+  if (!canAddAll(next, [[recipe.outputId, recipe.outputQty]])) {
+    notifyBagFull();
+    return false;
   }
   next = addItemTo(next, recipe.outputId, recipe.outputQty);
   gameState.inventory = next;

@@ -37,7 +37,6 @@
   "menu": {
     "continue": "Continue",
     "newGame": "New Game",
-    "loadGame": "Load Game",
     "settings": "Settings",
     "credits": "Credits",
     "account": "Account & Cloud",
@@ -83,6 +82,8 @@
     "base44NoCloud": "Base44 sign-in is for your profile name only. Cloud saves and the leaderboard use another account."
   },
   "newGame": {
+    "overwriteTitle": "Overwrite Save?",
+    "overwriteBody": "You already have a save. Starting a new game will overwrite it and the old progress will be lost. Continue?",
     "title": "Prepare New Expedition",
     "explorerName": "Explorer Name",
     "defaultName": "Arka-01",
@@ -128,24 +129,16 @@
       "female": "Female"
     }
   },
-  "loadGame": {
-    "title": "Load Saved Expedition",
-    "empty": "No local or cloud saves found yet.",
-    "slot": "Slot",
+  "save": {
     "local": "Local",
     "cloud": "Cloud",
-    "playtime": "Playtime",
-    "seed": "Seed",
-    "load": "Load",
-    "delete": "Delete",
-    "confirmDeleteTitle": "Delete Save Slot?",
-    "confirmDeleteBody": "This save slot will be permanently removed.",
-    "back": "Back",
-    "conflictTitle": "Cloud Save Conflict Detected",
-    "conflictBody": "Your local save and cloud save for this slot differ. Choose which progress to keep.",
-    "keepLocal": "Keep Local",
-    "keepCloud": "Keep Cloud",
-    "keepBoth": "Keep Both (Save Local to Slot 3)"
+    "conflictTitle": "Device and Cloud Saves Differ",
+    "conflictBody": "The save on this device differs from your cloud save. Pick one to continue from; the other will be overwritten.",
+    "keepLocal": "Continue from This Device",
+    "keepCloud": "Continue from Cloud",
+    "legacyTitle": "Choose Your Save",
+    "legacyBody": "The game now uses a single autosave (no Slot 1/2/3). This device still has several old saves. Pick one to continue; the others will be deleted.",
+    "legacyNewest": "(newest)"
   },
   "settings": {
     "title": "Settings",
@@ -214,6 +207,7 @@
     "lowOxygen": "Oxygen running low! Follow the green arrow to clean air or use a Gas Filter.",
     "suffocating": "You are gasping — health will start dropping soon!",
     "bagRecovered": "Item bag recovered.",
+    "bagFull": "Bag full — free up some space first.",
     "bagPartial": "Inventory full — some items are still left in the bag.",
     "bagHint": "Your items are in a bag where you fell. Look for the yellow light pillar.",
     "autoFilter": "Gas Filter equipped automatically — oxygen almost gone.",
@@ -264,6 +258,7 @@
       "sheltered": "Sheltered"
     },
     "interact": "Press [E] to",
+    "interactTouch": "Tap ACT to",
     "actions": {
       "pickup_bag": "Pick Up Item Bag",
       "gather_rock": "Gather Basalt & Clay",
@@ -498,10 +493,9 @@
   "pause": {
     "title": "Expedition Paused",
     "resume": "Resume",
-    "saveLocal": "Save Slot 1",
-    "saveSlot2": "Save Slot 2",
-    "saveSlot3": "Save Slot 3",
-    "saveCloud": "Save to Cloud",
+    "save": "Save Now",
+    "saveCloudHint": "Also synced to the cloud.",
+    "saveFailedToast": "Save failed. Device storage is full or blocked.",
     "settings": "Settings",
     "mainMenu": "Return to Main Menu",
     "savedToast": "Game progress saved.",
@@ -518,6 +512,8 @@
     "use": "Use",
     "equip": "Assign Hotbar",
     "place": "Build / Snap Place",
+    "discardOne": "Drop 1",
+    "discardAll": "Drop All",
     "craft": "Craft",
     "missingMaterials": "Missing Materials",
     "needStation": "Requires",
@@ -1006,7 +1002,7 @@
         },
         {
           "title": "Death and saving",
-          "body": "When you die, your items become a glowing bag where you fell (max 3 bags). The game autosaves every {autosaveSec} seconds and has {saveSlots} save slots."
+          "body": "When you die, your items become a glowing bag where you fell (max 3 bags). The game autosaves every {autosaveSec} seconds to a single save; the Continue button on the main menu loads it."
         }
       ]
     },
@@ -1148,7 +1144,7 @@
         {
           "title": "Game data",
           "items": [
-            "Save slots (player and world state, seed, play time) and game settings",
+            "Game save (player and world state, seed, play time) and game settings",
             "Character birth time, death count and last active time, for immortal age and away-time calculation",
             "Score for the leaderboard"
           ]

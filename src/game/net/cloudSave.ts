@@ -1,8 +1,8 @@
 import { gameState } from '../core/state';
-import { migrateSaveData, type SaveSlotData } from '../systems/saveLoad';
+import { CLOUD_SAVE_SLOT, migrateSaveData, type SaveData } from '../systems/saveLoad';
 import { getSupabaseClient } from './supabaseClient';
 
-export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
+export async function saveToCloud(snapshot: SaveData): Promise<boolean> {
   const sb = getSupabaseClient();
   if (!sb || gameState.user.mode !== 'authenticated' || !gameState.user.userId) {
     return false;
@@ -11,7 +11,7 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
     const { error } = await sb.from('game_saves').upsert(
       {
         user_id: gameState.user.userId,
-        slot: snapshot.slot,
+        slot: CLOUD_SAVE_SLOT,
         world_seed: snapshot.worldSeed,
         player_state: {
           saveVersion: snapshot.saveVersion,
@@ -20,6 +20,7 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
           inventory: snapshot.inventory,
           playerPos: snapshot.playerPos,
           difficulty: snapshot.difficulty,
+          bornAtMs: snapshot.bornAtMs,
         },
         world_state: {
           placedStructures: snapshot.placedStructures,
@@ -31,6 +32,7 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
           discoveredPois: snapshot.discoveredPois,
           customWaypoints: snapshot.customWaypoints,
           unlockedRecipes: snapshot.unlockedRecipes,
+          wisdomPerks: snapshot.wisdomPerks,
           journalUnlocked: snapshot.journalUnlocked,
           campaignComplete: snapshot.campaignComplete,
           waterCollectedCount: snapshot.waterCollectedCount,
@@ -50,47 +52,39 @@ export async function saveToCloud(snapshot: SaveSlotData): Promise<boolean> {
   }
 }
 
-export async function listCloudSaves(): Promise<SaveSlotData[]> {
+/**
+ * Simpanan cloud terbaru milik akun. Akun lama mungkin punya baris di slot 2/3 (sistem slot dulu);
+ * baris itu tidak dihapus, tetapi yang terbaru yang dianggap simpanan cloud.
+ */
+export async function fetchCloudSave(): Promise<SaveData | null> {
   const sb = getSupabaseClient();
   if (!sb || gameState.user.mode !== 'authenticated' || !gameState.user.userId) {
-    return [];
+    return null;
   }
   try {
     const { data, error } = await sb
       .from('game_saves')
       .select('*')
       .eq('user_id', gameState.user.userId)
-      .order('slot', { ascending: true });
+      .order('updated_at', { ascending: false })
+      .limit(1);
 
-    if (error || !data) return [];
-
-    return data.map((row) => {
-      const p = (row.player_state || {}) as Record<string, unknown>;
-      const w = (row.world_state || {}) as Record<string, unknown>;
-      return migrateSaveData(
-        {
-          ...p,
-          ...w,
-          slot: Number(row.slot) || 1,
-          source: 'cloud',
-          worldSeed: String(row.world_seed || 'HADEAN-01'),
-          playtimeSec: Number(row.playtime) || 0,
-          updatedAt: String(row.updated_at || new Date().toISOString()),
-        },
-        'cloud'
-      );
-    });
+    if (error || !data || data.length === 0) return null;
+    const row = data[0];
+    const p = (row.player_state || {}) as Record<string, unknown>;
+    const w = (row.world_state || {}) as Record<string, unknown>;
+    return migrateSaveData(
+      {
+        ...p,
+        ...w,
+        source: 'cloud',
+        worldSeed: String(row.world_seed || 'HADEAN-01'),
+        playtimeSec: Number(row.playtime) || 0,
+        updatedAt: String(row.updated_at || new Date().toISOString()),
+      },
+      'cloud'
+    );
   } catch {
-    return [];
-  }
-}
-
-export async function deleteCloudSave(slot: number): Promise<void> {
-  const sb = getSupabaseClient();
-  if (!sb || gameState.user.mode !== 'authenticated' || !gameState.user.userId) return;
-  try {
-    await sb.from('game_saves').delete().eq('user_id', gameState.user.userId).eq('slot', slot);
-  } catch {
-    // Ignore offline error
+    return null;
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { gameState } from '../game/core/state';
 import { eventBus } from '../game/core/eventBus';
-import { saveGameToSlot } from '../game/systems/saveLoad';
+import { saveGame } from '../game/systems/saveLoad';
 import {
   WISDOM_PERKS, canBuyPerk, getImmortalAge, wisdomPointsEarned, wisdomPointsSpent,
 } from '../game/data/eden';
@@ -20,7 +20,7 @@ export function WisdomPanel() {
     for (const r of perk.unlockRecipes ?? []) {
       if (!gameState.unlockedRecipes.includes(r)) gameState.unlockedRecipes = [...gameState.unlockedRecipes, r];
     }
-    saveGameToSlot(1, true);
+    saveGame(true);
     eventBus.emit('toast:show', { text: `Kebijaksanaan terbuka: ${perk.name}`, type: 'success' });
     bump((n) => n + 1);
   };

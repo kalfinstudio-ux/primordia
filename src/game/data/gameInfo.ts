@@ -40,7 +40,6 @@ export interface InfoBlock {
 }
 
 export const NUM_CHAPTERS = 5;
-export const SAVE_SLOT_COUNT = 3;
 
 /** Nilai pengganti untuk {placeholder} di teks i18n bagian `info`. */
 export function buildInfoVars(opts: { biomeCount: number; contactEmail?: string; ownerName?: string; updatedAt: string }): Record<string, string> {
@@ -77,7 +76,6 @@ export function buildInfoVars(opts: { biomeCount: number; contactEmail?: string;
     drillCap: String(DRILL_CAP),
     carry: String(BASE_CARRY_WEIGHT),
     autosaveSec: String(AUTOSAVE_INTERVAL_SEC),
-    saveSlots: String(SAVE_SLOT_COUNT),
     wisdom: WISDOM_MILESTONES.map((w) => `${w.days} hari = ${w.points}`).join(', '),
     perks: WISDOM_PERKS.map((p) => p.name).join(', '),
     seasons: Object.values(SEASON_FX)

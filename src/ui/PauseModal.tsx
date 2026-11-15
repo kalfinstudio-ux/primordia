@@ -2,7 +2,7 @@ import { WisdomPanel } from './WisdomPanel';
 import { ExitGameButton } from './ExitGameButton';
 import React, { useState } from 'react';
 import { gameState, setScreen } from '../game/core/state';
-import { returnToMainMenu, saveCurrentSlot } from '../game/main';
+import { returnToMainMenu, saveCurrentGame } from '../game/main';
 import { multiplayer } from '../game/net/multiplayer';
 import { t } from '../game/utils/i18n';
 
@@ -29,38 +29,15 @@ export function PauseModal() {
             {t('pause.resume')}
           </button>
 
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => saveCurrentSlot(1, true)}
-              className="min-h-[42px] rounded-lg border border-stone-700 bg-stone-900 px-2 py-2 text-xs font-medium text-stone-100 hover:bg-stone-800"
-            >
-              {t('pause.saveLocal')}
-            </button>
-            <button
-              type="button"
-              onClick={() => saveCurrentSlot(2, true)}
-              className="min-h-[42px] rounded-lg border border-stone-700 bg-stone-900 px-2 py-2 text-xs font-medium text-stone-100 hover:bg-stone-800"
-            >
-              {t('pause.saveSlot2')}
-            </button>
-            <button
-              type="button"
-              onClick={() => saveCurrentSlot(3, true)}
-              className="min-h-[42px] rounded-lg border border-stone-700 bg-stone-900 px-2 py-2 text-xs font-medium text-stone-100 hover:bg-stone-800"
-            >
-              {t('pause.saveSlot3')}
-            </button>
-          </div>
-
+          <button
+            type="button"
+            onClick={() => saveCurrentGame()}
+            className="min-h-[48px] w-full rounded-lg border border-stone-700 bg-stone-900 px-5 py-2 text-sm font-medium text-stone-100 hover:bg-stone-800"
+          >
+            {t('pause.save')}
+          </button>
           {gameState.user.mode === 'authenticated' && (
-            <button
-              type="button"
-              onClick={() => saveCurrentSlot(1, true)}
-              className="min-h-[42px] w-full rounded-lg border border-stone-700 bg-stone-900 px-5 py-2 text-sm font-medium text-orange-300 hover:bg-stone-800"
-            >
-              {t('pause.saveCloud')}
-            </button>
+            <p className="-mt-1 text-center text-[11px] text-stone-500">{t('pause.saveCloudHint')}</p>
           )}
 
           {multiplayer.isAvailable() && (

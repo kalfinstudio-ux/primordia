@@ -37,7 +37,6 @@
   "menu": {
     "continue": "Lanjutkan",
     "newGame": "Permainan Baru",
-    "loadGame": "Muat Permainan",
     "settings": "Pengaturan",
     "credits": "Kredit",
     "account": "Akun & Cloud",
@@ -83,6 +82,8 @@
     "base44NoCloud": "Login Base44 hanya untuk nama profil. Cloud save dan peringkat memakai akun lain."
   },
   "newGame": {
+    "overwriteTitle": "Timpa Simpanan?",
+    "overwriteBody": "Kamu sudah punya simpanan. Memulai permainan baru akan menimpanya dan progres lama hilang. Lanjutkan?",
     "title": "Persiapan Ekspedisi Baru",
     "explorerName": "Nama Penjelajah",
     "defaultName": "Arka-01",
@@ -128,24 +129,16 @@
       "female": "Wanita"
     }
   },
-  "loadGame": {
-    "title": "Muat Ekspedisi Tersimpan",
-    "empty": "Belum ada data simpanan lokal maupun cloud.",
-    "slot": "Slot",
+  "save": {
     "local": "Lokal",
     "cloud": "Cloud",
-    "playtime": "Waktu Bermain",
-    "seed": "Seed",
-    "load": "Muat",
-    "delete": "Hapus",
-    "confirmDeleteTitle": "Hapus Simpanan?",
-    "confirmDeleteBody": "Data simpanan ini akan dihapus permanen.",
-    "back": "Kembali",
-    "conflictTitle": "Konflik Simpanan Cloud Terdeteksi",
-    "conflictBody": "Simpanan lokal dan cloud pada slot ini berbeda. Pilih progres yang ingin dipertahankan.",
-    "keepLocal": "Pertahankan Lokal",
-    "keepCloud": "Gunakan Cloud",
-    "keepBoth": "Simpan Keduanya (Lokal ke Slot 3)"
+    "conflictTitle": "Simpanan Berbeda di Perangkat dan Cloud",
+    "conflictBody": "Simpanan di perangkat ini berbeda dengan simpanan cloud. Pilih satu untuk dilanjutkan; yang lain akan ditimpa.",
+    "keepLocal": "Lanjutkan dari Perangkat Ini",
+    "keepCloud": "Lanjutkan dari Cloud",
+    "legacyTitle": "Pilih Simpananmu",
+    "legacyBody": "Game kini memakai satu simpanan otomatis (tanpa Slot 1/2/3). Perangkat ini masih punya beberapa simpanan lama. Pilih satu untuk dilanjutkan; simpanan lainnya akan dihapus.",
+    "legacyNewest": "(terbaru)"
   },
   "settings": {
     "title": "Pengaturan",
@@ -214,6 +207,7 @@
     "lowOxygen": "Oksigen menipis! Ikuti panah hijau ke udara bersih atau pakai Filter Gas.",
     "suffocating": "Kamu sesak napas — nyawa akan turun sebentar lagi!",
     "bagRecovered": "Kantong barang diambil kembali.",
+    "bagFull": "Tas penuh — kosongkan tempat dulu.",
     "bagPartial": "Inventaris penuh — sebagian barang masih tertinggal di kantong.",
     "bagHint": "Barangmu tertinggal di kantong di lokasi tumbang. Cari pilar cahaya kuning.",
     "autoFilter": "Filter Gas dipasang otomatis — oksigen hampir habis.",
@@ -264,6 +258,7 @@
       "sheltered": "Terlindung Shelter"
     },
     "interact": "Tekan [E] untuk",
+    "interactTouch": "Ketuk AKSI untuk",
     "actions": {
       "pickup_bag": "Ambil Kantong Barang",
       "gather_rock": "Ambil Basalt & Lempung",
@@ -498,10 +493,9 @@
   "pause": {
     "title": "Ekspedisi Dijeda",
     "resume": "Lanjutkan",
-    "saveLocal": "Simpan Slot 1",
-    "saveSlot2": "Simpan Slot 2",
-    "saveSlot3": "Simpan Slot 3",
-    "saveCloud": "Simpan ke Cloud",
+    "save": "Simpan Sekarang",
+    "saveCloudHint": "Juga disinkronkan ke cloud.",
+    "saveFailedToast": "Gagal menyimpan. Penyimpanan perangkat penuh atau diblokir.",
     "settings": "Pengaturan",
     "mainMenu": "Kembali ke Menu Utama",
     "savedToast": "Progres permainan tersimpan.",
@@ -518,6 +512,8 @@
     "use": "Gunakan",
     "equip": "Pasang Hotbar",
     "place": "Bangun / Tempelkan",
+    "discardOne": "Buang 1",
+    "discardAll": "Buang Semua",
     "craft": "Rakit",
     "missingMaterials": "Bahan Kurang",
     "needStation": "Butuh",
@@ -1006,7 +1002,7 @@
         },
         {
           "title": "Kematian dan penyimpanan",
-          "body": "Saat mati, barangmu menjadi kantong bercahaya di lokasi kematian (maks 3 kantong). Game menyimpan otomatis tiap {autosaveSec} detik dan punya {saveSlots} slot simpan."
+          "body": "Saat mati, barangmu menjadi kantong bercahaya di lokasi kematian (maks 3 kantong). Game menyimpan otomatis tiap {autosaveSec} detik ke satu simpanan; tombol Lanjutkan di menu utama memuatnya."
         }
       ]
     },
@@ -1148,7 +1144,7 @@
         {
           "title": "Data permainan",
           "items": [
-            "Slot simpan (kondisi pemain dan dunia, seed, waktu main) dan pengaturan game",
+            "Simpanan game (kondisi pemain dan dunia, seed, waktu main) dan pengaturan game",
             "Waktu lahir karakter, jumlah kematian, dan waktu terakhir aktif, untuk umur abadi dan hitungan lama pergi",
             "Skor untuk papan peringkat"
           ]

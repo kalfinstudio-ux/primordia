@@ -10,7 +10,6 @@ const OnboardingScreen = lazy(() => import('./OnboardingScreen').then((m) => ({ 
 const MainMenuScreen = lazy(() => import('./MainMenuScreen').then((m) => ({ default: m.MainMenuScreen })));
 const AuthScreen = lazy(() => import('./AuthScreen').then((m) => ({ default: m.AuthScreen })));
 const NewGameScreen = lazy(() => import('./NewGameScreen').then((m) => ({ default: m.NewGameScreen })));
-const LoadGameScreen = lazy(() => import('./LoadGameScreen').then((m) => ({ default: m.LoadGameScreen })));
 const SettingsScreen = lazy(() => import('./SettingsScreen').then((m) => ({ default: m.SettingsScreen })));
 const PauseModal = lazy(() => import('./PauseModal').then((m) => ({ default: m.PauseModal })));
 const InventoryModal = lazy(() => import('./InventoryModal').then((m) => ({ default: m.InventoryModal })));
@@ -59,7 +58,6 @@ export function ScreenRouter() {
         {screen === 'menu' && <MainMenuScreen />}
         {screen === 'auth' && <AuthScreen />}
         {screen === 'newGame' && <NewGameScreen />}
-        {screen === 'loadGame' && <LoadGameScreen />}
         {screen === 'settings' && <SettingsScreen />}
         {screen === 'pause' && <PauseModal />}
         {screen === 'inventory' && <InventoryModal />}

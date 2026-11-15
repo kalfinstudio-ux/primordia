@@ -61,6 +61,15 @@ export function HudScreen() {
   const [joyKnob, setJoyKnob] = useState({ x: 0, y: 0 });
   const [emoteOpen, setEmoteOpen] = useState(false);
   const [socialUnread, setSocialUnread] = useState(0);
+  // HUD hilang (mis. kembali ke menu) saat jempol masih menekan: touchend tidak akan sampai ke elemen
+  // yang sudah dilepas, jadi lepaskan joystick dan tombol Lari agar karakter tidak berjalan/berlari sendiri.
+  useEffect(
+    () => () => {
+      input.setTouchJoystick(0, 0);
+      input.setVirtualHold(gameState.settings.controls.keys.sprint, false);
+    },
+    []
+  );
   useEffect(() => eventBus.on<number>('social:unread', (n) => setSocialUnread(typeof n === 'number' ? n : 0)), []);
   const hudMode = useSyncExternalStore(subscribeHudMode, getHudMode, getHudMode);
   const [modeFlash, setModeFlash] = useState<string | null>(null);
@@ -710,7 +719,7 @@ export function HudScreen() {
             className="pointer-events-auto min-h-[40px] rounded-lg border border-orange-500/80 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-100 shadow-lg"
             style={{ backgroundColor: 'rgba(20, 14, 11, 0.92)' }}
           >
-            {t('hud.interact')} {t(`hud.actions.${snap.interactTarget.actionKey}`)}
+            {touchMode ? t('hud.interactTouch') : t('hud.interact')} {t(`hud.actions.${snap.interactTarget.actionKey}`)}
           </button>
         )}
 
@@ -845,7 +854,7 @@ function HudIconBtn({
         e.currentTarget.blur();
         onClick(e);
       }}
-      className="flex h-11 w-11 sm:h-12 sm:w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-stone-800 text-stone-200 hover:border-orange-500 hover:text-white"
+      className="flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-stone-800 text-stone-200 hover:border-orange-500 hover:text-white"
       style={{ backgroundColor: 'rgba(15, 12, 11, 0.9)', opacity: dim ? 0.55 : 1 }}
     >
       {children}

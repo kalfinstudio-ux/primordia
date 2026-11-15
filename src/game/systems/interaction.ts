@@ -2,17 +2,31 @@ import { gameState, setScreen } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import type { ChunkManager } from '../world/chunkManager';
 import type { WorldInteractable } from '../world/props';
-import { addItem, damageToolDurability, getBestMiningToolId, hasItem, removeItem } from './inventory';
+import { addItem, canAddAll, damageToolDurability, getBestMiningToolId, hasItem, notifyBagFull, removeItem } from './inventory';
 import { t } from '../utils/i18n';
 import type { SkySystem } from '../world/sky';
+
+/**
+ * Beri `drops` hanya bila semuanya muat di tas. Bila penuh: tampilkan peringatan dan kembalikan false,
+ * sehingga node sumber daya tidak habis dan tidak ada barang yang hilang diam-diam.
+ */
+function grant(drops: Array<[string, number]>): boolean {
+  if (!canAddAll(gameState.inventory, drops)) {
+    notifyBagFull();
+    return false;
+  }
+  for (const [id, qty] of drops) addItem(id, qty);
+  return true;
+}
 
 export function performInteraction(target: WorldInteractable, chunks: ChunkManager, sky?: SkySystem): void {
   const toolId = getBestMiningToolId();
   const mult = toolId === 'meteor_drill' ? 4 : toolId === 'obsidian_pick' ? 3 : toolId === 'stone_axe' ? 2 : 1;
 
   if (target.kind === 'rock') {
-    addItem('basalt_rock', 2 * mult);
-    if (Math.random() < 0.75) addItem('ash_clay', 1 * Math.max(1, Math.floor(mult / 2)));
+    const drops: Array<[string, number]> = [['basalt_rock', 2 * mult]];
+    if (Math.random() < 0.75) drops.push(['ash_clay', 1 * Math.max(1, Math.floor(mult / 2))]);
+    if (!grant(drops)) return;
     if (toolId) damageToolDurability(toolId, 1);
     target.depleted = true;
     target.mesh.visible = false;
@@ -20,8 +34,9 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     eventBus.emit('audio:sfx', 'gather');
     eventBus.emit('toast:show', { text: `+${2 * mult} ${t('items.basalt_rock.name')}`, type: 'info' });
   } else if (target.kind === 'mineral') {
-    addItem('sulfur_mineral', 1 * mult);
-    if (Math.random() < 0.65) addItem('iron_slag', 1);
+    const drops: Array<[string, number]> = [['sulfur_mineral', 1 * mult]];
+    if (Math.random() < 0.65) drops.push(['iron_slag', 1]);
+    if (!grant(drops)) return;
     if (toolId) damageToolDurability(toolId, 1);
     target.depleted = true;
     target.mesh.visible = false;
@@ -29,7 +44,7 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     eventBus.emit('audio:sfx', 'gather');
     eventBus.emit('toast:show', { text: `+${1 * mult} ${t('items.sulfur_mineral.name')}`, type: 'info' });
   } else if (target.kind === 'obsidian') {
-    addItem('obsidian_shard', 1 * Math.max(1, mult - 1));
+    if (!grant([['obsidian_shard', 1 * Math.max(1, mult - 1)]])) return;
     gameState.obsidianCollectedCount += 1;
     if (toolId) damageToolDurability(toolId, 2);
     target.depleted = true;
@@ -38,15 +53,14 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     eventBus.emit('audio:sfx', 'gather');
     eventBus.emit('toast:show', { text: `+${Math.max(1, mult - 1)} ${t('items.obsidian_shard.name')}`, type: 'info' });
   } else if (target.kind === 'salt') {
-    addItem('thermal_salt', 2);
-    addItem('silicate_sand', 2);
+    if (!grant([['thermal_salt', 2], ['silicate_sand', 2]])) return;
     target.depleted = true;
     target.mesh.visible = false;
     chunks.spatialHash.remove(`col_${target.id}`);
     eventBus.emit('audio:sfx', 'gather');
     eventBus.emit('toast:show', { text: `+2 ${t('items.thermal_salt.name')}`, type: 'info' });
   } else if (target.kind === 'meteor_iron') {
-    addItem('meteor_iron', toolId === 'meteor_drill' ? 2 : 1);
+    if (!grant([['meteor_iron', toolId === 'meteor_drill' ? 2 : 1]])) return;
     gameState.meteorIronCollectedCount += 1;
     if (toolId) damageToolDurability(toolId, 2);
     target.depleted = true;
@@ -55,7 +69,7 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     eventBus.emit('audio:sfx', 'gather');
     eventBus.emit('toast:show', { text: `+1 ${t('items.meteor_iron.name')}`, type: 'success' });
   } else if (target.kind === 'crystal') {
-    addItem('primordial_crystal', 1);
+    if (!grant([['primordial_crystal', 1]])) return;
     gameState.crystalsExtractedCount += 1;
     if (toolId) damageToolDurability(toolId, 2);
     target.depleted = true;
@@ -81,9 +95,14 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     } else {
       gameState.vitals.water = 100;
       gameState.waterCollectedCount += 1;
-      addItem('thermal_salt', 1);
       eventBus.emit('audio:sfx', 'water');
-      eventBus.emit('toast:show', { text: `+1 ${t('items.thermal_salt.name')}`, type: 'info' });
+      // Air tetap terisi walau tas penuh; garam hanya diberi bila muat.
+      if (canAddAll(gameState.inventory, [['thermal_salt', 1]])) {
+        addItem('thermal_salt', 1);
+        eventBus.emit('toast:show', { text: `+1 ${t('items.thermal_salt.name')}`, type: 'info' });
+      } else {
+        notifyBagFull();
+      }
     }
   } else if (target.kind === 'storage_chest') {
     gameState.activeStorageId = target.id;
@@ -91,8 +110,8 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
   } else if (target.kind === 'water_collector') {
     const struct = gameState.placedStructures.find((s) => s.id === target.id);
     if (struct && (struct.waterStored || 0) >= 20) {
+      if (!grant([['purified_water', 1]])) return;
       struct.waterStored = 0;
-      addItem('purified_water', 1);
       eventBus.emit('audio:sfx', 'water');
       eventBus.emit('toast:show', { text: `+1 ${t('items.purified_water.name')}`, type: 'success' });
     } else {
@@ -102,8 +121,8 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
   } else if (target.kind === 'garden_plot') {
     const struct = gameState.placedStructures.find((s) => s.id === target.id);
     if (struct && (struct.growth || 0) >= 100) {
+      if (!grant([['ash_clay', 3]])) return;
       struct.growth = 0;
-      addItem('ash_clay', 3);
       gameState.vitals.health = Math.min(100, gameState.vitals.health + 15);
       gameState.vitals.radiation = Math.max(0, gameState.vitals.radiation - 10);
       eventBus.emit('audio:sfx', 'gather');
@@ -115,9 +134,10 @@ export function performInteraction(target: WorldInteractable, chunks: ChunkManag
     const struct = gameState.placedStructures.find((s) => s.id === target.id);
     const n = Math.floor(struct?.stored || 0);
     if (struct && n > 0) {
+      const drops: Array<[string, number]> = [['basalt_rock', n]];
+      if (n >= 8) drops.push(['iron_slag', Math.floor(n / 8)]);
+      if (!grant(drops)) return;
       struct.stored = 0;
-      addItem('basalt_rock', n);
-      if (n >= 8) addItem('iron_slag', Math.floor(n / 8));
       eventBus.emit('audio:sfx', 'gather');
       eventBus.emit('toast:show', { text: `+${n} ${t('items.basalt_rock.name')}`, type: 'success' });
     } else {

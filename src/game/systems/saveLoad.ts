@@ -1,7 +1,7 @@
 import { buildAwayReport, resolveAwayWindow, sanitizeBornAt } from '../data/eden';
 import { fetchAwaySeconds, startPresenceHeartbeat } from '../net/presence';
 import { setAwayReport } from './awayReport';
-import { DEFAULT_AVATAR, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
+import { DEFAULT_AVATAR, ITEMS, RECIPES, SAVE_VERSION, type AvatarConfig, type DifficultyLevel } from '../config';
 import {
   type DeathBag,
   createInitialVitals,
@@ -12,13 +12,13 @@ import {
   type PlacedStructure,
   type PlayerVitals,
 } from '../core/state';
-import { readStorage, writeStorage } from '../utils/storage';
+import { readStorage, removeStorage, writeStorage } from '../utils/storage';
 import { eventBus } from '../core/eventBus';
-import { saveToCloud, listCloudSaves, deleteCloudSave } from '../net/cloudSave';
+import { saveToCloud, fetchCloudSave } from '../net/cloudSave';
 
-export interface SaveSlotData {
+/** Satu simpanan permainan (lokal atau cloud). Sejak save v3 tidak ada lagi slot. */
+export interface SaveData {
   saveVersion: number;
-  slot: number;
   source: 'local' | 'cloud';
   worldSeed: string;
   difficulty: DifficultyLevel;
@@ -48,9 +48,44 @@ export interface SaveSlotData {
   updatedAt: string;
 }
 
-const LOCAL_SAVES_KEY = 'save_slots';
+/** Kunci simpanan tunggal (awalan `primordia_` ditambahkan oleh utils/storage). */
+const SAVE_KEY = 'save';
+/** Kunci lama (save v1/v2 dengan Slot 1–3). Hanya dibaca untuk migrasi lalu dihapus. */
+const LEGACY_SLOTS_KEY = 'save_slots';
+const LEGACY_LAST_SLOT_KEY = 'last_slot';
+/** Baris cloud memakai satu slot tetap agar skema Supabase (user_id, slot) tidak perlu diubah. */
+export const CLOUD_SAVE_SLOT = 1;
+const CLOUD_TIMEOUT_MS = 4000;
 
-export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 'cloud' = 'local'): SaveSlotData {
+/** Buang entri inventaris rusak: barang tak dikenal, jumlah bukan angka/<=0. Durability dijaga bila valid. */
+export function sanitizeSlots(raw: unknown): InventorySlot[] {
+  if (!Array.isArray(raw)) return [];
+  const out: InventorySlot[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const e = entry as Partial<InventorySlot>;
+    if (typeof e.itemId !== 'string' || !ITEMS[e.itemId]) continue;
+    const qty = Math.floor(Number(e.qty));
+    if (!Number.isFinite(qty) || qty <= 0) continue;
+    const slot: InventorySlot = { itemId: e.itemId, qty };
+    if (typeof e.durability === 'number' && Number.isFinite(e.durability)) slot.durability = Math.max(0, e.durability);
+    out.push(slot);
+  }
+  return out;
+}
+
+/** Vital bukan angka berhingga (mis. NaN tersimpan sebagai null) diganti nilai awal agar tidak merambat. */
+function sanitizeVitals(raw: Partial<PlayerVitals>, defaults: PlayerVitals): PlayerVitals {
+  const out = { ...defaults } as unknown as Record<string, number>;
+  const def = defaults as unknown as Record<string, number>;
+  for (const key of Object.keys(def)) {
+    const v = (raw as Record<string, unknown>)[key];
+    if (typeof v === 'number' && Number.isFinite(v)) out[key] = v;
+  }
+  return out as unknown as PlayerVitals;
+}
+
+export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 'cloud' = 'local'): SaveData {
   const defaultVitals = createInitialVitals();
   const rawVitals = (raw.vitals || {}) as Partial<PlayerVitals>;
   const rawAvatar = (raw.avatar || {}) as Partial<AvatarConfig>;
@@ -59,13 +94,12 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
 
   return {
     saveVersion: SAVE_VERSION,
-    slot: Number(raw.slot) || 1,
     source: (raw.source as 'local' | 'cloud') || source,
     worldSeed: String(raw.worldSeed || 'HADEAN-01'),
     difficulty: (raw.difficulty as DifficultyLevel) || 'survivor',
     avatar: { ...DEFAULT_AVATAR, ...rawAvatar },
-    vitals: { ...defaultVitals, ...rawVitals },
-    inventory: Array.isArray(raw.inventory) ? (raw.inventory as InventorySlot[]) : [],
+    vitals: sanitizeVitals(rawVitals, defaultVitals),
+    inventory: sanitizeSlots(raw.inventory),
     placedStructures: rawStructures.map((s) => {
       const item = s as Partial<PlacedStructure>;
       return {
@@ -90,9 +124,11 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
       y: Number(b.y) || 0,
       z: Number(b.z) || 0,
       createdAtSec: Number(b.createdAtSec) || 0,
-      items: Array.isArray(b.items) ? (b.items as InventorySlot[]).map((it) => ({ ...it })) : [],
+      items: sanitizeSlots(b.items),
     })),
-    storageInventories: (raw.storageInventories as Record<string, InventorySlot[]>) || {},
+    storageInventories: Object.fromEntries(
+      Object.entries(isPlainObject(raw.storageInventories) ? raw.storageInventories : {}).map(([id, slots]) => [id, sanitizeSlots(slots)])
+    ),
     completedQuests: Array.isArray(raw.completedQuests) ? (raw.completedQuests as string[]) : [],
     activeQuestIdx: Number(raw.activeQuestIdx) || 0,
     discoveredChunks: Array.isArray(raw.discoveredChunks) ? (raw.discoveredChunks as string[]) : ['0,0'],
@@ -106,7 +142,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     crystalsExtractedCount: Number(raw.crystalsExtractedCount) || 0,
     obsidianCollectedCount: Number(raw.obsidianCollectedCount) || 0,
     meteorIronCollectedCount: Number(raw.meteorIronCollectedCount) || 0,
-    playerPos: (raw.playerPos as SaveSlotData['playerPos']) || { x: 0, y: 0, z: 18, yaw: Math.PI },
+    playerPos: (raw.playerPos as SaveData['playerPos']) || { x: 0, y: 0, z: 18, yaw: Math.PI },
     playtimeSec: Number(raw.playtimeSec) || 0,
     bornAtMs: raw.bornAtMs === undefined ? undefined : sanitizeBornAt(raw.bornAtMs),
     distanceExplored: Number(raw.distanceExplored) || 0,
@@ -114,7 +150,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
   };
 }
 
-export function detectSaveConflict(local: SaveSlotData, cloud: SaveSlotData): boolean {
+export function detectSaveConflict(local: SaveData, cloud: SaveData): boolean {
   const timeDiffMs = Math.abs(Date.parse(local.updatedAt) - Date.parse(cloud.updatedAt));
   return (
     timeDiffMs > 15000 &&
@@ -124,10 +160,9 @@ export function detectSaveConflict(local: SaveSlotData, cloud: SaveSlotData): bo
   );
 }
 
-export function buildCurrentSaveSnapshot(slot: number): SaveSlotData {
+export function buildCurrentSaveSnapshot(): SaveData {
   return {
     saveVersion: SAVE_VERSION,
-    slot,
     source: 'local',
     worldSeed: gameState.worldSeed,
     difficulty: gameState.settings.gameplay.difficulty,
@@ -158,63 +193,124 @@ export function buildCurrentSaveSnapshot(slot: number): SaveSlotData {
   };
 }
 
-export function saveGameToSlot(slot = 1, syncCloud = true): SaveSlotData {
-  const snapshot = buildCurrentSaveSnapshot(slot);
-  const all = readStorage<Record<string, Record<string, unknown>>>(LOCAL_SAVES_KEY, {});
-  all[String(slot)] = snapshot as unknown as Record<string, unknown>;
-  writeStorage(LOCAL_SAVES_KEY, all);
-  writeStorage('last_slot', slot);
+/**
+ * Simpan permainan (satu simpanan). Mengembalikan null bila tidak ada dunia aktif
+ * (mis. dipanggil dari menu utama: jangan menimpa simpanan nyata dengan keadaan kosong)
+ * atau bila penyimpanan lokal gagal. Akun login juga disinkronkan ke cloud.
+ */
+export function saveGame(syncCloud = true): SaveData | null {
+  if (!gameState.activeWorldLoaded) return null;
+  const snapshot = buildCurrentSaveSnapshot();
+  const localOk = writeStorage(SAVE_KEY, snapshot);
 
   if (syncCloud && gameState.user.mode === 'authenticated') {
     void saveToCloud(snapshot);
   }
+  if (!localOk) return null;
   eventBus.emit('save:completed', snapshot);
   return snapshot;
 }
 
-export function getLocalSaves(): SaveSlotData[] {
-  const all = readStorage<Record<string, Record<string, unknown>>>(LOCAL_SAVES_KEY, {});
-  return Object.values(all)
-    .map((raw) => migrateSaveData(raw, 'local'))
-    .sort((a, b) => a.slot - b.slot);
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-export function getLatestLocalSave(): SaveSlotData | null {
-  const saves = getLocalSaves();
-  if (saves.length === 0) return null;
-  return [...saves].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0];
+/** Simpanan lokal saat ini, atau null. Tidak menyentuh data lama (lihat `migrateLegacySlots`). */
+export function getLocalSave(): SaveData | null {
+  const raw = readStorage<unknown>(SAVE_KEY, null);
+  return isPlainObject(raw) ? migrateSaveData(raw, 'local') : null;
 }
 
-export async function getAllAvailableSaves(): Promise<{
-  saves: SaveSlotData[];
-  conflicts: Array<{ slot: number; local: SaveSlotData; cloud: SaveSlotData }>;
-}> {
-  const local = getLocalSaves();
-  if (gameState.user.mode !== 'authenticated') {
-    return { saves: local, conflicts: [] };
+function saveFingerprint(s: SaveData): string {
+  return `${s.worldSeed}|${s.updatedAt}|${s.playtimeSec}`;
+}
+
+/**
+ * Migrasi dari sistem Slot 1/2/3 (save v1/v2) ke satu simpanan, tanpa menghilangkan progres.
+ * - Tepat satu simpanan lama dan belum ada simpanan baru: dipindahkan diam-diam, kunci lama dihapus.
+ * - Lebih dari satu simpanan berbeda: TIDAK ada yang dihapus; daftar pilihan dikembalikan (terbaru dulu)
+ *   agar pemain memilih sekali lewat `resolveLegacyChoice`.
+ * - Kunci lama hanya dihapus setelah penulisan kunci baru berhasil.
+ */
+export function migrateLegacySlots(): SaveData[] {
+  const legacyRaw = readStorage<unknown>(LEGACY_SLOTS_KEY, null);
+  if (legacyRaw === null) {
+    removeStorage(LEGACY_LAST_SLOT_KEY);
+    return [];
   }
-  const cloud = await listCloudSaves();
-  const conflicts: Array<{ slot: number; local: SaveSlotData; cloud: SaveSlotData }> = [];
-  for (const l of local) {
-    const match = cloud.find((c) => c.slot === l.slot);
-    if (match && detectSaveConflict(l, match)) {
-      conflicts.push({ slot: l.slot, local: l, cloud: match });
+  const legacy: SaveData[] = isPlainObject(legacyRaw)
+    ? Object.values(legacyRaw)
+        .filter(isPlainObject)
+        .map((raw) => migrateSaveData(raw, 'local'))
+    : [];
+  const current = getLocalSave();
+
+  const unique = new Map<string, SaveData>();
+  for (const sv of [...(current ? [current] : []), ...legacy]) {
+    if (!unique.has(saveFingerprint(sv))) unique.set(saveFingerprint(sv), sv);
+  }
+  const candidates = [...unique.values()].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+  if (candidates.length <= 1) {
+    if (candidates.length === 1 && !current) {
+      if (!writeStorage(SAVE_KEY, { ...candidates[0], source: 'local' })) return [];
     }
+    removeStorage(LEGACY_SLOTS_KEY);
+    removeStorage(LEGACY_LAST_SLOT_KEY);
+    return [];
   }
-  return { saves: [...local, ...cloud], conflicts };
+  return candidates;
 }
 
-export async function deleteSaveSlot(slot: number, source: 'local' | 'cloud'): Promise<void> {
-  if (source === 'local') {
-    const all = readStorage<Record<string, Record<string, unknown>>>(LOCAL_SAVES_KEY, {});
-    delete all[String(slot)];
-    writeStorage(LOCAL_SAVES_KEY, all);
-  } else {
-    await deleteCloudSave(slot);
+/** Pemain memilih satu simpanan dari `migrateLegacySlots`: jadikan simpanan utama, buang sisanya. */
+export function resolveLegacyChoice(chosen: SaveData): boolean {
+  if (!writeStorage(SAVE_KEY, { ...chosen, source: 'local' })) return false;
+  removeStorage(LEGACY_SLOTS_KEY);
+  removeStorage(LEGACY_LAST_SLOT_KEY);
+  return true;
+}
+
+export type ContinueDecision =
+  | { kind: 'none' }
+  | { kind: 'load'; save: SaveData }
+  | { kind: 'conflict'; local: SaveData; cloud: SaveData };
+
+/** Murni: tentukan apa yang terjadi saat menekan "Lanjutkan" dengan simpanan lokal dan/atau cloud. */
+export function decideContinue(local: SaveData | null, cloud: SaveData | null): ContinueDecision {
+  if (!local && !cloud) return { kind: 'none' };
+  if (local && !cloud) return { kind: 'load', save: local };
+  if (!local && cloud) return { kind: 'load', save: cloud };
+  return detectSaveConflict(local!, cloud!) ? { kind: 'conflict', local: local!, cloud: cloud! } : { kind: 'load', save: local! };
+}
+
+async function cloudSaveOrNull(): Promise<SaveData | null> {
+  if (gameState.user.mode !== 'authenticated') return null;
+  try {
+    return await Promise.race([
+      fetchCloudSave(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), CLOUD_TIMEOUT_MS)),
+    ]);
+  } catch {
+    return null;
   }
 }
 
-export function applySaveDataToState(raw: SaveSlotData): void {
+/** Siapkan "Lanjutkan": bandingkan simpanan lokal dengan cloud (bila login dan server menjawab). */
+export async function resolveContinue(): Promise<ContinueDecision> {
+  return decideContinue(getLocalSave(), await cloudSaveOrNull());
+}
+
+/** Selesaikan konflik: 'local' menimpa cloud, 'cloud' menimpa simpanan lokal. Mengembalikan simpanan terpilih. */
+export async function applyConflictChoice(choice: 'local' | 'cloud', local: SaveData, cloud: SaveData): Promise<SaveData> {
+  if (choice === 'local') {
+    await saveToCloud(local);
+    return local;
+  }
+  writeStorage(SAVE_KEY, { ...cloud, source: 'local' });
+  return cloud;
+}
+
+export function applySaveDataToState(raw: SaveData): void {
   const data = migrateSaveData(raw as unknown as Record<string, unknown>, raw.source);
   gameState.worldSeed = data.worldSeed;
   gameState.settings.gameplay.difficulty = data.difficulty;

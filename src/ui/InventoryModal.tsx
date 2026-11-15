@@ -6,6 +6,7 @@ import { canCraft, craftItem, hasStationNearby } from '../game/systems/crafting'
 import {
   assignToHotbar,
   computeCarryWeight,
+  discardItem,
   getItemCount,
   getMaxCarryWeightIn,
   useItemById,
@@ -193,6 +194,24 @@ export function InventoryModal() {
                       >
                         {t('inventory.equip')}
                       </button>
+                      {selectedDef.id !== 'seed_of_life' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => discardItem(selectedDef.id)}
+                            className="min-h-[44px] rounded-lg border border-stone-800 bg-stone-950 px-3 py-1.5 text-xs font-medium text-stone-400 hover:border-red-800 hover:text-red-300"
+                          >
+                            {t('inventory.discardOne')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => discardItem(selectedDef.id, true)}
+                            className="min-h-[44px] rounded-lg border border-stone-800 bg-stone-950 px-3 py-1.5 text-xs font-medium text-stone-400 hover:border-red-800 hover:text-red-300"
+                          >
+                            {t('inventory.discardAll')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </>
                 ) : (

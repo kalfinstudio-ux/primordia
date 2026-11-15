@@ -1,7 +1,7 @@
 import type { AvatarConfig, DifficultyLevel } from './config';
 import { gameState, resetRunState, saveSettingsToLocal, setScreen } from './core/state';
 import { SceneManager } from './scenes/SceneManager';
-import { applySaveDataToState, getLatestLocalSave, saveGameToSlot, type SaveSlotData } from './systems/saveLoad';
+import { applySaveDataToState, getLocalSave, saveGame, type SaveData } from './systems/saveLoad';
 import { audioSystem } from './systems/audio';
 import { initAuthSession } from './net/auth';
 import { submitLeaderboardScore } from './net/leaderboard';
@@ -40,7 +40,8 @@ export async function bootGame(canvasContainer: HTMLElement): Promise<void> {
 export function completeOnboarding(): void {
   gameState.onboardingDone = true;
   writeStorage('onboarding_done', true);
-  setScreen('menu');
+  // Pemain baru (belum ada simpanan): langsung ke persiapan ekspedisi, satu ketukan lebih sedikit.
+  setScreen(gameState.activeWorldLoaded || getLocalSave() ? 'menu' : 'newGame');
 }
 
 export function startNewExpedition(
@@ -67,14 +68,14 @@ export function startNewGamePlus(): void {
   startNewExpedition(nextSeed, gameState.avatar, gameState.settings.gameplay.difficulty, true);
 }
 
+/** Lanjutkan dunia yang sedang aktif, atau muat simpanan lokal. Dengan cloud: lihat `resolveContinue`. */
 export function continueLatestExpedition(): void {
   audioSystem.unlock();
   if (gameState.activeWorldLoaded) {
-    setScreen('hud');
-    manager?.enterWorld(false);
+    openLoadedWorld();
     return;
   }
-  const latest = getLatestLocalSave();
+  const latest = getLocalSave();
   if (latest) {
     loadExpedition(latest);
   } else {
@@ -82,11 +83,23 @@ export function continueLatestExpedition(): void {
   }
 }
 
-export function loadExpedition(save: SaveSlotData): void {
+export function loadExpedition(save: SaveData): void {
   audioSystem.unlock();
   applySaveDataToState(save);
+  openLoadedWorld();
+}
+
+/**
+ * Masuk ke dunia yang sudah dimuat. Bila nyawa 0 (simpanan dibuat saat mati, atau kembali dari
+ * layar Game Over lewat menu), tampilkan lagi layar Game Over alih-alih mengulang kematian di HUD.
+ */
+function openLoadedWorld(): void {
   setScreen('hud');
   manager?.enterWorld(false);
+  if (gameState.vitals.health <= 0) {
+    if (!gameState.deathReason) gameState.deathReason = 'reasonGeneric';
+    setScreen('gameOver');
+  }
 }
 
 export function fastTravelToBeacon(x: number, z: number): void {
@@ -120,13 +133,13 @@ export function returnToMainMenu(): void {
 }
 
 /**
- * Keluar game: simpan (slot 1 = slot simpan otomatis) bila sedang bermain, keluar layar penuh,
+ * Keluar game: simpan bila ada dunia aktif, keluar layar penuh,
  * lalu kembali ke halaman utama situs (satu tingkat di atas /play/).
  */
 export function exitGame(saveFirst = true): void {
   if (saveFirst) {
     try {
-      saveGameToSlot(1, true);
+      saveGame(true);
     } catch {
       /* tetap keluar walau gagal menyimpan */
     }
@@ -144,9 +157,12 @@ export function respawnExplorer(): void {
   manager?.respawnAtSafeRidge();
 }
 
-export function saveCurrentSlot(slot = 1, syncCloud = true): void {
-  saveGameToSlot(slot, syncCloud);
-  eventBus.emit('toast:show', { text: t('pause.savedToast'), type: 'success' });
+export function saveCurrentGame(): void {
+  const saved = saveGame(true);
+  eventBus.emit('toast:show', {
+    text: saved ? t('pause.savedToast') : t('pause.saveFailedToast'),
+    type: saved ? 'success' : 'warn',
+  });
 }
 
 export function destroyGame(): void {

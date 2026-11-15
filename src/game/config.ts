@@ -16,7 +16,6 @@ export type ScreenName =
   | 'menu'
   | 'auth'
   | 'newGame'
-  | 'loadGame'
   | 'settings'
   | 'hud'
   | 'pause'
@@ -93,7 +92,7 @@ export * from './data/recipes';
 export * from './data/quests';
 
 export const GAME_VERSION = '0.9.0-Archean';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const WORLD_RADIUS = 115; // Legacy starter landmark zone radius
 export const WORLD_HALF_EXTENT = 2048; // 4km x 4km open world (-2048..+2048)
 export const CHUNK_SIZE = 64;

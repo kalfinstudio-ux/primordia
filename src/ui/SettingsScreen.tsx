@@ -422,6 +422,14 @@ export function SettingsScreen() {
 
               <button
                 type="button"
+                onClick={() => setScreen('assets')}
+                className="min-h-[44px] w-full rounded-lg border border-stone-700 bg-stone-900 px-4 py-2 text-left text-sm font-medium text-stone-200 hover:bg-stone-800"
+              >
+                {t('menu.assets')}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   gameState.onboardingDone = false;
                   writeStorage('onboarding_done', false);

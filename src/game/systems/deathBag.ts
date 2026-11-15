@@ -4,6 +4,7 @@ import { gameState, setScreen, type DeathBag, type InventorySlot } from '../core
 import { eventBus } from '../core/eventBus';
 import { ITEMS } from '../config';
 import { MAX_BAG_SLOTS } from './inventory';
+import { saveGame } from './saveLoad';
 import { distance2D } from '../utils/math';
 
 const cloneSlots = (slots: readonly InventorySlot[]): InventorySlot[] => slots.map((s) => ({ ...s }));
@@ -116,6 +117,9 @@ export function handlePlayerDeath(reason: string): void {
   eventBus.emit('deathbags:changed', gameState.deathBags);
   eventBus.emit('audio:sfx', 'gameover');
   setScreen('gameOver');
+  // Simpan SEKARANG: tanpa ini, menutup game di layar "Game Over" memuat simpanan sebelum mati
+  // (barang utuh, tanpa kantong) dan kematian bisa dihindari begitu saja.
+  saveGame(true);
 }
 
 /** Ambil kantong; mengembalikan true bila seluruh isi terambil (false bila inventaris penuh/sebagian). */

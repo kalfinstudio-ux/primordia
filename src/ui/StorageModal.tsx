@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ITEMS } from '../game/config';
 import { gameState, setScreen, type InventorySlot } from '../game/core/state';
-import { addItem, addItemTo, removeItem, removeItemFrom } from '../game/systems/inventory';
+import { eventBus } from '../game/core/eventBus';
+import { MAX_BAG_SLOTS, notifyBagFull, transferOne } from '../game/systems/inventory';
 import { t } from '../game/utils/i18n';
 import { ItemIcon } from './ItemIcon';
 
@@ -10,20 +11,28 @@ export function StorageModal() {
   const [bag, setBag] = useState<InventorySlot[]>(() => [...gameState.inventory]);
   const [chest, setChest] = useState<InventorySlot[]>(() => [...(gameState.storageInventories[chestId] || [])]);
 
+  // Pindahkan satu unit dengan data aslinya (durability alat tetap) dan tanpa barang hilang saat tas penuh.
   const storeOne = (itemId: string) => {
-    removeItem(itemId, 1);
-    const nextChest = addItemTo(chest, itemId, 1);
-    gameState.storageInventories[chestId] = nextChest;
-    setBag([...gameState.inventory]);
-    setChest(nextChest);
+    const res = transferOne(gameState.inventory, chest, itemId);
+    if (!res) return;
+    gameState.inventory = res.from;
+    gameState.storageInventories[chestId] = res.to;
+    eventBus.emit('inventory:changed', gameState.inventory);
+    setBag([...res.from]);
+    setChest(res.to);
   };
 
   const takeOne = (itemId: string) => {
-    addItem(itemId, 1);
-    const nextChest = removeItemFrom(chest, itemId, 1);
-    gameState.storageInventories[chestId] = nextChest;
-    setBag([...gameState.inventory]);
-    setChest(nextChest);
+    const res = transferOne(chest, gameState.inventory, itemId, MAX_BAG_SLOTS);
+    if (!res) {
+      notifyBagFull();
+      return;
+    }
+    gameState.inventory = res.to;
+    gameState.storageInventories[chestId] = res.from;
+    eventBus.emit('inventory:changed', gameState.inventory);
+    setBag([...res.to]);
+    setChest(res.from);
   };
 
   return (

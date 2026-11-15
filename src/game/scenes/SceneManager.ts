@@ -42,7 +42,7 @@ import {
   hasItem,
   useHotbarSlot,
 } from '../systems/inventory';
-import { saveGameToSlot } from '../systems/saveLoad';
+import { saveGame } from '../systems/saveLoad';
 import { DeathBagView } from '../world/deathBagView';
 import { findBagInRange, pickUpBag } from '../systems/deathBag';
 import { pickRespawnPoint, relativeBearingDeg } from '../systems/cleanAir';
@@ -372,7 +372,7 @@ export class SceneManager {
 
     const screen = gameState.screen;
     const isPlaying = screen === 'hud';
-    const isFlyover = ['menu', 'splash', 'onboarding', 'newGame', 'loadGame', 'auth', 'credits'].includes(screen);
+    const isFlyover = ['menu', 'splash', 'onboarding', 'newGame', 'auth', 'credits'].includes(screen);
 
     if (isFlyover) {
       this.sky.update(dt * 0.4, this.engine.scene, _worldCenter, this.weather.currentWeather);
@@ -491,7 +491,7 @@ export class SceneManager {
       this.autosaveAccum += dt;
       if (this.autosaveAccum >= AUTOSAVE_INTERVAL_SEC) {
         this.autosaveAccum = 0;
-        saveGameToSlot(1, true);
+        saveGame(true);
       }
 
       this.hudEmitAccum += dt;

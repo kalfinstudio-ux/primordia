@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import type { AvatarConfig, BodyBuild, DifficultyLevel, Gender, HairStyle, PackStyle } from '../game/config';
 import { gameState, setScreen } from '../game/core/state';
 import { startNewExpedition } from '../game/main';
+import { getLocalSave } from '../game/systems/saveLoad';
+import { ConfirmDialog } from './ConfirmDialog';
 import { t } from '../game/utils/i18n';
 import { CharacterPreviewCanvas } from './CharacterPreviewCanvas';
 
@@ -24,6 +26,7 @@ export function NewGameScreen() {
   const [hairStyle, setHairStyle] = useState<HairStyle>(gameState.avatar.hairStyle || 'short');
   const [suitColor, setSuitColor] = useState(gameState.avatar.suitColor);
   const [packStyle, setPackStyle] = useState<PackStyle>(gameState.avatar.packStyle || 'o2_pack');
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   const [seed, setSeed] = useState(gameState.worldSeed || 'HADEAN-01');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(gameState.settings.gameplay.difficulty);
 
@@ -52,9 +55,13 @@ export function NewGameScreen() {
     setSeed(`${prefixes[code % prefixes.length]}-${code}`);
   };
 
+  const launch = () => startNewExpedition(seed.trim() || 'HADEAN-01', previewAvatar, difficulty);
+
+  // Hanya ada satu simpanan: game baru menimpanya, jadi minta konfirmasi bila sudah ada progres.
   const handleLaunch = (e: React.FormEvent) => {
     e.preventDefault();
-    startNewExpedition(seed.trim() || 'HADEAN-01', previewAvatar, difficulty);
+    if (gameState.activeWorldLoaded || getLocalSave()) setConfirmOverwrite(true);
+    else launch();
   };
 
   return (
@@ -309,6 +316,16 @@ export function NewGameScreen() {
           </button>
         </div>
       </form>
+      <ConfirmDialog
+        open={confirmOverwrite}
+        title={t('newGame.overwriteTitle')}
+        body={t('newGame.overwriteBody')}
+        onCancel={() => setConfirmOverwrite(false)}
+        onConfirm={() => {
+          setConfirmOverwrite(false);
+          launch();
+        }}
+      />
     </main>
   );
 }

@@ -9,7 +9,8 @@ import { stepVitals } from './player/stats';
 import { addItemTo, computeCarryWeight, getMaxCarryWeightIn } from './systems/inventory';
 import { canCraftIn } from './systems/crafting';
 import { isQuestSatisfied, type QuestEvalInput } from './systems/quests';
-import { detectSaveConflict, migrateSaveData } from './systems/saveLoad';
+import { decideContinue, detectSaveConflict, getLocalSave, migrateLegacySlots, migrateSaveData, resolveLegacyChoice, saveGame } from './systems/saveLoad';
+import { gameState } from './core/state';
 
 test('SpatialHashGrid and capsule solver slide player smoothly around obstacles', () => {
   const grid = new SpatialHashGrid(8);
@@ -133,7 +134,7 @@ test('All 22 campaign quests evaluate properly through Seed of Life completion',
 
 test('Save migration upgrades Stage 1 saves to v2 and detects cloud conflicts', () => {
   const v1Raw = {
-    slot: 1,
+    slot: 1, // campuran: save lama masih membawa field slot, harus diabaikan
     worldSeed: 'LEGACY-01',
     playtimeSec: 120,
     completedQuests: ['q1'],
@@ -150,4 +151,106 @@ test('Save migration upgrades Stage 1 saves to v2 and detects cloud conflicts', 
     'cloud'
   );
   assert.equal(detectSaveConflict(migrated, cloudNewer), true);
+});
+
+// ── Simpanan tunggal (pengganti Slot 1/2/3) ─────────────────────────────
+function installFakeStorage(): Map<string, string> {
+  const mem = new Map<string, string>();
+  (globalThis as unknown as { window: unknown }).window = {
+    localStorage: {
+      getItem: (k: string) => (mem.has(k) ? mem.get(k)! : null),
+      setItem: (k: string, v: string) => void mem.set(k, v),
+      removeItem: (k: string) => void mem.delete(k),
+      key: (i: number) => [...mem.keys()][i] ?? null,
+      get length() {
+        return mem.size;
+      },
+    },
+  };
+  return mem;
+}
+
+const legacySlot = (seed: string, playtimeSec: number, updatedAt: string) => ({
+  worldSeed: seed,
+  playtimeSec,
+  completedQuests: [],
+  updatedAt,
+});
+
+test('migrasi: satu slot lama dipindah diam-diam ke simpanan tunggal, kunci lama dihapus', () => {
+  const mem = installFakeStorage();
+  mem.set('primordia_save_slots', JSON.stringify({ '1': legacySlot('A-1', 600, '2026-01-01T00:00:00.000Z') }));
+  mem.set('primordia_last_slot', '1');
+  assert.deepEqual(migrateLegacySlots(), []);
+  assert.equal(getLocalSave()?.worldSeed, 'A-1');
+  assert.equal(getLocalSave()?.playtimeSec, 600);
+  assert.equal(mem.has('primordia_save_slots'), false);
+  assert.equal(mem.has('primordia_last_slot'), false);
+  assert.deepEqual(migrateLegacySlots(), []); // idempoten
+  assert.equal(getLocalSave()?.worldSeed, 'A-1');
+});
+
+test('migrasi: slot 2/3 berbeda tidak dibuang diam-diam; dipilih pemain, baru sisanya dihapus', () => {
+  const mem = installFakeStorage();
+  mem.set(
+    'primordia_save_slots',
+    JSON.stringify({
+      '1': legacySlot('A-1', 600, '2026-01-01T00:00:00.000Z'),
+      '2': legacySlot('B-2', 9000, '2026-03-01T00:00:00.000Z'),
+      '3': legacySlot('C-3', 100, '2026-02-01T00:00:00.000Z'),
+    })
+  );
+  const choices = migrateLegacySlots();
+  assert.deepEqual(choices.map((c) => c.worldSeed), ['B-2', 'C-3', 'A-1']); // terbaru dulu
+  // belum dipilih: semua data lama masih utuh
+  assert.equal(mem.has('primordia_save_slots'), true);
+  assert.equal(getLocalSave(), null);
+  assert.equal(migrateLegacySlots().length, 3); // tetap menawarkan pilihan di sesi berikutnya
+
+  assert.equal(resolveLegacyChoice(choices[2]), true);
+  assert.equal(getLocalSave()?.worldSeed, 'A-1');
+  assert.equal(mem.has('primordia_save_slots'), false);
+  assert.deepEqual(migrateLegacySlots(), []);
+});
+
+test('migrasi: entri slot rusak diabaikan, simpanan baru yang sama tidak diduplikasi', () => {
+  const mem = installFakeStorage();
+  mem.set('primordia_save_slots', JSON.stringify({ '1': null, '2': 'x', '3': legacySlot('D-4', 5, '2026-01-01T00:00:00.000Z') }));
+  assert.deepEqual(migrateLegacySlots(), []);
+  assert.equal(getLocalSave()?.worldSeed, 'D-4');
+
+  mem.set('primordia_save_slots', JSON.stringify({ '1': getLocalSave() }));
+  assert.deepEqual(migrateLegacySlots(), []); // salinan identik bukan "dua pilihan"
+  assert.equal(mem.has('primordia_save_slots'), false);
+});
+
+test('saveGame tidak menimpa simpanan nyata bila tidak ada dunia aktif (mis. dari menu utama)', () => {
+  const mem = installFakeStorage();
+  mem.set('primordia_save', JSON.stringify(legacySlot('REAL-1', 777, '2026-01-01T00:00:00.000Z')));
+  gameState.activeWorldLoaded = false;
+  assert.equal(saveGame(false), null);
+  assert.equal(getLocalSave()?.playtimeSec, 777);
+
+  gameState.activeWorldLoaded = true;
+  gameState.playtimeSec = 888;
+  const saved = saveGame(false);
+  assert.equal(saved?.playtimeSec, 888);
+  assert.equal(getLocalSave()?.playtimeSec, 888);
+  assert.equal('slot' in (saved as object), false);
+  gameState.activeWorldLoaded = false;
+});
+
+test('decideContinue: lokal saja, cloud saja, konflik, dan tanpa simpanan', () => {
+  const base = { worldSeed: 'S', playtimeSec: 100, completedQuests: ['q1'], updatedAt: '2026-01-01T00:00:00.000Z' };
+  const local = migrateSaveData(base, 'local');
+  const cloudSame = migrateSaveData(base, 'cloud');
+  const cloudAhead = migrateSaveData({ ...base, playtimeSec: 900, updatedAt: '2026-01-02T00:00:00.000Z' }, 'cloud');
+
+  assert.equal(decideContinue(null, null).kind, 'none');
+  assert.equal(decideContinue(local, null).kind, 'load');
+  const cloudOnly = decideContinue(null, cloudAhead);
+  assert.equal(cloudOnly.kind === 'load' && cloudOnly.save.playtimeSec, 900);
+  const same = decideContinue(local, cloudSame);
+  assert.equal(same.kind === 'load' && same.save.source, 'local');
+  assert.equal(decideContinue(local, cloudAhead).kind, 'conflict');
 });
