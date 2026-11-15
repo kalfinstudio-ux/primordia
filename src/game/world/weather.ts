@@ -16,8 +16,6 @@ const CHRONICLE_CHECK_SEC = 1;
 
 export class WeatherSystem {
   currentWeather: WeatherType = 'clear_haze';
-  /** 0..1: seberapa tertutup pemain oleh pondok (1 = di dalam). Meredam partikel cuaca di sekitar kamera. */
-  shelterCover = 0;
   private timer = 0;
   private chronicleTimer = 0;
   private lightningTimer = 6;
@@ -150,11 +148,9 @@ export class WeatherSystem {
     const fallSpeed = isEmber ? -1.6 : isRain ? 22 : isMeteor ? 9 : 5.5;
     const windX = isEmber ? 1.8 : isRain ? 2.5 : 8.5;
     const live = isEmber ? 44 : PARTICLE_COUNT;
-    // Di dalam pondok hujan/abu nyaris tak terlihat (tersisa ±10% agar tidak terasa mati)
-    const shown = Math.max(0, Math.floor(live * (1 - 0.9 * this.shelterCover)));
-    this.particleMesh.count = shown;
+    this.particleMesh.count = live;
 
-    for (let i = 0; i < shown; i++) {
+    for (let i = 0; i < live; i++) {
       const ix = i * 3;
       this.offsets[ix] += windX * dt;
       this.offsets[ix + 1] -= fallSpeed * dt;

@@ -1,3 +1,4 @@
+import { BrukDialog } from './BrukDialog';
 import { AwayReportModal } from './AwayReportModal';
 import { SocialPanel } from './SocialPanel';
 import { EdenClock } from './EdenClock';
@@ -399,6 +400,7 @@ export function HudScreen() {
   return (
     <div className="hud-root safe-hud-pad pointer-events-none fixed inset-0 z-20">
       <AwayReportModal />
+      <BrukDialog />
       <SocialPanel />
       {critical && <div className="hud-critical-vignette animate-pulse" aria-hidden="true" />}
       {(rotateBanner || (ctrl.preferLandscape && isPortrait && touchMode)) && (

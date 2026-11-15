@@ -276,9 +276,7 @@
       "collect_rain": "Collect Condensed Water",
       "use_beacon": "Open Fast-Travel Map",
       "seed_pool": "Deposit Seed of Life",
-      "rest_shelter": "Rest & Sleep in Shelter",
-      "rest_done": "You rest in the shelter. Air, warmth and energy are restored (+{hp} HP).",
-      "rest_done_night": "You sleep in the shelter until morning. Air, warmth and energy are restored (+{hp} HP)."
+      "rest_shelter": "Rest & Sleep in Shelter"
     },
     "controlsHint": "WASD Move · Space Jump · Shift Sprint · E Action · I Bag · B Build · M Map · J Journal · F3 Debug",
     "pauseBtn": "Pause",
@@ -1212,5 +1210,26 @@
     "danger": "Danger",
     "entered": "Entering",
     "current": "Region"
+  },
+  "bruk": {
+    "name": "Bruk",
+    "hintLabel": "hint",
+    "lines": {
+      "first_fire": "Hot. Go.",
+      "first_shelter": "A roof. I need none. You do. You are fragile.",
+      "storm_survived": "The storm passed. You are still here. Usually they are not.",
+      "fire_third": "Fire again. I do not leave. I sit near it. Do not ask why.",
+      "chapter_1": "You dug into the heart of my crater and I did not stop you. Call it mercy.",
+      "chapter_2": "Iron and obsidian. This world once had only fire. Now it has your hands. I do not yet know if that is better.",
+      "chapter_3": "You forge, and something hisses in the embers like a voice I forgot long ago. Do not stop. I am not ready to remember it.",
+      "chapter_4": "I hold back your years so someone has time to plant. Every day you live is a day I stole from the earth. I do not regret it. Not yet.",
+      "ending": "The seed is planted. Time moves again, and I let you go. You will age, then go out. I stay here and remember everything. That is the price, and I pay it."
+    },
+    "hints": {
+      "level1": "Water is not far from where you woke. Follow the steam.",
+      "level2": "Crystals lie inside craters and at meteor sites. Look for red rings on the ground.",
+      "level3": "Obsidian sits in black fissures near the volcano. Bring a gas filter.",
+      "level4": "A roof shields nearby structures from storms. Raise your workbench beneath it."
+    }
   }
 }

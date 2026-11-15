@@ -1,3 +1,4 @@
+import { sanitizeBrukMoments } from '../data/bruk';
 import { buildAwayReport, resolveAwayWindow, sanitizeBornAt } from '../data/eden';
 import { fetchAwaySeconds, startPresenceHeartbeat } from '../net/presence';
 import { setAwayReport } from './awayReport';
@@ -36,6 +37,7 @@ export interface SaveData {
   unlockedRecipes: string[];
   wisdomPerks?: string[];
   journalUnlocked: string[];
+  brukMoments?: string[];
   campaignComplete: boolean;
   waterCollectedCount: number;
   crystalsExtractedCount: number;
@@ -137,6 +139,7 @@ export function migrateSaveData(raw: Record<string, unknown>, source: 'local' | 
     unlockedRecipes: Array.isArray(raw.unlockedRecipes) ? (raw.unlockedRecipes as string[]) : defaultRecipes,
     wisdomPerks: Array.isArray(raw.wisdomPerks) ? (raw.wisdomPerks as string[]) : [],
     journalUnlocked: Array.isArray(raw.journalUnlocked) ? (raw.journalUnlocked as string[]) : ['j_basalt'],
+    brukMoments: sanitizeBrukMoments(raw.brukMoments),
     campaignComplete: Boolean(raw.campaignComplete),
     waterCollectedCount: Number(raw.waterCollectedCount) || 0,
     crystalsExtractedCount: Number(raw.crystalsExtractedCount) || 0,
@@ -180,6 +183,7 @@ export function buildCurrentSaveSnapshot(): SaveData {
     unlockedRecipes: [...gameState.unlockedRecipes],
     wisdomPerks: [...gameState.wisdomPerks],
     journalUnlocked: [...gameState.journalUnlocked],
+    brukMoments: [...gameState.brukMoments],
     campaignComplete: gameState.campaignComplete,
     waterCollectedCount: gameState.waterCollectedCount,
     crystalsExtractedCount: gameState.crystalsExtractedCount,
@@ -328,6 +332,7 @@ export function applySaveDataToState(raw: SaveData): void {
   gameState.unlockedRecipes = [...data.unlockedRecipes];
   gameState.wisdomPerks = [...(data.wisdomPerks || [])];
   gameState.journalUnlocked = [...data.journalUnlocked];
+  gameState.brukMoments = sanitizeBrukMoments(data.brukMoments);
   gameState.campaignComplete = data.campaignComplete;
   gameState.waterCollectedCount = data.waterCollectedCount;
   gameState.crystalsExtractedCount = data.crystalsExtractedCount;

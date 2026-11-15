@@ -276,9 +276,7 @@
       "collect_rain": "Ambil Air Kondensasi",
       "use_beacon": "Buka Peta Teleportasi",
       "seed_pool": "Tanam Benih Kehidupan",
-      "rest_shelter": "Istirahat & Tidur di Shelter",
-      "rest_done": "Kamu beristirahat di shelter. Napas, suhu, dan tenaga pulih (+{hp} HP).",
-      "rest_done_night": "Kamu tidur di shelter sampai pagi. Napas, suhu, dan tenaga pulih (+{hp} HP)."
+      "rest_shelter": "Istirahat & Tidur di Shelter"
     },
     "controlsHint": "WASD Gerak · Spasi Lompat · Shift Lari · E Aksi · I Tas · B Bangun · M Peta · J Jurnal · F3 Debug",
     "pauseBtn": "Jeda",
@@ -1212,5 +1210,26 @@
     "danger": "Bahaya",
     "entered": "Memasuki",
     "current": "Wilayah"
+  },
+  "bruk": {
+    "name": "Bruk",
+    "hintLabel": "petunjuk",
+    "lines": {
+      "first_fire": "Panas. Pergi.",
+      "first_shelter": "Atap. Aku tak butuh. Kau butuh. Kalian rapuh.",
+      "storm_survived": "Badai lewat. Kau masih ada. Biasanya tidak.",
+      "fire_third": "Api lagi. Aku tidak pergi. Aku duduk di dekatnya. Jangan tanya kenapa.",
+      "chapter_1": "Kau menggali jantung kawahku dan aku tidak menghentikanmu. Anggap itu kemurahan.",
+      "chapter_2": "Besi dan obsidian. Dulu bumi ini hanya punya api. Sekarang punya tanganmu. Aku belum tahu itu lebih baik.",
+      "chapter_3": "Kau menempa, dan ada yang berdesis di dalam bara seperti suara yang sudah lama kulupakan. Jangan berhenti. Aku belum siap mengingatnya.",
+      "chapter_4": "Aku menahan umurmu supaya ada yang sempat menanam. Tiap hari yang kau lewati adalah hari yang kucuri dari bumi. Aku tidak menyesal. Belum.",
+      "ending": "Benih sudah tertanam. Waktu bergerak lagi, dan aku melepasmu. Kau akan menua, lalu padam. Aku tetap di sini mengingat semuanya. Itu harganya, dan aku membayarnya."
+    },
+    "hints": {
+      "level1": "Mata air tak jauh dari tempatmu bangun. Ikuti uapnya.",
+      "level2": "Kristal ada di dalam kawah dan di bekas meteor. Cari cincin merah di tanah.",
+      "level3": "Obsidian ada di retakan hitam dekat gunung. Bawa filter gas.",
+      "level4": "Atap menahan badai bagi bangunan di sekitarnya. Dirikan bengkelmu di bawahnya."
+    }
   }
 }

@@ -1,16 +1,54 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v22: Bruk NPC tingkat 1, kepercayaan, dialog HUD; v21: simpanan tunggal, audit bug, navigasi pemain baru; v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
 
-## 0j. Shelter (pondok basal) lebih nyata — v22 (15 Nov 2026) — logika teruji (tsx), visual BELUM dilihat di browser
-- Model baru `basic_shelter` (`props.ts` → `buildBasaltHut`): cincin 8 slot dinding batu (7 dinding + 1 pintu menghadap -Z lokal = ke arah pemain saat dipasang), atap 3 tingkat + tepi berkarat + kristal puncak, lantai bara dan cahaya pintu (mesh `userData.ghostHide` disembunyikan di pratinjau). Tanpa PointLight.
-- **Bisa dimasuki**: collider tunggal r=2,1 diganti 7 silinder (`world/shelterLayout.ts`, celah pintu ≈1,29 m > kapsul pemain 0,9 m). `chunkManager` kini melacak semua id collider (`structureColliderIds`) dan membuangnya utuh saat sinkron.
-- Cuaca: `WeatherSystem.shelterCover` (0..1, dari `shelterCover()`) mengurangi partikel hujan/abu di dalam pondok (maks −90%). Tidak memengaruhi vital: perlindungan vital tetap radius 4,5 m (`survival.ts`) — sengaja tidak diubah.
-- Istirahat: toast menyebut HP yang pulih dan apakah tidur sampai pagi (`hud.actions.rest_done[_night]`).
-- Tes: `shelter.test.ts` (4: pintu bebas di semua rotasi, dinding tertutup, cover memudar).
-- Cek visual yang diperlukan: proporsi pondok vs pemain, kamera di dalam (boom collision), pintu menghadap pemain saat dipasang, pratinjau ghost, FPS HP lama, pondok lama di save lama (posisi sama, collider berubah: pemain yang berdiri di tengah pondok lama tidak tersangkut karena kini kosong).
+## 0j. Perubahan v22 — Bruk jadi NPC tingkat 1: suara, kepercayaan, dialog HUD (15 Nov 2026) — logika teruji (tsx), UI BELUM diuji di browser
+
+Dikerjakan di sandbox tanpa `vite`/`three`/`react`: `npm test` (dengan `@supabase/supabase-js` di-stub sementara) **171/171 lulus** (161 lama + 10 baru di `bruk.test.ts`). `npm run lint` dan `npm run build` **belum dijalankan** — jalankan di Codespace. `BrukDialog.tsx` dan edit `HudScreen.tsx`/`SceneManager.ts` belum dicek tipe.
+
+### Keputusan pemilik
+- Bruk menjadi karakter, bukan hanya lore. Ide inti: game ini tentang **hal-hal pertama manusia**; Bruk belajar memahami manusia lewat tindakan pemain (api, atap, badai, tempa, benih).
+- **Nada cerita: BERAT (kehilangan)**, bukan bittersweet. Bruk bicara sepotong-sepotong dan dingin di awal ("Panas. Pergi."), makin panjang dan makin terluka tiap bab. Akhir: menanam benih = waktu bergerak lagi, Bruk melepas Adam & Hawa dan menanggung ingatan sendirian ("itu harganya, dan aku membayarnya").
+- Tingkat NPC: **tingkat 1 saja** (dialog + meter). Model 3D Bruk (tingkat 2) dan Bruk yang mengikuti pemain (tingkat 3) belum dikerjakan.
+- Peta tidak diperluas.
+
+### Yang dibuat
+- `data/bruk.ts` (murni): `BRUK_MOMENTS` (9 momen: api pertama, shelter pertama, selamat dari badai, api ketiga, akhir bab 1–4, ending), `brukTrust()`, `brukLevel()` (ambang 0/10/30/55/80), `evaluateBruk()`, `sanitizeBrukMoments()`.
+  - **Kepercayaan DIHITUNG, tidak disimpan**: jumlah poin momen + 2 per misi selesai, maks 100. Yang disimpan hanya `brukMoments` (id momen yang sudah diucapkan).
+  - Bila banyak momen terpenuhi sekaligus (mis. memuat save lama), semua ditandai tetapi **hanya satu diucapkan** (yang terakhir menurut urutan) agar layar tidak banjir dialog. Naik tingkat karena momen baru → tambah satu baris "petunjuk" untuk tingkat sekarang.
+- `systems/bruk.ts` (`BrukSystem`): dipanggil dari `SceneManager.fixedUpdate` setelah `tickStructures`; cek fakta tiap 1 dtk; badai terhitung selamat bila pemain berada ≥25 dtk dalam radius 4,5 m shelter/atap saat cuaca badai (`ash_storm`, `acid_rain`, `electrical_storm`, `meteor_shower`). Memancarkan event `bruk:say`. `reset()` dipanggil di `enterWorld`.
+- `ui/BrukDialog.tsx`: kotak dialog di HUD (di bawah toast, ±30% dari atas), antrean, ketuk untuk menutup, lama tampil menurut panjang teks, warna aksen makin hangat tiap tingkat.
+- State/save: `gameState.brukMoments`; masuk `SaveData` (opsional, save lama aman), `sanitizeBrukMoments` saat memuat, ikut cloud (`world_state.brukMoments`, tanpa perubahan SQL). `resetRunState`: dikosongkan kecuali New Game+ (`preserveKnowledge`).
+- Teks: `bruk.*` di `i18n/id.json` dan `en.json` (nama, 9 dialog, 4 petunjuk tingkat).
+
+### Yang BELUM dikerjakan / diketahui
+- **Hadiah petunjuk saat ini hanya teks** (lokasi air, kristal, obsidian, atap). Belum ada hadiah mekanik (resep, jeda cuaca); sengaja tidak menyentuh `balance.ts` sebelum ada data main.
+- **Pilihan pemain di bab 5** ("Bruk rela melepas waktu atau tidak") belum ada: saat ini ending bernada tetap (Bruk melepas). Mengubahnya jadi pilihan butuh UI baru di `VictoryModal` dan satu flag di save.
+- **Momen "nama tempat"** (pemain menamai kawah/mata air, Bruk mengulang namanya) belum ada karena game belum punya fitur menamai tempat; `customWaypoints` punya `label` dan bisa jadi pintu masuk.
+- Momen badai bergantung pada cuaca kronik 6 jam: uji dengan mengubah jam perangkat ke blok badai, berlindung ≥25 dtk, lalu tunggu cuaca berganti atau 25 dtk berlalu.
+- Penampilan maskot 3D/2D belum berubah per tingkat (hanya warna aksen dialog).
+- Nada berat dan isi dialog adalah **draf**; sebaiknya dibaca ulang pemilik, terutama `chapter_3` dan `ending`.
+
+### Cek manual v22 (Codespace)
+- [ ] `npm test && npm run lint && npm run build` hijau.
+- [ ] Permainan Baru: pasang Api Unggun → kotak "Bruk" muncul: "Panas. Pergi." lalu petunjuk (mata air). Ketuk menutup; tidak muncul lagi setelah simpan/muat.
+- [ ] Pasang shelter → dialog atap. Selesaikan misi bab 1 (q5) → dialog bab 1.
+- [ ] Berlindung di shelter saat badai ≥25 dtk → dialog "Badai lewat".
+- [ ] Muat save lama yang sudah jauh: hanya satu dialog, bukan banjir.
+- [ ] HP 390×844 dan 844×390: kotak tidak menutup joystick/tombol AKSI; teks terbaca; tidak bentrok dengan toast.
+- [ ] Mode HUD "Bersih": dialog Bruk tetap tampil (belum disaring `hudVisibility`; putuskan apakah perlu disembunyikan).
+- [ ] Ganti bahasa ID↔EN: teks dialog ikut berganti pada dialog berikutnya.
+
+### Langkah berikutnya yang disarankan
+1. Playtest 15 menit di Codespace, catat nada dialog dan ritme kemunculan.
+2. Pilihan bab 5 (lepas/tahan waktu) + flag save.
+3. Hadiah mekanik per tingkat, setelah simulasi keseimbangan.
+4. Tingkat 2: model 3D Bruk di kawah pertama (butuh aset baru; aset yang ada hanya manusia).
+
+### Prompt untuk melanjutkan bersama Claude
+> Baca `HANDOFF.md` bagian 0j dan `README.md` repo PRIMORDIA. Lanjutkan Bruk dari "Langkah berikutnya" nomor …, nada cerita BERAT, ikuti Konvensi kode (§7), tulis tes untuk logika murni (`bruk.test.ts`), lalu perbarui HANDOFF.md.
 
 ## 0i. Landing page disinkronkan dengan v21 (15 Nov 2026) — hanya teks `index.html`, belum dilihat di browser
 - Dikoreksi (klaim salah): jumlah item/resep 42/33 → **45/36** (dihitung dari `ITEMS`/`RECIPES`); "peta berubah tiap bulan" di Features, Roadmap Stage 3, dan Help sekarang menyatakan **Great Shift dimatikan** (`MONTHLY_TERRAIN_SHIFT=false` sejak v14); Roadmap "karakter wanita" dihapus dari Planned (sudah ada, kode-dibangun).

@@ -16,7 +16,6 @@ import { WaterSystem } from '../world/water';
 import { LavaSystem } from '../world/lava';
 import { VolcanoSystem } from '../world/volcano';
 import { WeatherSystem } from '../world/weather';
-import { shelterCover } from '../world/shelterLayout';
 import { MeteorSystem } from '../world/meteors';
 import { ChunkManager } from '../world/chunkManager';
 import { RemotePlayersSystem } from '../world/remotePlayers';
@@ -30,6 +29,7 @@ import { CharacterAnimator, actionKindFor } from '../player/animator';
 import { PlayerController } from '../player/controller';
 import { ThirdPersonCamera } from '../player/camera';
 import { SurvivalSystem } from '../systems/survival';
+import { BrukSystem } from '../systems/bruk';
 import { performInteraction } from '../systems/interaction';
 import { BuildingGhostSystem, tickStructures, tryPlaceStructure } from '../systems/building';
 import { WorldEventSystem, evaluateContextualTutorial } from '../systems/events';
@@ -81,6 +81,7 @@ export class SceneManager {
   private controller: PlayerController;
   private camRig = new ThirdPersonCamera();
   private survival = new SurvivalSystem();
+  private bruk = new BrukSystem();
   private deathBagView!: DeathBagView;
   private worldEvents = new WorldEventSystem();
 
@@ -215,6 +216,7 @@ export class SceneManager {
     this.camRig.snapToPlayer(this.controller.position, 0);
     this.camRig.updateGameplay(0.016, this.engine.camera, this.controller.position, this.terrain, this.spatialHash);
     this.autosaveAccum = 0;
+    this.bruk.reset();
     multiplayer.enterWorld(effectiveTerrainSeed(gameState.worldSeed));
     this.emitHudSnapshot();
     this.engine.render();
@@ -365,6 +367,7 @@ export class SceneManager {
       this.weather.currentWeather
     );
     tickStructures(fixedDt, this.weather.currentWeather);
+    this.bruk.update(fixedDt, this.weather.currentWeather);
   }
 
   private renderFrame(alpha: number, dt: number, elapsed: number): void {
@@ -443,7 +446,6 @@ export class SceneManager {
       this.water.update(dt, pos);
       this.lava.update(dt, elapsed);
       this.volcano.update(dt, gameState.settings.graphics.particles, pos, this.terrain);
-      this.weather.shelterCover = shelterCover(pos.x, pos.z, gameState.placedStructures);
       this.weather.update(dt, this.engine.scene, this.sky, pos, this.terrain);
       this.deathBagView.update(elapsed, (x, z) => this.terrain.groundHeightAt(x, z));
 

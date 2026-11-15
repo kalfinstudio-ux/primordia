@@ -190,6 +190,8 @@ export interface RuntimeGameState {
   learnedTutorials: string[];
   achievements: string[];
   journalUnlocked: string[];
+  /** Momen Bruk yang sudah diucapkan (lihat data/bruk.ts). Kepercayaan dihitung dari ini + misi selesai. */
+  brukMoments: string[];
   activeStorageId: string | null;
   buildModeItem: StructureType | null;
   buildRotOffset: number;
@@ -280,6 +282,7 @@ export const gameState: RuntimeGameState = {
   learnedTutorials: readStorage<string[]>('learned_tutorials', []),
   achievements: readStorage<string[]>('achievements', []),
   journalUnlocked: ['j_basalt'],
+  brukMoments: [],
   activeStorageId: null,
   buildModeItem: null,
   buildRotOffset: 0,
@@ -359,6 +362,7 @@ export function resetRunState(seed: string, avatar: AvatarConfig, preserveKnowle
     gameState.unlockedRecipes = getDefaultUnlockedRecipes();
     gameState.wisdomPerks = [];
     gameState.journalUnlocked = ['j_basalt'];
+    gameState.brukMoments = [];
   }
   gameState.activeStorageId = null;
   gameState.buildModeItem = null;
