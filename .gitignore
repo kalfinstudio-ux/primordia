@@ -16,3 +16,4 @@ server.log
 *.zip
 .env
 *.zip
+update-hero.zip
