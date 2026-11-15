@@ -6,6 +6,7 @@ import { gameState, type PlacedStructure } from '../core/state';
 import { eventBus } from '../core/eventBus';
 import { distance2D, hashString, mulberry32 } from '../utils/math';
 import { CRYSTAL_CRATER, VOLCANO_MAIN, WORLD_POIS, getBiomeAt, getDistanceToLava } from './biomes';
+import { disposeObject3D, markShared } from './disposal';
 import type { TerrainSystem } from './terrain';
 import {
   createBasaltRockNode,
@@ -18,6 +19,12 @@ import {
   createThermalSaltNode,
   type WorldInteractable,
 } from './props';
+
+// Aset spire dipakai bersama semua chunk (dibuat sekali, tidak pernah dibuang per chunk).
+const SPIRE_MATERIAL = markShared(new THREE.MeshStandardMaterial({ color: '#2b2422', roughness: 0.92, metalness: 0.1 }));
+// Satu geometri spire berukuran 1; skala per spire lewat mesh.scale.
+// Bentuk setara CylinderGeometry(0.45*s, 1.3*s, 5.2*s, 6) karena skala seragam.
+const SPIRE_GEOMETRY = markShared(new THREE.CylinderGeometry(0.45, 1.3, 5.2, 6));
 
 interface LoadedPropChunk {
   key: string;
@@ -55,7 +62,10 @@ export class ChunkManager {
   populate(terrain: TerrainSystem, seed: string): void {
     this.seed = seed;
     this.clearAllPropChunks();
-    for (const ex of this.extraInteractables) this.group.remove(ex.mesh);
+    for (const ex of this.extraInteractables) {
+      this.group.remove(ex.mesh);
+      disposeObject3D(ex.mesh);
+    }
     this.extraInteractables = [];
     this.lastCenterKey = '';
     this.updateStreaming(terrain, gameState.playerPos.x, gameState.playerPos.z, true);
@@ -93,8 +103,7 @@ export class ChunkManager {
 
     for (const [key, chunk] of this.propChunks.entries()) {
       if (!wanted.has(key)) {
-        this.group.remove(chunk.group);
-        for (const cid of chunk.colliderIds) this.spatialHash.remove(cid);
+        this.releaseChunk(chunk);
         this.propChunks.delete(key);
       }
     }
@@ -186,7 +195,6 @@ export class ChunkManager {
     }
 
     // Procedural basalt spires for vertical geological silhouette + spatial obstacle collision
-    const spireMat = new THREE.MeshStandardMaterial({ color: '#2b2422', roughness: 0.92, metalness: 0.1 });
     for (let i = 0; i < 4; i++) {
       const sx = baseX + (rng() - 0.5) * (CHUNK_SIZE - 8);
       const sz = baseZ + (rng() - 0.5) * (CHUNK_SIZE - 8);
@@ -194,7 +202,8 @@ export class ChunkManager {
       const sy = terrain.groundHeightAt(sx, sz);
       if (sy < WATER_LEVEL + 0.3 || getDistanceToLava(sx, sz) < 5) continue;
       const scale = 0.75 + rng() * 1.1;
-      const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * scale, 1.3 * scale, 5.2 * scale, 6), spireMat);
+      const spire = new THREE.Mesh(SPIRE_GEOMETRY, SPIRE_MATERIAL);
+      spire.scale.setScalar(scale);
       spire.position.set(sx, sy + 2.3 * scale, sz);
       spire.rotation.set((rng() - 0.5) * 0.16, rng() * Math.PI * 2, (rng() - 0.5) * 0.16);
       chunkGroup.add(spire);
@@ -313,7 +322,10 @@ export class ChunkManager {
   }
 
   syncPlacedStructures(structures: PlacedStructure[]): void {
-    for (const m of this.structureMeshes) this.group.remove(m);
+    for (const m of this.structureMeshes) {
+      this.group.remove(m);
+      disposeObject3D(m);
+    }
     this.structureMeshes.length = 0;
     for (const s of this.structureInteractables) this.spatialHash.remove(`col_str_${s.id}`);
     this.structureInteractables = [];
@@ -427,15 +439,23 @@ export class ChunkManager {
   }
 
   private clearAllPropChunks(): void {
-    for (const ch of this.propChunks.values()) {
-      this.group.remove(ch.group);
-      for (const cid of ch.colliderIds) this.spatialHash.remove(cid);
-    }
+    for (const ch of this.propChunks.values()) this.releaseChunk(ch);
     this.propChunks.clear();
+  }
+
+  /** Lepas chunk dari scene, hapus collider, dan buang geometri/material miliknya (bukan yang bersama). */
+  private releaseChunk(chunk: LoadedPropChunk): void {
+    this.group.remove(chunk.group);
+    for (const cid of chunk.colliderIds) this.spatialHash.remove(cid);
+    disposeObject3D(chunk.group);
   }
 
   dispose(): void {
     this.clearAllPropChunks();
+    for (const m of this.structureMeshes) {
+      this.group.remove(m);
+      disposeObject3D(m);
+    }
     this.structureMeshes.length = 0;
   }
 }

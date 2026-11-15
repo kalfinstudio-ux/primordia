@@ -1,8 +1,21 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 14 November 2026 (v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0b. Perubahan v15 — Fase 0 / Minggu 2: dispose chunk & aset spire bersama (15 Nov 2026) — BELUM diuji di browser
+- **Baru** `world/disposal.ts` (logika murni, tanpa import three): `disposeObject3D(root)` membuang geometri & material satu pohon objek (tiap objek sekali); `markShared(res)` menandai sumber daya bersama (`userData.sharedResource`) yang tidak pernah dibuang. Tekstur tidak pernah dibuang.
+- `world/chunkManager.ts`: chunk prop yang keluar jangkauan kini lewat `releaseChunk()` (lepas dari scene, hapus collider, **dispose**). Spire memakai **satu** `SPIRE_GEOMETRY` + `SPIRE_MATERIAL` bersama (dulu material baru per chunk dan geometri baru per spire); ukuran lewat `mesh.scale` (bentuk sama persis). Mesh meteor tambahan dan mesh struktur (dibangun ulang tiap `syncPlacedStructures`) juga dibuang.
+- `world/props.ts`: 13 material tingkat-modul ditandai `markShared` supaya dispose chunk tidak merusak prop lain. **Konvensi:** material/geometri baru yang dipakai bersama di `props.ts` wajib dibungkus `markShared(...)`; kalau tidak, akan ikut dibuang saat chunk dilepas dan prop lain bisa jadi tak tampak.
+- Tes: `disposal.test.ts` (4 tes, lulus di 4 zona waktu). Total di sandbox 87 lulus; `balance.test.ts` & `stage2.test.ts` gagal hanya karena paket `@supabase/supabase-js` tak ada di sandbox (bukan akibat perubahan ini; di Codespace harus lulus).
+
+### Cek manual v15
+- [ ] `npm test && npm run build && npm run lint` hijau di Codespace.
+- [ ] Jalan jauh melintasi banyak chunk: batu, mineral, kristal, obsidian, spire tetap tampil benar (warna/bentuk sama seperti sebelumnya), tidak ada prop yang menghilang atau hitam setelah chunk lama dilepas lalu didekati lagi.
+- [ ] Spire: tinggi/ketebalan terlihat sama; tabrakan spire tetap bekerja.
+- [ ] Pasang beberapa bangunan, simpan/muat, pasang lagi: semua bangunan tampil utuh (mesh struktur dibuang+dibuat ulang).
+- [ ] Panel F3 (`DebugOverlay`): jalan 10 menit di area luas; **jumlah Geometries/Textures tidak naik terus** (sebelumnya naik tiap chunk). Kirim tangkapan layar sebelum & sesudah untuk baseline Fase 0.
 
 ## 0a. Perubahan v14 — hasil audit Minggu 1 (15 Nov 2026) — BELUM diuji di browser
 Dokumen audit lengkap + roadmap ada di dokumen "Audit & Roadmap PRIMORDIA". Yang dikerjakan:
@@ -10,7 +23,7 @@ Dokumen audit lengkap + roadmap ada di dokumen "Audit & Roadmap PRIMORDIA". Yang
 - **Kalender = UTC** (`data/eden.ts`): hari/bulan/musim/seed sama untuk semua zona waktu. Langit tetap memakai jam lokal (`realTimeOfDay`).
 - **`MONTHLY_TERRAIN_SHIFT = false`**: medan TIDAK lagi diacak tiap bulan; bangunan tidak terkubur. Peringatan "Pergeseran Besar" dan baris laporan "Saat kamu pergi" ikut mati (parameter `enabled`/`terrainShift`, default = konstanta itu). Medan dunia yang sudah ada kini memakai seed dasar, jadi bentuknya bisa berbeda dari bulan lalu: **cek save lama**. Pengganti: lapisan Era (Fase 2 roadmap).
 - **Multiplayer:** nama kamar memakai `effectiveTerrainSeed` (`SceneManager.enterWorld`), jadi medan berbeda tidak pernah satu kamar.
-- **CI:** `npm ci` (lockfile diperbaiki: `@base44/sdk` di root lock kini `^0.8.26`, bukan `latest`), `npm test` kini memblokir deploy. `npm run lint` terbukti bersih di Codespace (0 error) dan build Vite lolos, jadi `lint` juga memblokir deploy.
+- **CI:** `npm ci` (lockfile diperbaiki: `@base44/sdk` di root lock kini `^0.8.26`, bukan `latest`), `npm test` kini memblokir deploy. `lint` masih `continue-on-error` sampai `npm run lint` terbukti bersih.
 - **Tes:** `eden*.test.ts` dipindah ke tanggal UTC; baru `eden5.test.ts` (UTC, seed tetap, kamar). Total 83 tes lulus di TZ Asia/Jakarta, UTC, America/Los_Angeles, Pacific/Kiritimati (tes yang butuh paket supabase tidak dijalankan di sandbox).
 - Teks i18n (id/en) yang menyebut "peta berubah tiap bulan" disesuaikan.
 

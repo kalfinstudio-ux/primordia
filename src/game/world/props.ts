@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { StructureType } from '../core/state';
+import { markShared } from './disposal';
 
 export interface WorldInteractable {
   id: string;
@@ -29,19 +30,19 @@ export interface WorldInteractable {
   chunkKey?: string;
 }
 
-const basaltMat = new THREE.MeshStandardMaterial({ color: '#3b3532', roughness: 0.9, metalness: 0.08 });
-const darkBasaltMat = new THREE.MeshStandardMaterial({ color: '#24201e', roughness: 0.85, metalness: 0.12 });
-const sulfurMat = new THREE.MeshStandardMaterial({ color: '#eab308', emissive: '#854d0e', emissiveIntensity: 0.45, roughness: 0.35, metalness: 0.65 });
-const obsidianMat = new THREE.MeshStandardMaterial({ color: '#1e1b4b', emissive: '#312e81', emissiveIntensity: 0.25, roughness: 0.16, metalness: 0.6 });
-const saltMat = new THREE.MeshStandardMaterial({ color: '#fef3c7', emissive: '#d97706', emissiveIntensity: 0.18, roughness: 0.45, metalness: 0.1 });
-const meteorIronMat = new THREE.MeshStandardMaterial({ color: '#475569', emissive: '#1d4ed8', emissiveIntensity: 0.35, roughness: 0.28, metalness: 0.85 });
-const crystalMat = new THREE.MeshStandardMaterial({ color: '#fb923c', emissive: '#ea580c', emissiveIntensity: 1.15, roughness: 0.14, metalness: 0.2 });
-const shelterFrameMat = new THREE.MeshStandardMaterial({ color: '#57534e', roughness: 0.75, metalness: 0.25 });
-const shelterShieldMat = new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32, metalness: 0.65 });
-const ironMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 });
-const glassMat = new THREE.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.65, roughness: 0.1, metalness: 0.2 });
-const mossMat = new THREE.MeshStandardMaterial({ color: '#4d7c0f', emissive: '#14532d', emissiveIntensity: 0.25, roughness: 0.85 });
-const beaconMat = new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#eab308', emissiveIntensity: 1.4, roughness: 0.2 });
+const basaltMat = markShared(new THREE.MeshStandardMaterial({ color: '#3b3532', roughness: 0.9, metalness: 0.08 }));
+const darkBasaltMat = markShared(new THREE.MeshStandardMaterial({ color: '#24201e', roughness: 0.85, metalness: 0.12 }));
+const sulfurMat = markShared(new THREE.MeshStandardMaterial({ color: '#eab308', emissive: '#854d0e', emissiveIntensity: 0.45, roughness: 0.35, metalness: 0.65 }));
+const obsidianMat = markShared(new THREE.MeshStandardMaterial({ color: '#1e1b4b', emissive: '#312e81', emissiveIntensity: 0.25, roughness: 0.16, metalness: 0.6 }));
+const saltMat = markShared(new THREE.MeshStandardMaterial({ color: '#fef3c7', emissive: '#d97706', emissiveIntensity: 0.18, roughness: 0.45, metalness: 0.1 }));
+const meteorIronMat = markShared(new THREE.MeshStandardMaterial({ color: '#475569', emissive: '#1d4ed8', emissiveIntensity: 0.35, roughness: 0.28, metalness: 0.85 }));
+const crystalMat = markShared(new THREE.MeshStandardMaterial({ color: '#fb923c', emissive: '#ea580c', emissiveIntensity: 1.15, roughness: 0.14, metalness: 0.2 }));
+const shelterFrameMat = markShared(new THREE.MeshStandardMaterial({ color: '#57534e', roughness: 0.75, metalness: 0.25 }));
+const shelterShieldMat = markShared(new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32, metalness: 0.65 }));
+const ironMat = markShared(new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 }));
+const glassMat = markShared(new THREE.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.65, roughness: 0.1, metalness: 0.2 }));
+const mossMat = markShared(new THREE.MeshStandardMaterial({ color: '#4d7c0f', emissive: '#14532d', emissiveIntensity: 0.25, roughness: 0.85 }));
+const beaconMat = markShared(new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#eab308', emissiveIntensity: 1.4, roughness: 0.2 }));
 
 export function createBasaltRockNode(shadowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
