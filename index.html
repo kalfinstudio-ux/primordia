@@ -6,11 +6,39 @@
 <meta name="theme-color" content="#0f1518">
 <title>PRIMORDIA — Survive the First Earth | Jurkon Studio</title>
 <meta name="description" content="PRIMORDIA is a 3D survival game that runs in your browser. Wake up on a volcanic Earth, build an outpost and plant the first seed of life. By Jurkon Studio.">
+<link rel="canonical" href="__SITE_URL__/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<!-- Google Search Console (pilih metode "HTML tag", tempel di sini):
+<meta name="google-site-verification" content="KODE_DARI_GOOGLE"> -->
+<meta property="og:site_name" content="PRIMORDIA by Jurkon Studio">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:url" content="__SITE_URL__/">
 <meta property="og:title" content="PRIMORDIA — Survive the First Earth">
 <meta property="og:description" content="A 3D open-world survival game in your browser, set on primordial Earth. By Jurkon Studio.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="./mascot-512.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="__SITE_URL__/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PRIMORDIA — Survive the First Earth. Bruk, the basalt warden, beside the game title.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PRIMORDIA — Survive the First Earth">
+<meta name="twitter:description" content="A 3D open-world survival game in your browser, set on primordial Earth. By Jurkon Studio.">
+<meta name="twitter:image" content="__SITE_URL__/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type":"Organization","@id":"__SITE_URL__/#studio","name":"Jurkon Studio","url":"__SITE_URL__/","logo":"__SITE_URL__/mascot-512.png","sameAs":["https://jurkon.my.id/","https://smartphone-empire.my.id/","https://boombastis.my.id/"]},
+    {"@type":"WebSite","@id":"__SITE_URL__/#website","url":"__SITE_URL__/","name":"PRIMORDIA","publisher":{"@id":"__SITE_URL__/#studio"},"inLanguage":"en"},
+    {"@type":"VideoGame","@id":"__SITE_URL__/#game","name":"PRIMORDIA","alternateName":"PRIMORDIA — Survive the First Earth",
+     "description":"A 3D open-world survival game that runs in your browser, set on primordial Earth. Build an outpost, craft across five tiers, finish a 22-mission campaign and plant the first seed of life.",
+     "url":"__SITE_URL__/","image":"__SITE_URL__/og-image.png","genre":["Survival","Open world","Exploration"],
+     "gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any (WebGL browser)","playMode":["SinglePlayer","MultiPlayer"],
+     "inLanguage":"id","author":{"@id":"__SITE_URL__/#studio"},"publisher":{"@id":"__SITE_URL__/#studio"},
+     "copyrightHolder":{"@id":"__SITE_URL__/#studio"},"copyrightYear":2026,"hasPart":{"@id":"__SITE_URL__/studio/#bruk"}}
+  ]
+}
+</script>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
@@ -90,6 +118,14 @@ h1{font-size:clamp(2.8rem,8.5vw,5.6rem);line-height:.95;letter-spacing:-.01em}
 .ch p{margin:4px 0 10px;color:var(--mute);font-size:.93rem}
 .ch ol{margin:0;padding-left:30px;font-size:.95rem}
 .ch li{padding:2px 0}
+#projects{--tone:#2a2b26}
+.projects{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.proj{display:flex;flex-direction:column;gap:8px;padding:20px 22px;border:1px solid var(--line);border-top:3px solid var(--pc,var(--sulfur));border-radius:4px;background:#ffffff06}
+.proj .kind{font:600 .82rem var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--pc,var(--sulfur))}
+.proj p{margin:0;color:var(--mute);font-size:.98rem}
+.proj ul{margin:4px 0 8px;padding-left:20px;color:var(--mute);font-size:.93rem}
+.proj .btn{margin-top:auto;align-self:flex-start;padding:9px 18px;font-size:.98rem}
+.proj .host{font-size:.85rem;color:var(--mute);word-break:break-all}
 #help{--tone:#2d2a24}
 .keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 14px;margin:0 0 28px;padding:0;list-style:none}
 kbd{font:600 .85rem var(--body);background:#0f1518;border:1px solid var(--line);border-bottom-width:3px;border-radius:4px;padding:1px 7px;margin-right:6px}
@@ -119,7 +155,7 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
 <body>
 <header class="nav"><div class="wrap">
   <a class="brand" href="#top"><img src="./favicon.svg" alt="">PRIMORDIA</a>
-  <nav aria-label="Main"><a href="#story">Story</a><a href="#features">Features</a><a href="#roadmap">Roadmap</a><a href="#missions">Missions</a><a href="#help">Help</a><a href="#legal">Legal</a></nav>
+  <nav aria-label="Main"><a href="#story">Story</a><a href="#features">Features</a><a href="#roadmap">Roadmap</a><a href="#missions">Missions</a><a href="#projects">Projects</a><a href="#help">Help</a><a href="./studio/">Assets</a><a href="#legal">Legal</a></nav>
   <a class="btn" data-play href="./play/">Play</a>
 </div></header>
 
@@ -144,7 +180,7 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
 
 <section id="story"><div class="wrap">
   <h2>What is PRIMORDIA about?</h2>
-  <p class="sub">Meet Bruk, the basalt warden who guards the crater, and the first pair he watches over.</p>
+  <p class="sub">Meet Bruk, the basalt warden who guards the crater, and the first pair he watches over. <a href="./studio/">Download Bruk (animated SVG, PNG, GIF, video)</a>.</p>
   <div class="story">
     <p>Four billion years ago there were no plants, no animals and no other people. There was only black basalt, steaming shallow oceans and a sky that meteors kept tearing open. You are the first survivor on this 4 × 4 km world.</p>
     <p>Your goal is not to conquer it but to prepare it for life. You collect stone and minerals, smelt iron, mine metal from fallen stars and brew prebiotic compounds in a research lab until you can craft a Seed of Life. The final mission takes you to the Geyser Basin to plant it.</p>
@@ -193,6 +229,37 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
     <div class="ch"><h3>Chapter 3: Iron Age</h3><p>Smelting and your first outpost.</p><ol start="11"><li>Dawn of the Iron Age</li><li>Ancient Metallurgy</li><li>Modular Outpost</li><li>Master of Heat</li></ol></div>
     <div class="ch"><h3>Chapter 4: Fallen Stars</h3><p>Meteor metal and crystal power.</p><ol start="15"><li>Archean Laboratory</li><li>Metal from the Stars</li><li>Core Ignition</li><li>Beacon Network</li></ol></div>
     <div class="ch"><h3>Chapter 5: Seed of Life</h3><p>Prebiotic chemistry, then the moment that matters.</p><ol start="19"><li>Amino Synthesis</li><li>Protocell Membrane</li><li>Seed of Life</li><li>Cradle of Biology</li></ol></div>
+  </div>
+</div></section>
+
+<section id="projects"><div class="wrap">
+  <h2>More from Jurkon Studio</h2>
+  <p class="sub">PRIMORDIA is one of several projects made by Jurkon Studio. The others are live now.</p>
+  <div class="projects">
+    <article class="proj" style="--pc:#FF6A2A">
+      <span class="kind">Game · Business sim</span>
+      <h3>Smartphone Empire</h3>
+      <p>Run your own phone company from 1 January 2000 to the AI era. Hire a team, research technology, design phones and fight rival brands for market share. Plays in the browser on phone or PC, and a blog covers smartphone news and specs.</p>
+      <ul><li>134 technologies and 141 phone components</li><li>32 competitors, 12 languages, installable as an app</li></ul>
+      <a class="btn" href="https://smartphone-empire.my.id/" target="_blank" rel="noopener">Play free</a>
+      <span class="host">smartphone-empire.my.id</span>
+    </article>
+    <article class="proj" style="--pc:#5FD3C4">
+      <span class="kind">Web tools · English &amp; Indonesian</span>
+      <h3>Boombastis</h3>
+      <p>Free online tools that run in your browser, so your files and passwords are never uploaded. Compress images, work with PDFs, generate QR codes and passwords, format JSON and more, plus tools made for Indonesia.</p>
+      <ul><li>41 tools, no account needed</li><li>PDF, image, developer and security tools</li></ul>
+      <a class="btn" href="https://boombastis.my.id/" target="_blank" rel="noopener">Open the tools</a>
+      <span class="host">boombastis.my.id</span>
+    </article>
+    <article class="proj" style="--pc:#D4BC2A">
+      <span class="kind">Social app · Bahasa Indonesia</span>
+      <h3>Jurkon (Jurnal Koneksi)</h3>
+      <p>A social network made by Indonesians for writing notes and reminders. Posts are limited to 250 characters, the feed has an end, and you can leave a note for yourself to read a year from now. The app is in Indonesian.</p>
+      <ul><li>250-character posts</li><li>A feed that ends, and notes to your future self</li></ul>
+      <a class="btn" href="https://jurkon.my.id/" target="_blank" rel="noopener">Visit Jurkon</a>
+      <span class="host">jurkon.my.id</span>
+    </article>
   </div>
 </div></section>
 
@@ -262,7 +329,7 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
 
   <div class="panel" role="tabpanel" id="p-copyright" aria-labelledby="t-copyright" hidden>
     <h3>Copyright</h3><p>© 2026 Jurkon Studio. All rights reserved. PRIMORDIA, its name, logo, mascot Bruk, game design, mission flow, text and original code belong to Jurkon Studio.</p>
-    <h3>What you may do</h3><p>Play for personal use, and share screenshots or videos of your gameplay with credit to “PRIMORDIA by Jurkon Studio”.</p>
+    <h3>What you may do</h3><p>Play for personal use, and share screenshots or videos of your gameplay with credit to “PRIMORDIA by Jurkon Studio”. Bruk can be downloaded and used under the <a href="./studio/#license">Jurkon Studio Asset License</a>.</p>
     <h3>What you may not do</h3><p>Copy, redistribute, sell or make derivative works from the code, design or assets without written permission from Jurkon Studio.</p>
     <h3>Third parties</h3><p>The game uses open-source libraries such as Three.js, React and Vite under their own licenses. Some 3D models come from other creators and remain the property of those creators under their licenses. If you believe your work is used improperly, contact us and we will review it and remove it if needed.</p>
     <h3>Reporting infringement</h3><p class="contact">Include a link, proof of ownership and a short explanation.</p>
@@ -272,7 +339,7 @@ footer img{width:44px;height:44px;border-radius:10px;vertical-align:middle;margi
 
 <footer><div class="wrap"><div class="row2">
   <div><img src="./mascot-512.png" alt="Bruk the basalt warden"><strong>PRIMORDIA</strong> v0.9.0-Archean · © 2026 Jurkon Studio. All rights reserved.</div>
-  <div><a href="#story">Story</a> · <a href="#help">Help</a> · <a href="#legal" data-tab="terms">Terms</a> · <a href="#legal" data-tab="privacy">Privacy</a> · <a href="#legal" data-tab="copyright">Copyright</a></div>
+  <div><a href="#story">Story</a> · <a href="#help">Help</a> · <a href="#projects">Projects</a> · <a href="./studio/">Assets</a> · <a href="#legal" data-tab="terms">Terms</a> · <a href="#legal" data-tab="privacy">Privacy</a> · <a href="#legal" data-tab="copyright">Copyright</a></div>
 </div></div></footer>
 
 <script>

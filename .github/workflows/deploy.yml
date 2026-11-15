@@ -37,6 +37,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://pnagpmfhlxoiodnmhlvm.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_7Rjph4NMWtwZ0Xas1JdVRw_c4Z4y14x
+          # Alamat publik situs (canonical, og:image, sitemap). Ganti ke domain sendiri setelah dibeli.
+          VITE_SITE_URL: https://kalfinstudio-ux.github.io/primordia
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
