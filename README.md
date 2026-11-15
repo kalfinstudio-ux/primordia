@@ -10,6 +10,11 @@
 - **5-Tier Crafting, Modular Building & Campaign (`src/game/data/`, `systems/`)**: 42 items across 5 tech tiers, 33 recipes with station proximity & material unlocks, snap-grid modular building (`3m` ghost preview), persistent Storage Chests, 22-quest **"Seed of Life"** campaign + Victory/New Game+, `[J]` Discovery Journal / Achievements / Repeatable Survey Contracts, and timed world events.
 - **PWA, Save Migration & Hardened Supabase Sync (`public/`, `src/game/systems/saveLoad.ts`, `supabase/`)**: Offline Service Worker, install prompt, v1 → v2 save migration, Cloud Save Conflict resolution (`Keep Local / Keep Cloud / Keep Both`), and validated server-side Postgres RPC leaderboard (`submit_validated_score`).
 
+## Gerak Manusia, Wajah & Bruk (v20)
+- **Gerak seperti manusia** (`src/game/player/pose.ts`, `animator.ts`): rig kini punya siku, lutut, pergelangan, serta pinggul/dada yang berputar berlawanan. Ayunan tangan lebar, lutut menekuk saat lari, kepala stabil, idle bernapas & menoleh, lompat/mendarat/renang punya pose sendiri. Aksi berbeda per benda: menambang (ayun dua tangan), memungut, minum, membuka, membangun (palu). Pemain jauh memakai poser yang sama.
+- **Wajah v2** (`player/character.ts`): mata berkelopak + kedip, alis melengkung, hidung, bibir, pipi, dagu; pria/wanita berbeda.
+- **Bruk** adalah penjaga basal yang memilih Adam & Hawa dan menahan penuaan mereka (slide onboarding + landing page). Maskot dibuat ulang tanpa moncong babi (`tools/make_mascot.py`).
+
 ## Era Adam & Hawa (pembaruan terbaru)
 Lapisan cerita dan sistem baru: awal era manusia pertama, tanpa tua dan tanpa akhir.
 - **Umur abadi** tersimpan di profil Supabase (`born_at`, dihitung server); mati karena bahaya tidak mereset umur.

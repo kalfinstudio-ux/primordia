@@ -14,6 +14,11 @@ export function OnboardingScreen() {
       extra: null,
     },
     {
+      title: t('onboarding.slideBrukTitle'),
+      body: t('onboarding.slideBrukBody'),
+      extra: null,
+    },
+    {
       title: t('onboarding.slide2Title'),
       body: t('onboarding.slide2Body'),
       extra: null,

@@ -4,11 +4,20 @@ import type { AvatarConfig, Gender } from '../config';
 export interface CharacterRig {
   root: THREE.Group;
   bodyPivot: THREE.Group;
+  /** Pinggul (pelvis + sabuk). Berputar berlawanan dengan dada saat berjalan. */
   torsoGroup: THREE.Group;
+  /** Dada + ransel + bahu + kepala; anak dari torsoGroup. */
+  chestGroup: THREE.Group;
   leftLeg: THREE.Group;
   rightLeg: THREE.Group;
+  leftKnee: THREE.Group;
+  rightKnee: THREE.Group;
+  leftAnkle: THREE.Group;
+  rightAnkle: THREE.Group;
   leftArm: THREE.Group;
   rightArm: THREE.Group;
+  leftElbow: THREE.Group;
+  rightElbow: THREE.Group;
   headGroup: THREE.Group;
   toolMesh: THREE.Group;
   backShieldMesh: THREE.Mesh;
@@ -16,6 +25,8 @@ export interface CharacterRig {
   applyAppearance: (avatar: AvatarConfig) => void;
   setEquipmentVisuals: (toolId: string | null, hasShield: boolean) => void;
   setSootAmount: (soot: number) => void;
+  /** 0 = mata terbuka, 1 = terpejam. */
+  setBlink: (amount: number) => void;
 }
 
 type V3 = [number, number, number];
@@ -108,34 +119,41 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
   const baseSuitColor = new THREE.Color(avatar.suitColor);
   const TRIM_DARKEN = new THREE.Color('#0c0a09');
 
-  // ---- legs (pivot di pinggul, y=0.9) ----
-  const makeLeg = (): { leg: THREE.Group; limb: THREE.Group } => {
+  // ---- kaki: pinggul -> lutut -> pergelangan (tiga sendi, supaya bisa berlari seperti manusia) ----
+  const makeLeg = (): { leg: THREE.Group; knee: THREE.Group; ankle: THREE.Group; parts: THREE.Mesh[] } => {
     const leg = new THREE.Group();
     leg.position.y = 0.9;
-    const limb = new THREE.Group();
     const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.28, 6, 12), darkUnderMat);
     thigh.position.y = -0.22;
-    const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.28, 6, 12), suitAccentMat);
-    shin.position.y = -0.62;
-    const kneePad = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.06), trimMat);
-    kneePad.position.set(0, -0.43, 0.075);
-    limb.add(thigh, shin, kneePad);
 
+    const knee = new THREE.Group();
+    knee.position.y = -0.43;
+    const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.28, 6, 12), suitAccentMat);
+    shin.position.y = -0.19;
+    const kneePad = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.06), trimMat);
+    kneePad.position.set(0, 0, 0.075);
     const bootCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.093, 0.1, 0.06, 12), trimMat);
-    bootCuff.position.set(0, -0.76, 0);
+    bootCuff.position.set(0, -0.33, 0);
+
+    const ankle = new THREE.Group();
+    ankle.position.y = -0.33;
     const boot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.3), metalTrimMat);
-    boot.position.set(0, -0.83, 0.05);
+    boot.position.set(0, -0.07, 0.05);
     const sole = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.33), darkUnderMat);
-    sole.position.set(0, -0.8825, 0.055);
-    leg.add(limb, bootCuff, boot, sole);
-    return { leg, limb };
+    sole.position.set(0, -0.1225, 0.055);
+    ankle.add(boot, sole);
+
+    knee.add(shin, kneePad, bootCuff, ankle);
+    leg.add(thigh, knee);
+    return { leg, knee, ankle, parts: [thigh, shin, kneePad] };
   };
-  const { leg: leftLeg, limb: leftLegLimb } = makeLeg();
-  const { leg: rightLeg, limb: rightLegLimb } = makeLeg();
+  const { leg: leftLeg, knee: leftKnee, ankle: leftAnkle, parts: leftLegParts } = makeLeg();
+  const { leg: rightLeg, knee: rightKnee, ankle: rightAnkle, parts: rightLegParts } = makeLeg();
 
   // ---- torso ----
   const torsoGroup = new THREE.Group();
   torsoGroup.position.y = 0.92;
+  const chestGroup = new THREE.Group();
 
   const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.19, 0.2, 14), darkUnderMat);
   pelvis.position.y = 0.05;
@@ -191,30 +209,33 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
   backShieldMesh.position.set(0, 0.4, -0.37);
   backShieldMesh.visible = false;
 
-  // ---- arms (pivot di bahu) ----
-  const makeArm = (): { arm: THREE.Group; limb: THREE.Group; pad: THREE.Mesh } => {
+  // ---- lengan: bahu -> siku (dua sendi) ----
+  const makeArm = (): { arm: THREE.Group; elbow: THREE.Group; pad: THREE.Mesh; parts: THREE.Mesh[] } => {
     const arm = new THREE.Group();
     arm.position.y = 0.58;
     const pad = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), suitAccentMat);
-    const limb = new THREE.Group();
     const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.22, 6, 12), darkUnderMat);
     upper.position.y = -0.18;
-    const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 6, 12), metalTrimMat);
-    forearm.position.y = -0.45;
-    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.072, 0.06, 12), trimMat);
-    cuff.position.y = -0.58;
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), skinMat);
-    hand.position.y = -0.65;
-    limb.add(upper, forearm, cuff, hand);
-    arm.add(pad, limb);
-    return { arm, limb, pad };
-  };
-  const { arm: leftArm, limb: leftArmLimb, pad: leftPad } = makeArm();
-  const { arm: rightArm, limb: rightArmLimb, pad: rightPad } = makeArm();
 
-  // Alat di tangan kanan
+    const elbow = new THREE.Group();
+    elbow.position.y = -0.34;
+    const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 6, 12), metalTrimMat);
+    forearm.position.y = -0.11;
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.072, 0.06, 12), trimMat);
+    cuff.position.y = -0.24;
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), skinMat);
+    hand.position.y = -0.31;
+    hand.scale.set(0.85, 1.2, 0.75);
+    elbow.add(forearm, cuff, hand);
+    arm.add(pad, upper, elbow);
+    return { arm, elbow, pad, parts: [upper, forearm, cuff, hand] };
+  };
+  const { arm: leftArm, elbow: leftElbow, pad: leftPad, parts: leftArmParts } = makeArm();
+  const { arm: rightArm, elbow: rightElbow, pad: rightPad, parts: rightArmParts } = makeArm();
+
+  // Alat di tangan kanan (ikut siku, jadi terayun bersama lengan bawah)
   const toolMesh = new THREE.Group();
-  toolMesh.position.set(0, -0.66, 0.08);
+  toolMesh.position.set(0, -0.32, 0.08);
   const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.56, 8), metalTrimMat);
   handle.rotation.x = Math.PI / 2;
   handle.position.z = 0.22;
@@ -225,7 +246,7 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
   head.position.set(0, 0.04, 0.46);
   toolMesh.add(handle, head);
   toolMesh.visible = false;
-  rightArm.add(toolMesh);
+  rightElbow.add(toolMesh);
 
   // ---- kepala ----
   const headGroup = new THREE.Group();
@@ -242,51 +263,143 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
   const earR = earL.clone();
   earR.position.x = 0.155;
 
-  // Mata: putih + iris, alis, hidung, mulut
-  const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), eyeWhiteMat);
-  eyeWhiteL.scale.set(1, 0.85, 0.55);
-  eyeWhiteL.position.set(-0.056, 0.245, 0.15);
-  const eyeWhiteR = eyeWhiteL.clone();
-  eyeWhiteR.position.x = 0.056;
-  const irisL = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 8), irisMat);
-  irisL.position.set(-0.056, 0.245, 0.162);
-  const irisR = irisL.clone();
-  irisR.position.x = 0.056;
+  // ---- wajah (v2): mata berkelopak yang bisa berkedip, alis melengkung, hidung berpangkal, bibir atas/bawah,
+  // tulang pipi & dagu. Semua primitif kecil, tanpa tekstur, jadi murah untuk HP lama. ----
+  const pupilMat = new THREE.MeshBasicMaterial({ color: '#0b0b0d' });
+  const glintMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+  const blushMat = new THREE.MeshBasicMaterial({ color: '#e07a6a', transparent: true, opacity: 0.16, depthWrite: false });
+  irisMat.color.set('#4a3426');
 
-  const browL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.014), hairMat);
-  browL.position.set(-0.056, 0.282, 0.152);
-  browL.rotation.z = 0.12;
-  const browR = browL.clone();
-  browR.position.x = 0.056;
-  browR.rotation.z = -0.12;
+  const eyes: { white: THREE.Mesh; iris: THREE.Mesh; pupil: THREE.Mesh; glint: THREE.Mesh; lid: THREE.Mesh; x: number }[] = [];
+  for (const x of [-0.058, 0.058]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.029, 12, 10), eyeWhiteMat);
+    white.scale.set(1.1, 0.78, 0.5);
+    white.position.set(x, 0.243, 0.148);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.0165, 12, 10), irisMat);
+    iris.scale.set(1, 1, 0.6);
+    iris.position.set(x, 0.243, 0.158);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 8), pupilMat);
+    pupil.scale.set(1, 1, 0.5);
+    pupil.position.set(x, 0.243, 0.1645);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.0042, 6, 6), glintMat);
+    glint.position.set(x + 0.006, 0.249, 0.168);
+    // Kelopak atas: cakram kulit yang membesar ke bawah menutup mata saat berkedip.
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(0.031, 12, 8), skinMat);
+    lid.scale.set(1.1, 0.12, 0.58);
+    lid.position.set(x, 0.262, 0.15);
+    eyes.push({ white, iris, pupil, glint, lid, x });
+  }
 
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), skinMat);
-  nose.scale.set(0.9, 1.25, 1.1);
-  nose.position.set(0, 0.215, 0.163);
-  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.009, 0.012), lipMat);
-  mouth.position.set(0, 0.172, 0.156);
+  // Alis dua segmen: pangkal rendah -> puncak lengkung -> ekor turun
+  const makeBrow = (sx: number, mat: THREE.Material, thick: number) => {
+    const g = new THREE.Group();
+    const inner = new THREE.Mesh(new THREE.BoxGeometry(0.03, thick, 0.014), mat);
+    inner.position.set(sx * 0.042, 0.284, 0.151);
+    inner.rotation.z = sx * 0.2;
+    const outer = new THREE.Mesh(new THREE.BoxGeometry(0.032, thick, 0.014), mat);
+    outer.position.set(sx * 0.074, 0.287, 0.145);
+    outer.rotation.z = -sx * 0.28;
+    outer.rotation.y = sx * 0.35;
+    g.add(inner, outer);
+    return g;
+  };
+  const browL = makeBrow(-1, hairMat, 0.011);
+  const browR = makeBrow(1, hairMat, 0.011);
 
-  // Detail khusus: bulu mata + bibir lebih penuh (wanita), alis tebal + rahang (pria)
-  const lashL = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.006, 0.01), irisMat);
-  lashL.position.set(-0.058, 0.263, 0.156);
-  lashL.rotation.z = 0.2;
+  // Hidung: pangkal tipis di antara mata, ujung bulat, sayap kecil
+  const noseBridge = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.04, 4, 8), skinMat);
+  noseBridge.position.set(0, 0.228, 0.157);
+  noseBridge.rotation.x = -0.22;
+  const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), skinMat);
+  noseTip.scale.set(0.95, 0.85, 1.0);
+  noseTip.position.set(0, 0.203, 0.171);
+  const noseWingL = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), skinMat);
+  noseWingL.position.set(-0.016, 0.2, 0.162);
+  const noseWingR = noseWingL.clone();
+  noseWingR.position.x = 0.016;
+  const nose = new THREE.Group();
+  nose.add(noseBridge, noseTip, noseWingL, noseWingR);
+
+  // Tulang pipi + dagu (memberi bentuk, bukan bola polos) + semburat pipi
+  const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 8), skinMat);
+  cheekL.scale.set(1, 0.8, 0.6);
+  cheekL.position.set(-0.088, 0.2, 0.118);
+  const cheekR = cheekL.clone();
+  cheekR.position.x = 0.088;
+  const blushL = new THREE.Mesh(new THREE.CircleGeometry(0.026, 12), blushMat);
+  blushL.position.set(-0.085, 0.196, 0.1545);
+  blushL.rotation.y = -0.5;
+  const blushR = blushL.clone();
+  blushR.position.x = 0.085;
+  blushR.rotation.y = 0.5;
+  const chin = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), skinMat);
+  chin.scale.set(1, 0.7, 0.8);
+  chin.position.set(0, 0.125, 0.105);
+
+  // Mulut: bibir atas tipis, bibir bawah penuh, sudut bibir sedikit terangkat (ekspresi tenang)
+  const lipUpper = new THREE.Mesh(new THREE.CapsuleGeometry(0.0075, 0.036, 4, 8), lipMat);
+  lipUpper.rotation.z = Math.PI / 2;
+  lipUpper.position.set(0, 0.1775, 0.1575);
+  const lipLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.0095, 0.032, 4, 8), lipMat);
+  lipLower.rotation.z = Math.PI / 2;
+  lipLower.position.set(0, 0.1675, 0.1565);
+  const mouthCornerL = new THREE.Mesh(new THREE.SphereGeometry(0.0065, 6, 6), lipMat);
+  mouthCornerL.position.set(-0.026, 0.1735, 0.151);
+  const mouthCornerR = mouthCornerL.clone();
+  mouthCornerR.position.x = 0.026;
+  const mouth = new THREE.Group();
+  mouth.add(lipUpper, lipLower, mouthCornerL, mouthCornerR);
+
+  // Telinga bagian dalam
+  const earInL = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), darkUnderMat);
+  earInL.scale.set(0.4, 1, 0.7);
+  earInL.position.set(-0.159, 0.225, 0.004);
+  const earInR = earInL.clone();
+  earInR.position.x = 0.159;
+
+  // Detail khusus: bulu mata tebal & bibir lebih penuh (wanita); alis tebal, rahang & bayangan jenggot (pria)
+  const lashL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.006, 0.01), irisMat);
+  lashL.position.set(-0.058, 0.266, 0.153);
+  lashL.rotation.z = 0.12;
   const lashR = lashL.clone();
   lashR.position.x = 0.058;
-  lashR.rotation.z = -0.2;
-  const lipFull = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.007, 0.01), lipMat);
-  lipFull.position.set(0, 0.182, 0.155);
+  lashR.rotation.z = -0.12;
+  const lashTipL = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.01), irisMat);
+  lashTipL.position.set(-0.084, 0.263, 0.147);
+  lashTipL.rotation.z = 0.5;
+  const lashTipR = lashTipL.clone();
+  lashTipR.position.x = 0.084;
+  lashTipR.rotation.z = -0.5;
+  const lipFull = new THREE.Mesh(new THREE.CapsuleGeometry(0.0105, 0.03, 4, 8), lipMat);
+  lipFull.rotation.z = Math.PI / 2;
+  lipFull.position.set(0, 0.1665, 0.1575);
   const femaleFace = new THREE.Group();
-  femaleFace.add(lashL, lashR, lipFull);
+  femaleFace.add(lashL, lashR, lashTipL, lashTipR, lipFull);
 
-  const browThickL = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.008, 0.012), hairMat);
-  browThickL.position.set(-0.056, 0.292, 0.15);
-  const browThickR = browThickL.clone();
-  browThickR.position.x = 0.056;
+  const browThickL = makeBrow(-1, hairMat, 0.016);
+  browThickL.position.y = 0.002;
+  const browThickR = makeBrow(1, hairMat, 0.016);
+  browThickR.position.y = 0.002;
   const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), skinMat);
   jaw.scale.set(1.0, 0.62, 0.92);
   jaw.position.set(0, 0.145, 0.025);
+  const stubbleMat = new THREE.MeshBasicMaterial({ color: avatar.hairColor, transparent: true, opacity: 0.2, depthWrite: false });
+  const stubble = new THREE.Mesh(new THREE.SphereGeometry(0.103, 12, 10, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.4), stubbleMat);
+  stubble.scale.set(1.0, 0.62, 0.92);
+  stubble.position.set(0, 0.143, 0.027);
   const maleFace = new THREE.Group();
-  maleFace.add(browThickL, browThickR, jaw);
+  maleFace.add(browThickL, browThickR, jaw, stubble);
+  // alis tipis hanya untuk wanita; pria memakai alis tebal
+  const browThin = new THREE.Group();
+  browThin.add(browL, browR);
+
+  const setBlink = (amount: number) => {
+    const a = Math.max(0, Math.min(1, amount));
+    for (const e of eyes) {
+      e.lid.scale.y = 0.12 + 0.9 * a;
+      e.lid.position.y = 0.262 - 0.02 * a;
+    }
+  };
 
   // Kacamata pelindung di dahi (wajah tetap terlihat)
   const goggles = new THREE.Group();
@@ -354,17 +467,19 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
   breathPuff.position.set(0, 0.17, 0.25);
 
   headGroup.add(
-    neck, cranium, earL, earR,
-    eyeWhiteL, eyeWhiteR, irisL, irisR, browL, browR, nose, mouth,
+    neck, cranium, earL, earR, earInL, earInR,
+    ...eyes.flatMap((e) => [e.white, e.iris, e.pupil, e.glint, e.lid]),
+    browThin, nose, cheekL, cheekR, blushL, blushR, chin, mouth,
     femaleFace, maleFace, goggles,
     hairShort, hairPonytail, hairBuzz, hairHood, hairLong, hairBun, hairBraid,
     breathPuff
   );
-  torsoGroup.add(
-    pelvis, jacket, chestPlate, collar, belt, buckle, pouchL, pouchR,
+  chestGroup.add(
+    jacket, chestPlate, collar,
     packO2, packExpedition, packScout, backShieldMesh,
     leftArm, rightArm, headGroup
   );
+  torsoGroup.add(pelvis, belt, buckle, pouchL, pouchR, chestGroup);
   bodyPivot.add(leftLeg, rightLeg, torsoGroup);
 
   bodyPivot.traverse((obj) => {
@@ -375,13 +490,15 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
     const s = SHAPES[g];
     leftLeg.position.x = -s.legX;
     rightLeg.position.x = s.legX;
-    leftLegLimb.scale.set(s.legThick, 1, s.legThick);
-    rightLegLimb.scale.set(s.legThick, 1, s.legThick);
+    for (const m of [...leftLegParts, ...rightLegParts]) m.scale.set(s.legThick, 1, s.legThick);
 
     leftArm.position.x = -s.shoulderX;
     rightArm.position.x = s.shoulderX;
-    leftArmLimb.scale.set(s.armThick, 1, s.armThick);
-    rightArmLimb.scale.set(s.armThick, 1, s.armThick);
+    for (const m of [...leftArmParts, ...rightArmParts]) {
+      // tangan sudah dipipihkan (0.85 x 1.2 x 0.75): kalikan, jangan timpa
+      m.scale.x = (m.userData.baseX ??= m.scale.x) * s.armThick;
+      m.scale.z = (m.userData.baseZ ??= m.scale.z) * s.armThick;
+    }
     leftPad.scale.set(s.pad, s.pad * 0.75, s.pad);
     rightPad.scale.set(s.pad, s.pad * 0.75, s.pad);
 
@@ -396,6 +513,9 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
 
     femaleFace.visible = g === 'female';
     maleFace.visible = g === 'male';
+    browThin.visible = g === 'female';
+    chin.scale.set(g === 'female' ? 0.85 : 1, 0.7, 0.8);
+    stubbleMat.color.set(hairMat.color);
     lipMat.color.set(g === 'female' ? '#a8504c' : '#7a4238');
   };
 
@@ -446,10 +566,17 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
     root,
     bodyPivot,
     torsoGroup,
+    chestGroup,
     leftLeg,
     rightLeg,
+    leftKnee,
+    rightKnee,
+    leftAnkle,
+    rightAnkle,
     leftArm,
     rightArm,
+    leftElbow,
+    rightElbow,
     headGroup,
     toolMesh,
     backShieldMesh,
@@ -457,5 +584,6 @@ export function createExplorerCharacter(avatar: AvatarConfig, shadowTex: THREE.T
     applyAppearance,
     setEquipmentVisuals,
     setSootAmount,
+    setBlink,
   };
 }

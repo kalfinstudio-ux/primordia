@@ -228,7 +228,8 @@ export class PlayerController {
       elapsed,
       showBreathVapor,
       lookAtOffsetYaw,
-      glbHandle
+      glbHandle,
+      this.velocity.y
     );
 
     return _interp;

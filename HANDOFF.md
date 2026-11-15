@@ -1,8 +1,22 @@
 # HANDOFF — PRIMORDIA (Era Adam & Hawa)
 
 Dokumen serah-terima agar pengembangan bisa dilanjutkan oleh siapa pun (manusia atau Claude) tanpa konteks percakapan sebelumnya.
-Terakhir diperbarui: 15 November 2026 (v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
+Terakhir diperbarui: 15 November 2026 (v20: gerak manusia, wajah v2, lore Bruk; v17: gerbang aset karakter; v16: perapian dokumen & CI; v15: dispose chunk & aset spire bersama; v14: audit Minggu 1; v12: Info Game di Pengaturan + login Base44; v11: HUD landscape + mode sembunyi, 10 menit pertama lebih ramah, identitas visual tahap 1; v10: Backlog #2–#5 selesai; #1 aset 3D tahap awal).
 
+
+## 0g. Perubahan v20 — Gerak manusia, wajah baru, lore Bruk (15 Nov 2026) — BELUM diuji di browser/Codespace
+- **Rig** (`player/character.ts`): lengan = bahu+siku, kaki = pinggul+lutut+pergelangan, `torsoGroup` = pinggul, `chestGroup` = dada+kepala (berputar berlawanan). Alat kini ikut siku kanan.
+- **Pose** (`player/pose.ts`, baru, tanpa import three): `HumanPoser` dipakai pemain lokal (`animator.ts`) DAN pemain jauh (`remotePlayers.ts`). Jalan/lari dengan ayunan tangan ±0,9–1,4 rad (lama ±0,56), tekukan lutut, kepala distabilkan, tinggi pinggul dari panjang kaki; idle bernapas/menoleh/pindah tumpuan; lompat naik/jatuh + mendarat jongkok; renang gaya bebas. Aksi: `mine` (ayun dua tangan), `gather`, `drink`, `use`, `build` (palu) — dipilih `actionKindFor(kind, hasTool)`; `build` dipicu saat bangunan berhasil dipasang. Pemain jauh baru mendapat gerak dasar (protokol multiplayer belum membawa jenis aksi).
+- **Wajah v2**: mata berkelopak + kedip acak, pupil+kilau, alis dua segmen, pangkal hidung, bibir atas/bawah, tulang pipi, dagu, semburat pipi, telinga dalam, bayangan jenggot (pria), bulu mata (wanita). `rig.setBlink(0..1)`.
+- **Maskot** (`tools/make_mascot.py`): moncong+dua lubang hidung (terbaca seperti babi) diganti punggung hidung basal bersudut. `public/mascot*.svg|png`, favicon, ikon PWA dan blok hero `index.html` sudah dibuat ulang.
+- **Lore**: Bruk memilih Adam & Hawa dan menahan penuaan mereka; slide onboarding baru (`onboarding.slideBruk*`) + paragraf landing page.
+- Tes: `pose.test.ts` (6 tes, lulus di sandbox). Tipe `character.ts`/`remotePlayers.ts` belum dicek `tsc` penuh (sandbox tanpa `three`): jalankan `npm run lint`.
+
+### Cek manual v20
+- [ ] Lari/jalan: tangan mengayun lebar, siku menekuk, badan memutar, tidak kaku; kaki tidak menembus/melayang.
+- [ ] Tekan Aksi di batu (dengan & tanpa alat), air, peti, bangun: tiap gerakan berbeda dan kembali netral.
+- [ ] Lompat, jatuh, mendarat, berenang, keluar air: tidak ada lengan berputar liar.
+- [ ] Wajah di layar Karakter Baru & dalam game: mata berkedip; pria & wanita berbeda; FPS tidak turun.
 
 ## 0f. Perubahan v19 — Peta langkah 2+3: titik penting dari generator & wilayah bernama (15 Nov 2026) — BELUM diuji di browser
 

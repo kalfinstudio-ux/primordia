@@ -25,7 +25,7 @@ import { VOLCANO_MAIN, getBiomeAt } from '../world/biomes';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
 import { tryLoadExplorerGlb, type GlbExplorerHandle } from '../player/glbCharacter';
 import { currentPlayerModelUrl } from '../utils/assetPrefs';
-import { CharacterAnimator } from '../player/animator';
+import { CharacterAnimator, actionKindFor } from '../player/animator';
 import { PlayerController } from '../player/controller';
 import { ThirdPersonCamera } from '../player/camera';
 import { SurvivalSystem } from '../systems/survival';
@@ -284,6 +284,7 @@ export class SceneManager {
       return;
     }
     const ok = tryPlaceStructure(mode, this.terrain, this.chunks, cand);
+    if (ok) this.animator.triggerInteract('build');
     eventBus.emit('toast:show', {
       text: ok ? t(`items.${mode}.name`) : t('inventory.missingMaterials'),
       type: ok ? 'success' : 'warn',
@@ -550,7 +551,7 @@ export class SceneManager {
           ? null
           : this.chunks.findNearestInteractable(this.controller.position.x, this.controller.position.z);
         if (bag) {
-          this.animator.triggerInteract();
+          this.animator.triggerInteract('gather');
           const all = pickUpBag(bag.id);
           audioSystem.playSfx('gather');
           eventBus.emit('toast:show', {
@@ -558,7 +559,7 @@ export class SceneManager {
             type: all ? 'success' : 'warn',
           });
         } else if (nearest) {
-          this.animator.triggerInteract();
+          this.animator.triggerInteract(actionKindFor(nearest.kind, Boolean(getBestMiningToolId())));
           performInteraction(nearest, this.chunks, this.sky);
         }
       }

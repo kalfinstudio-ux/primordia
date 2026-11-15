@@ -424,13 +424,16 @@ def build(lite=False):
         B.append('<use href="#p_%s" fill="#000" fill-opacity=".6" filter="url(#b4)" transform="translate(0 7)"/>' % k)
         B.append('<g filter="url(#rBrow)"><use href="#p_%s" fill="url(#gBrow)"/></g>' % k)
 
-    # ---- moncong
-    B.append('<use href="#p_snout" fill="#000" fill-opacity=".5" filter="url(#b4)" transform="translate(0 7)"/>')
-    B.append('<g filter="url(#rSnout)"><use href="#p_snout" fill="url(#gSnout)"/></g>')
-    for k in ("nosL", "nosR"):
-        B.append('<use href="#p_%s" fill="#06090a" stroke="#06090a" stroke-width="3"/>' % k)
-        B.append('<use href="#p_%s" fill="url(#gNos)"/>' % k)
-        B.append('<use href="#p_%s" fill="none" stroke="#9db2b8" stroke-opacity=".30" stroke-width="1" transform="translate(0 1.8)" filter="url(#b1)"/>' % k)
+    # ---- batang hidung (v2): punggung basal bersudut, BUKAN moncong bundar berlubang dua.
+    # Moncong + lubang hidung lama membuat wajah Bruk terbaca seperti babi, jadi p_snout/p_nosL/p_nosR
+    # tidak digambar lagi (datanya tetap di mascot_shapes.json bila mau dipakai ulang).
+    RIDGE = "M188 207 L204 199 L219 206 L224 233 L215 258 L202 267 L192 255 L185 232 Z"
+    B.append('<path d="%s" fill="#000" fill-opacity=".55" filter="url(#b4)" transform="translate(3 8)"/>' % RIDGE)
+    B.append('<g filter="url(#rSnout)"><path d="%s" fill="url(#gSnout)"/></g>' % RIDGE)
+    B.append('<path d="%s" fill="none" stroke="#06090a" stroke-opacity=".7" stroke-width="1.6" stroke-linejoin="round"/>' % RIDGE)
+    B.append('<path d="M196 214 L203 232 L200 262" stroke="#9db2b8" stroke-opacity=".32" stroke-width="1.4" fill="none" filter="url(#b1)"/>')
+    B.append('<path d="M206 214 L208 236 L204 252" stroke="#ff7a1a" stroke-opacity=".75" stroke-width="1.5" stroke-linecap="round" fill="none" filter="url(#b1)"/>')
+    B.append('<path d="M190 250 Q202 262 217 250" stroke="#06090a" stroke-opacity=".55" stroke-width="3" fill="none" filter="url(#b2)"/>')
 
     # ---- mulut + taring
     B.append('<use href="#p_mouth" fill="#05080a" stroke="#05080a" stroke-width="5" stroke-linejoin="round"/>')

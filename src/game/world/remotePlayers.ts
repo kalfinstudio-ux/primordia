@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createExplorerCharacter, type CharacterRig } from '../player/character';
+import { HumanPoser } from '../player/pose';
 import { eventBus } from '../core/eventBus';
 import type { RemotePlayerState } from '../net/multiplayer';
 import { damp } from '../utils/math';
@@ -19,7 +20,8 @@ interface Entry {
   pos: THREE.Vector3;
   yaw: number;
   speed: number;
-  phase: number;
+  prevY: number;
+  poser: HumanPoser;
   initialized: boolean;
   appearanceKey: string;
   name: string;
@@ -112,7 +114,8 @@ export class RemotePlayersSystem {
       pos: new THREE.Vector3(state.x, state.y, state.z),
       yaw: state.yaw,
       speed: 0,
-      phase: 0,
+      prevY: state.y,
+      poser: new HumanPoser(),
       initialized: false,
       appearanceKey: this.appearanceKey(state),
       name: state.name,
@@ -233,32 +236,22 @@ export class RemotePlayersSystem {
       }
     }
 
-    if (s.anim === 'swim') {
-      e.phase += Math.max(2.5, sp * 1.4) * dt;
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, 0.65, 8, dt);
-      rig.leftArm.rotation.x = Math.sin(e.phase) * 0.9 - 0.8;
-      rig.rightArm.rotation.x = -Math.sin(e.phase) * 0.9 - 0.8;
-      rig.leftLeg.rotation.x = Math.sin(e.phase * 1.4) * 0.45;
-      rig.rightLeg.rotation.x = -Math.sin(e.phase * 1.4) * 0.45;
-      rig.bodyPivot.position.y = Math.sin(elapsed * 3.2) * 0.06;
-    } else if (s.anim !== 'jump' && sp > 0.25) {
-      e.phase += sp * dt * 1.9;
-      const swing = Math.sin(e.phase) * Math.min(0.72, sp * 0.11);
-      rig.leftLeg.rotation.x = swing;
-      rig.rightLeg.rotation.x = -swing;
-      rig.leftArm.rotation.x = -swing * 0.78;
-      rig.rightArm.rotation.x = swing * 0.78;
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, sp > 6.6 ? 0.18 : 0.05, 10, dt);
-      rig.bodyPivot.position.y = Math.abs(Math.sin(e.phase)) * 0.055;
-    } else {
-      const air = s.anim === 'jump';
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, air ? 0.1 : 0, 10, dt);
-      rig.leftLeg.rotation.x = damp(rig.leftLeg.rotation.x, air ? 0.3 : 0, 12, dt);
-      rig.rightLeg.rotation.x = damp(rig.rightLeg.rotation.x, air ? -0.25 : 0, 12, dt);
-      rig.leftArm.rotation.x = damp(rig.leftArm.rotation.x, air ? -0.45 : 0, 10, dt);
-      rig.rightArm.rotation.x = damp(rig.rightArm.rotation.x, air ? -0.45 : 0, 10, dt);
-      rig.bodyPivot.position.y = Math.sin(elapsed * 2.2 + e.pos.x) * 0.015;
-    }
+    e.poser.update(
+      rig,
+      {
+        speed: sp,
+        grounded: s.anim !== 'jump' && s.anim !== 'swim',
+        swimming: s.anim === 'swim',
+        verticalSpeed: e.pos.y - e.prevY > 0 ? 2.5 : -2.5,
+        lookYaw: 0,
+        heightScale: h,
+        action: null,
+        landWeight: 0,
+      },
+      dt,
+      elapsed + e.pos.x
+    );
+    e.prevY = e.pos.y;
   }
 
   dispose(): void {

@@ -2,15 +2,25 @@ import * as THREE from 'three';
 import type { CharacterRig } from './character';
 import type { GlbExplorerHandle } from './glbCharacter';
 import { damp } from '../utils/math';
+import { ACTION_DURATION, HumanPoser, type ActionKind } from './pose';
+
+export { actionKindFor, type ActionKind } from './pose';
+
+/** Lama jongkok saat mendarat (detik). */
+const LAND_TIME = 0.3;
 
 export class CharacterAnimator {
-  private walkPhase = 0;
-  private interactTimer = 0;
+  private readonly poser = new HumanPoser();
+  private actionKind: ActionKind = 'use';
+  private actionTimer = 0;
+  private landTimer = 0;
   private squashY = 1;
   private squashXZ = 1;
 
-  triggerInteract(): void {
-    this.interactTimer = 0.35;
+  /** Mulai gerakan aksi (menambang, memungut, minum, membuka, membangun). */
+  triggerInteract(kind: ActionKind = 'use'): void {
+    this.actionKind = kind;
+    this.actionTimer = ACTION_DURATION[kind];
   }
 
   triggerJump(): void {
@@ -19,8 +29,9 @@ export class CharacterAnimator {
   }
 
   triggerLand(): void {
-    this.squashY = 0.82;
-    this.squashXZ = 1.14;
+    this.squashY = 0.9;
+    this.squashXZ = 1.07;
+    this.landTimer = LAND_TIME;
   }
 
   update(
@@ -34,10 +45,12 @@ export class CharacterAnimator {
     elapsed: number,
     showBreathVapor = false,
     lookAtOffsetYaw = 0,
-    glbHandle?: GlbExplorerHandle | null
+    glbHandle?: GlbExplorerHandle | null,
+    verticalSpeed = 0
   ): void {
+    const acting = this.actionTimer > 0;
     if (glbHandle) {
-      const nextState = this.interactTimer > 0
+      const nextState = acting
         ? 'mine'
         : swimming
           ? 'swim'
@@ -60,48 +73,31 @@ export class CharacterAnimator {
       baseHeight * buildScale * this.squashXZ
     );
 
-    if (swimming) {
-      this.walkPhase += Math.max(2.5, speed * 1.4) * dt;
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, 0.65, 8, dt);
-      rig.leftArm.rotation.x = Math.sin(this.walkPhase) * 0.9 - 0.8;
-      rig.rightArm.rotation.x = -Math.sin(this.walkPhase) * 0.9 - 0.8;
-      rig.leftLeg.rotation.x = Math.sin(this.walkPhase * 1.4) * 0.45;
-      rig.rightLeg.rotation.x = -Math.sin(this.walkPhase * 1.4) * 0.45;
-      rig.bodyPivot.position.y = Math.sin(elapsed * 3.2) * 0.06;
-    } else if (grounded && speed > 0.2) {
-      this.walkPhase += speed * dt * 1.9;
-      const swing = Math.sin(this.walkPhase) * Math.min(0.72, speed * 0.11);
-      rig.leftLeg.rotation.x = swing;
-      rig.rightLeg.rotation.x = -swing;
-      rig.leftArm.rotation.x = -swing * 0.78;
-      if (this.interactTimer <= 0) {
-        rig.rightArm.rotation.x = swing * 0.78;
-      }
-      // Forward sprint lean
-      const targetLean = speed > 6.6 ? 0.18 : 0.05;
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, targetLean, 10, dt);
-      rig.bodyPivot.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.055;
-    } else {
-      rig.torsoGroup.rotation.x = damp(rig.torsoGroup.rotation.x, grounded ? 0 : 0.1, 10, dt);
-      rig.leftLeg.rotation.x = damp(rig.leftLeg.rotation.x, grounded ? 0 : 0.3, 12, dt);
-      rig.rightLeg.rotation.x = damp(rig.rightLeg.rotation.x, grounded ? 0 : -0.25, 12, dt);
-      rig.leftArm.rotation.x = damp(rig.leftArm.rotation.x, grounded ? 0 : -0.45, 10, dt);
-      if (this.interactTimer <= 0) {
-        rig.rightArm.rotation.x = damp(rig.rightArm.rotation.x, grounded ? 0 : -0.45, 10, dt);
-      }
-      rig.bodyPivot.position.y = Math.sin(elapsed * 2.2) * 0.015;
+    // Rig kode disembunyikan bila model GLB aktif: tidak perlu diposisikan.
+    if (!glbHandle) {
+      if (acting) this.actionTimer = Math.max(0, this.actionTimer - dt);
+      this.landTimer = Math.max(0, this.landTimer - dt);
+      const t = acting ? 1 - this.actionTimer / ACTION_DURATION[this.actionKind] : 0;
+      this.poser.update(
+        rig,
+        {
+          speed,
+          grounded,
+          swimming,
+          verticalSpeed,
+          lookYaw: lookAtOffsetYaw,
+          heightScale: baseHeight,
+          action: acting ? { kind: this.actionKind, t } : null,
+          landWeight: this.landTimer / LAND_TIME,
+        },
+        dt,
+        elapsed
+      );
+    } else if (acting) {
+      this.actionTimer = Math.max(0, this.actionTimer - dt);
     }
 
-    // Subtle head look-at toward nearby interactable
-    rig.headGroup.rotation.y = damp(rig.headGroup.rotation.y, THREE.MathUtils.clamp(lookAtOffsetYaw, -0.55, 0.55), 8, dt);
-
-    if (this.interactTimer > 0) {
-      this.interactTimer -= dt;
-      const p = Math.sin((this.interactTimer / 0.35) * Math.PI);
-      rig.rightArm.rotation.x = -p * 1.45;
-    }
-
-    // Breath vapor puff pulse in toxic/cold air
+    // Uap napas di udara beracun/dingin
     const puffMat = rig.breathPuff.material as THREE.MeshBasicMaterial;
     if (showBreathVapor) {
       const cycle = (elapsed * 0.8) % 1;
